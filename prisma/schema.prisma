@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Campaign {
+  id                  String           @id @default(cuid())
+  name                String
+  campaignType        String           @default("clipping")
+  cpm                 Float            @default(0)
+  maxPerClip          Float            @default(0)
+  minPayout           Float            @default(0)
+  paymentModel        String           @default("cpm")
+  aiInstructions      String           @default("")
+  contentRules        String           @default("")
+  rejectionReasons    String           @default("")
+  captionRules        String           @default("")
+  platforms           String           @default("")
+  taggingJson         String           @default("{}")
+  submissionProcess   String           @default("")
+  clipCount           Int              @default(10)
+  clipLength          Int              @default(60)
+  aspectRatio         String           @default("9:16")
+  scheduleEnabled     Boolean          @default(false)
+  scheduleFrequency   String?
+  scheduleTime        String?
+  minimumEngagement   String           @default("")
+  audienceRequirement String           @default("")
+  postDuration        String           @default("")
+  status              String           @default("active")
+  createdAt           DateTime         @default(now())
+  sources             CampaignSource[]
+  jobs                AgentJob[]
+}
+
+model CampaignSource {
+  id         String   @id @default(cuid())
+  campaignId String
+  platform   String
+  url        String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+}
+
+model SourceVideo {
+  id         String   @id @default(cuid())
+  campaignId String
+  platform   String
+  url        String
+  videoId    String
+  title      String
+  duration   Int      @default(0)
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+}
+
+model AgentJob {
+  id          String    @id @default(cuid())
+  campaignId  String
+  status      String    @default("idle")
+  startedAt   DateTime?
+  completedAt DateTime?
+  logEntries  String    @default("[]")
+  createdAt   DateTime  @default(now())
+  campaign    Campaign  @relation(fields: [campaignId], references: [id])
+  clips       Clip[]
+}
+
+model Clip {
+  id            String   @id @default(cuid())
+  jobId         String
+  campaignId    String
+  title         String
+  filePath      String
+  downloadUrl   String
+  thumbnailUrl  String   @default("")
+  startTime     Float
+  endTime       Float
+  viralityScore String
+  reason        String
+  hook          String   @default("")
+  caption       String   @default("")
+  platformFit   String   @default("")
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  job           AgentJob @relation(fields: [jobId], references: [id])
+}
+
+model UserSettings {
+  id              String @id @default("default")
+  tiktokHandle    String @default("")
+  instagramHandle String @default("")
+  youtubeHandle   String @default("")
+  kickHandle      String @default("")
+  twitchHandle    String @default("")
+  defaultLength   Int    @default(60)
+  defaultRatio    String @default("9:16")
+  subtitleStyle   String @default("viral-word")
+  colorGrade      String @default("viral")
+  autoEdit        Boolean @default(true)
+  outputFolder    String @default("/tmp/clipflow")
+  maxClipsPerVideo Int   @default(10)
+}
