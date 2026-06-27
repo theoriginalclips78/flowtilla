@@ -58,6 +58,7 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove, onU
   const [jobCount, setJobCount] = useState(0);
   const [checklistClip, setChecklistClip] = useState<WorkspaceClip | null>(null);
   const [previewClip, setPreviewClip] = useState<WorkspaceClip | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const abortRef = useRef<AbortController | null>(null);
 
   const addLog = useCallback((line: LogLine) => {

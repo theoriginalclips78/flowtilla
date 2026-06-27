@@ -45,7 +45,7 @@ const TIPS = [
   { icon: <TrendingUp size={16} />, title: "Hook in the first 2 seconds", body: "The algorithm decides whether to keep showing your clip based on how many people watch past the first 2–3 seconds. Start with the most interesting or surprising moment, not a slow intro." },
   { icon: <Star size={16} />, title: "Caption = context, not promotion", body: 'Captions like "You need to see this" or "POV: you just realized..." perform far better than "Buy now" or "Check the link in bio." Feel like a person, not a brand.' },
   { icon: <Clock size={16} />, title: "Posting frequency matters", body: "1–3 posts per day is the sweet spot on TikTok. More than that and your own posts compete with each other. Less than 3/week and the algorithm deprioritizes your account." },
-  { icon: <AlertCircle size={16} />, title: "Don't repost identical clips", body: "Platforms penalize duplicate content. Even if the same clip performed well, don't repost it — make a new cut with a different start time or caption angle." },
+  { icon: <AlertCircle size={16} />, title: "Don't repost identical clips", body: "Platforms penalize duplicate content. Even if the same clip performed well, don&apos;t repost it — make a new cut with a different start time or caption angle." },
   { icon: <Send size={16} />, title: "Tag the brand account", body: "Most campaigns require you to tag the brand's official account. Check the campaign's Tagging section — missing tags = rejected submission = no pay." },
   { icon: <CheckCircle size={16} />, title: "Meet the audience requirement", body: "Some campaigns require 40%+ Tier 1 audience (US, UK, Canada, Australia). Check your TikTok / Instagram analytics before applying to make sure your audience qualifies." },
 ];
@@ -133,7 +133,7 @@ export default function GuidePage() {
         <div className="mt-4 p-4 rounded-xl" style={{ background: "#FFF5F5", border: "1px solid #FECACA" }}>
           <p className="text-xs font-bold text-[#9B1C1C] mb-1">IMPORTANT — Campaign Submission</p>
           <p className="text-sm text-[#7F1D1D] leading-relaxed">
-            After posting a campaign clip, you must submit it to the brand for review. Keep the video live, tag the correct accounts, and don't edit or delete it. Payment is only released after the brand confirms it meets their content rules and the view minimum.
+            After posting a campaign clip, you must submit it to the brand for review. Keep the video live, tag the correct accounts, and don&apos;t edit or delete it. Payment is only released after the brand confirms it meets their content rules and the view minimum.
           </p>
         </div>
       </AccordionSection>
