@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001";
+// The local app the OAuth result should ultimately land on.
+const LOCAL_APP = process.env.LOCAL_APP_URL || "http://localhost:3001";
+// Public HTTPS URL registered with TikTok/Meta as the redirect (must match the connect route).
+const OAUTH_REDIRECT = process.env.OAUTH_REDIRECT_BASE || "https://flowtilla.vercel.app";
 
 async function getCreds() {
   const s = await prisma.userSettings.findUnique({ where: { id: "default" } });
@@ -11,6 +15,14 @@ async function getCreds() {
 export async function GET(req: NextRequest, { params }: { params: { platform: string } }) {
   const { platform } = params;
   const code = req.nextUrl.searchParams.get("code");
+
+  // When this callback runs on Vercel (no local DB / credentials live on the user's
+  // machine), forward the OAuth code+state straight to the local app, which does the
+  // token exchange and saves to the local database.
+  if (process.env.VERCEL) {
+    return NextResponse.redirect(`${LOCAL_APP}/api/social/callback/${platform}?${req.nextUrl.searchParams.toString()}`);
+  }
+
   if (!code) return NextResponse.redirect(`${BASE}/settings?social_error=no_code`);
 
   const creds = await getCreds();
@@ -19,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: { platform: st
     if (platform === "tiktok") {
       const clientKey    = creds.tiktokClientKey    || process.env.TIKTOK_CLIENT_KEY!;
       const clientSecret = creds.tiktokClientSecret || process.env.TIKTOK_CLIENT_SECRET!;
-      const redirect     = `${BASE}/api/social/callback/tiktok`;
+      const redirect     = `${OAUTH_REDIRECT}/api/social/callback/tiktok`;
 
       const res  = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
         method: "POST",
@@ -57,7 +69,7 @@ export async function GET(req: NextRequest, { params }: { params: { platform: st
     if (platform === "instagram") {
       const appId     = creds.metaAppId     || process.env.META_APP_ID!;
       const appSecret = creds.metaAppSecret || process.env.META_APP_SECRET!;
-      const redirect  = `${BASE}/api/social/callback/instagram`;
+      const redirect  = `${OAUTH_REDIRECT}/api/social/callback/instagram`;
 
       const res  = await fetch(`https://graph.facebook.com/v19.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&redirect_uri=${encodeURIComponent(redirect)}&code=${code}`);
       const data = await res.json();
