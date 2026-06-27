@@ -27,9 +27,18 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { campaignId: string } }
 ) {
+  const id = params.campaignId;
   try {
-    await prisma.campaignSource.deleteMany({ where: { campaignId: params.campaignId } });
-    await prisma.campaign.delete({ where: { id: params.campaignId } });
+    // Must delete in order: Clip → AgentJob → CampaignSource → SourceVideo → Campaign
+    const jobs = await prisma.agentJob.findMany({ where: { campaignId: id }, select: { id: true } });
+    const jobIds = jobs.map(j => j.id);
+    if (jobIds.length) {
+      await prisma.clip.deleteMany({ where: { jobId: { in: jobIds } } });
+      await prisma.agentJob.deleteMany({ where: { id: { in: jobIds } } });
+    }
+    await prisma.campaignSource.deleteMany({ where: { campaignId: id } });
+    await prisma.sourceVideo.deleteMany({ where: { campaignId: id } });
+    await prisma.campaign.delete({ where: { id } });
     return NextResponse.json({ deleted: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

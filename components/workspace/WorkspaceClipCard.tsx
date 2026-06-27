@@ -24,6 +24,7 @@ interface Props {
   clip: WorkspaceClip;
   onApprove: (id: string) => void;
   onDiscard: (id: string) => void;
+  onPreview: (clip: WorkspaceClip) => void;
 }
 
 const viralBadge: Record<string, { label: string; bg: string }> = {
@@ -36,9 +37,8 @@ function fmt(s: number) {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 }
 
-export default function WorkspaceClipCard({ clip, onApprove, onDiscard }: Props) {
+export default function WorkspaceClipCard({ clip, onApprove, onDiscard, onPreview }: Props) {
   const router = useRouter();
-  const [playing, setPlaying] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const badge = viralBadge[clip.viralityScore] || viralBadge.low;
@@ -63,23 +63,17 @@ export default function WorkspaceClipCard({ clip, onApprove, onDiscard }: Props)
         </div>
       )}
 
-      {/* Thumbnail */}
-      <div className="relative bg-black/40 aspect-video cursor-pointer" onClick={() => setPlaying(!playing)}>
-        {playing ? (
-          <video src={clip.downloadUrl} autoPlay controls className="w-full h-full object-cover" />
-        ) : (
-          <>
-            {clip.thumbnailUrl
-              ? <img src={clip.thumbnailUrl} alt={clip.title} className="w-full h-full object-cover" />
-              : <video src={clip.downloadUrl} className="w-full h-full object-cover" preload="metadata" />
-            }
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-9 h-9 rounded-full liquid-glass flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
-                <div className="w-0 h-0 border-y-[6px] border-y-transparent border-l-[10px] border-l-white ml-0.5" />
-              </div>
-            </div>
-          </>
-        )}
+      {/* Thumbnail — click to open fullscreen preview */}
+      <div className="relative bg-black/40 aspect-video cursor-pointer group" onClick={() => onPreview(clip)}>
+        {clip.thumbnailUrl
+          ? <img src={clip.thumbnailUrl} alt={clip.title} className="w-full h-full object-cover" />
+          : <video src={clip.downloadUrl} className="w-full h-full object-cover" preload="metadata" />
+        }
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(59,130,246,0.85)", boxShadow: "0 0 20px rgba(59,130,246,0.5)" }}>
+            <div className="w-0 h-0 border-y-[7px] border-y-transparent border-l-[12px] border-l-white ml-1" />
+          </div>
+        </div>
         <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-lg liquid-glass text-white" style={{ background: badge.bg }}>
           {badge.label}
         </span>

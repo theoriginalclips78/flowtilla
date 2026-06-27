@@ -347,7 +347,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                     <span className="text-xs bg-green-400/20 text-green-300 px-2 py-0.5 rounded-full font-bold">${preview.campaign.cpm} CPM</span>
                   )}
                   {preview.campaign.maxPerClip > 0 && (
-                    <span className="text-xs bg-blue-400/20 text-blue-300 px-2 py-0.5 rounded-full font-bold">Max ${preview.campaign.maxPerClip}</span>
+                    <span className="text-xs bg-red-600/20 text-red-400 px-2 py-0.5 rounded-full font-bold">Max ${preview.campaign.maxPerClip}</span>
                   )}
                 </div>
               </div>

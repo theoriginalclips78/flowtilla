@@ -37,7 +37,7 @@ const SYSTEM_PROMPT = `You are a universal campaign brief parser for content cre
   "minPayout": number or null,
   "paymentModel": "cpm / flat / per-submission / other",
   "platforms": ["tiktok","instagram","youtube","twitter","kick","twitch"],
-  "sourceUrls": ["ALL content source URLs — YouTube channels, TikTok accounts, Twitch/Kick channels, Instagram pages"],
+  "sourceUrls": ["ALL content source URLs. IMPORTANT: If explicit URLs are not provided but social handles are mentioned (e.g. @davidfilterbuy, @handle), infer the channel URLs: for YouTube use https://www.youtube.com/@handle, for TikTok use https://www.tiktok.com/@handle, for Instagram use https://www.instagram.com/handle/ (no @ prefix). Include ALL platforms the creator posts on based on context clues in the brief."],
   "tagging": {
     "tiktok": "@handle or null",
     "instagram": "@handle or null",
@@ -47,7 +47,7 @@ const SYSTEM_PROMPT = `You are a universal campaign brief parser for content cre
   },
   "captionRules": "caption do/don't rules as a string",
   "contentRules": "content rules as a string",
-  "aiInstructions": "detailed description of what makes a perfect clip — specific moments, energy, visuals, emotions to look for",
+  "aiInstructions": "detailed description of what makes a perfect clip — specific moments, energy, visuals, emotions to look for. Include the creator's name, topic focus, what makes their content unique.",
   "requirements": ["all must-do requirements"],
   "rejectionReasons": ["all rejection/non-payment reasons"],
   "minimumEngagement": "engagement requirement or null",
@@ -55,6 +55,8 @@ const SYSTEM_PROMPT = `You are a universal campaign brief parser for content cre
   "postDuration": "how long to keep post live",
   "submissionProcess": "how to submit clips for payment"
 }
+
+CRITICAL for sourceUrls: Always try to populate this. If the brief mentions a creator handle like @davidfilterbuy and says to clip from their podcast/content on YouTube/TikTok/Instagram, generate the URLs for all mentioned platforms. Never return an empty sourceUrls array if handles are present.
 
 If a field is not found, set it to null. Return ONLY the JSON.`;
 

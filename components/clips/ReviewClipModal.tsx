@@ -155,11 +155,11 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
               {adjustMode && (
                 <>
                   <div
-                    className="absolute w-3 h-3 bg-blue-500 rounded-full top-0 -translate-x-1/2 cursor-ew-resize shadow"
+                    className="absolute w-3 h-3 bg-red-700 rounded-full top-0 -translate-x-1/2 cursor-ew-resize shadow"
                     style={{ left: `${startRatio * 100}%` }}
                   />
                   <div
-                    className="absolute w-3 h-3 bg-blue-500 rounded-full top-0 -translate-x-1/2 cursor-ew-resize shadow"
+                    className="absolute w-3 h-3 bg-red-700 rounded-full top-0 -translate-x-1/2 cursor-ew-resize shadow"
                     style={{ left: `${endRatio * 100}%` }}
                   />
                 </>

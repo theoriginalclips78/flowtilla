@@ -24,38 +24,29 @@ const tools = [
 export default function ToolsPage() {
   const router = useRouter();
 
-  const handleQuickAccess = (href: string) => {
-    if (href.startsWith("#")) {
-      document.getElementById("all-tools")?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      router.push(href);
-    }
-  };
-
   return (
     <div className="space-y-8">
       <div className="animate-fade-up delay-1">
-        <h1 className="text-2xl font-bold text-white">Tools</h1>
-        <p className="text-sm text-white/50 mt-1">Free utilities to power your content workflow</p>
+        <h1 className="text-2xl font-bold text-[#0F1E3C]">Tools</h1>
+        <p className="text-sm text-[#64748B] mt-1">Free utilities to power your content workflow</p>
       </div>
 
       {/* Quick access */}
       <div className="animate-fade-up delay-2">
-        <h2 className="font-medium text-white/70 text-sm uppercase tracking-wider mb-3">Quick Access</h2>
+        <h2 className="font-semibold text-[#64748B] text-xs uppercase tracking-wider mb-3">Quick Access</h2>
         <div className="grid grid-cols-3 gap-4">
           {quickAccess.map((t) => (
             <button
               key={t.label}
-              onClick={() => handleQuickAccess(t.href)}
-              className="liquid-glass rounded-2xl p-5 flex items-center gap-4 text-left hover:bg-white/10 transition-all hover:scale-[1.01] border border-white/10"
-              style={{ background: "rgba(255,255,255,0.07)" }}
+              onClick={() => router.push(t.href)}
+              className="panel p-5 flex items-center gap-4 text-left hover:border-red-300 hover:shadow-md transition-all hover:-translate-y-0.5"
             >
-              <div className="w-11 h-11 rounded-xl liquid-glass flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.12)" }}>
-                <t.icon size={20} className="text-white" />
+              <div className="w-11 h-11 rounded-xl bg-[#FFF5F5] flex items-center justify-center flex-shrink-0">
+                <t.icon size={20} className="text-red-800" />
               </div>
               <div>
-                <p className="font-medium text-white">{t.label}</p>
-                <p className="text-xs text-white/50 mt-0.5">{t.desc}</p>
+                <p className="font-semibold text-[#0F1E3C] text-sm">{t.label}</p>
+                <p className="text-xs text-[#64748B] mt-0.5">{t.desc}</p>
               </div>
             </button>
           ))}
@@ -63,21 +54,20 @@ export default function ToolsPage() {
       </div>
 
       {/* All tools */}
-      <div id="all-tools" className="animate-fade-up delay-3">
-        <h2 className="font-medium text-white/70 text-sm uppercase tracking-wider mb-3">All Tools</h2>
+      <div className="animate-fade-up delay-3">
+        <h2 className="font-semibold text-[#64748B] text-xs uppercase tracking-wider mb-3">All Tools</h2>
         <div className="grid grid-cols-4 gap-4">
           {tools.map((t) => (
             <div
               key={t.label}
-              className="liquid-glass rounded-2xl p-5 flex flex-col gap-3 hover:bg-white/10 hover:scale-[1.01] transition-all border border-white/10"
-              style={{ background: "rgba(255,255,255,0.07)" }}
+              className="panel p-5 flex flex-col gap-3 hover:border-red-300 hover:shadow-md hover:-translate-y-0.5 transition-all"
             >
-              <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
-                <t.icon size={18} className="text-white" />
+              <div className="w-10 h-10 rounded-xl bg-[#FFF5F5] flex items-center justify-center">
+                <t.icon size={18} className="text-red-800" />
               </div>
               <div className="flex-1">
-                <p className="font-medium text-sm text-white">{t.label}</p>
-                <p className="text-xs text-white/50 mt-1">{t.desc}</p>
+                <p className="font-semibold text-sm text-[#0F1E3C]">{t.label}</p>
+                <p className="text-xs text-[#64748B] mt-1">{t.desc}</p>
               </div>
               <button
                 onClick={() => router.push(t.href)}

@@ -11,11 +11,12 @@ interface Props {
   clips: WorkspaceClip[];
   onApprove: (id: string) => void;
   onDiscard: (id: string) => void;
+  onPreview: (clip: WorkspaceClip) => void;
 }
 
 const viralOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
 
-export default function ClipsOutputPanel({ clips, onApprove, onDiscard }: Props) {
+export default function ClipsOutputPanel({ clips, onApprove, onDiscard, onPreview }: Props) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("virality");
   const [page, setPage] = useState(20);
@@ -90,6 +91,7 @@ export default function ClipsOutputPanel({ clips, onApprove, onDiscard }: Props)
             clip={clip}
             onApprove={onApprove}
             onDiscard={onDiscard}
+            onPreview={onPreview}
           />
         ))}
         {filtered.length > page && (

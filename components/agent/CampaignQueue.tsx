@@ -18,7 +18,7 @@ interface Props {
 
 const statusConfig = {
   queued: { label: "Queued", className: "bg-gray-100 text-[#6B7280]" },
-  running: { label: "Running", className: "bg-blue-100 text-blue-600 animate-pulse" },
+  running: { label: "Running", className: "bg-red-100 text-red-800 animate-pulse" },
   complete: { label: "Complete", className: "bg-green-500/10 text-green-600" },
 };
 

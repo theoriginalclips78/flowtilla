@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
             videoId: video.videoId,
             title: video.title,
             duration: video.duration,
+            viewCount: video.viewCount || 0,
+            uploadDate: video.uploadDate || "",
             status: "pending",
           },
         });

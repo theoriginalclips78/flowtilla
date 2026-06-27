@@ -25,7 +25,7 @@ interface ReadResult {
 }
 
 export default function AgentPage() {
-  const { setCampaigns, addCampaign } = useCampaignStore();
+  const { setCampaigns, addCampaign, deleteCampaign } = useCampaignStore();
   const [entries, setEntries] = useState<WorkspaceEntry[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -56,8 +56,10 @@ export default function AgentPage() {
     setActiveTab(entries.length);
   };
 
-  const handleRemove = (campaignId: string) => {
+  const handleRemove = async (campaignId: string) => {
     setEntries((prev) => prev.filter((e) => e.campaign.id !== campaignId));
+    deleteCampaign(campaignId);
+    await fetch(`/api/campaigns/${campaignId}`, { method: "DELETE" });
   };
 
   const scrollToCard = (index: number) => {
@@ -152,6 +154,7 @@ export default function AgentPage() {
                 campaign={entry.campaign}
                 sources={entry.sources}
                 onRemove={handleRemove}
+                onUpdate={(updated) => setEntries(prev => prev.map(e => e.campaign.id === updated.id ? { ...e, campaign: updated } : e))}
               />
             </div>
           ))}

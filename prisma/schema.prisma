@@ -23,6 +23,9 @@ model Campaign {
   submissionProcess   String           @default("")
   clipCount           Int              @default(10)
   clipLength          Int              @default(60)
+  clipLengthMin       Int              @default(30)
+  clipLengthMax       Int              @default(90)
+  extraContext        String           @default("")
   aspectRatio         String           @default("9:16")
   scheduleEnabled     Boolean          @default(false)
   scheduleFrequency   String?
@@ -52,6 +55,8 @@ model SourceVideo {
   videoId    String
   title      String
   duration   Int      @default(0)
+  viewCount  Int      @default(0)
+  uploadDate String   @default("")
   status     String   @default("pending")
   createdAt  DateTime @default(now())
 }
@@ -88,6 +93,28 @@ model Clip {
   job           AgentJob @relation(fields: [jobId], references: [id])
 }
 
+model SocialAccount {
+  id           String    @id @default(cuid())
+  platform     String    // "tiktok" | "instagram"
+  accountName  String    @default("")
+  accountId    String    @default("")
+  accessToken  String
+  refreshToken String    @default("")
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model PostLog {
+  id        String    @id @default(cuid())
+  clipId    String
+  platform  String
+  status    String    @default("pending")
+  postUrl   String    @default("")
+  error     String    @default("")
+  postedAt  DateTime?
+  createdAt DateTime  @default(now())
+}
+
 model UserSettings {
   id              String @id @default("default")
   tiktokHandle    String @default("")
@@ -102,4 +129,9 @@ model UserSettings {
   autoEdit        Boolean @default(true)
   outputFolder    String @default("/tmp/clipflow")
   maxClipsPerVideo Int   @default(10)
+  tiktokClientKey    String @default("")
+  tiktokClientSecret String @default("")
+  metaAppId          String @default("")
+  metaAppSecret      String @default("")
+  youtubeApiKey      String @default("")
 }

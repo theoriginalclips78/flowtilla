@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { ChevronDown, ChevronUp, Play, CheckCircle, MoreHorizontal, Zap, Trash2, Pause } from "lucide-react";
 import { Campaign } from "@/store/campaignStore";
 import { toast } from "sonner";
@@ -9,6 +9,8 @@ import BriefSummaryPanel from "./BriefSummaryPanel";
 import ClipsOutputPanel from "./ClipsOutputPanel";
 import { WorkspaceClip } from "./WorkspaceClipCard";
 import PostChecklistModal from "./PostChecklistModal";
+import ClipPreviewModal from "./ClipPreviewModal";
+import EditBriefModal from "./EditBriefModal";
 
 type AgentStatus = "idle" | "running" | "complete" | "error";
 
@@ -23,6 +25,7 @@ interface Props {
   sources: Source[];
   index?: number;
   onRemove: (id: string) => void;
+  onUpdate?: (updated: Campaign) => void;
 }
 
 const PlatformIcon = ({ platform, size = 18 }: { platform: string; size?: number }) => {
@@ -40,10 +43,11 @@ function now() {
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
 }
 
-export default function CampaignWorkspaceCard({ campaign, sources, onRemove }: Props) {
+export default function CampaignWorkspaceCard({ campaign, sources, onRemove, onUpdate }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [status, setStatus] = useState<AgentStatus>("idle");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [clips, setClips] = useState<WorkspaceClip[]>([]);
   const [totalClips, setTotalClips] = useState(0);
@@ -53,96 +57,156 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove }: P
   const [processedSourceIds] = useState(new Set<string>());
   const [jobCount, setJobCount] = useState(0);
   const [checklistClip, setChecklistClip] = useState<WorkspaceClip | null>(null);
+  const [previewClip, setPreviewClip] = useState<WorkspaceClip | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const addLog = useCallback((line: LogLine) => {
     setLogs((prev) => [...prev, line]);
   }, []);
 
+  const pollJobRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const seenLogCount = useRef(0);
+  const activeJobId = useRef<string | null>(null);
+
+  useEffect(() => () => { if (pollJobRef.current) clearInterval(pollJobRef.current); }, []);
+
+  const processEvent = useCallback((event: Record<string, unknown>) => {
+    if (event.step === "source_start") {
+      addLog({ time: now(), message: event.message as string, status: "info", isGroupHeader: true });
+      setSourcesProcessed(event.sourceIndex as number);
+    } else if (event.step === "source_complete") {
+      setSourcesProcessed((event.sourceIndex as number) + 1);
+      addLog({ time: now(), message: `🎉 Video ${(event.sourceIndex as number) + 1} complete — ${event.clipsFromSource} clips`, status: "info" });
+    } else if (event.step === "clip_ready" && event.clip) {
+      const c = event.clip as Record<string, unknown>;
+      setTotalClips(event.totalClips as number);
+      setCurrentClipInSource((prev) => prev + 1);
+      addLog({ time: now(), message: event.message as string, status: "complete" });
+      setClips((prev) => [...prev, {
+        id: c.id as string, title: c.title as string, downloadUrl: c.downloadUrl as string,
+        thumbnailUrl: c.thumbnailUrl as string, startTime: c.startTime as number, endTime: c.endTime as number,
+        viralityScore: c.viralityScore as string, reason: c.reason as string, hook: c.hook as string,
+        caption: c.caption as string, platformFit: c.platformFit as string, sourceTitle: c.sourceTitle as string,
+        status: "pending",
+      }]);
+    } else if (event.step === "analyze" && event.momentCount) {
+      setClipsInCurrentSource(event.momentCount as number);
+      setCurrentClipInSource(0);
+      addLog({ time: now(), message: event.message as string, status: "complete" });
+    } else if (event.step === "done") {
+      setStatus("complete");
+      addLog({ time: now(), message: event.message as string, status: "info" });
+      toast.success(`${campaign.name}: ${event.totalClips} clips generated!`);
+    } else if (event.message) {
+      addLog({ time: now(), message: event.message as string, status: (event.status as LogLine["status"]) || "info" });
+    }
+  }, [addLog, campaign.name]);
+
+  const startPolling = useCallback((jobId: string) => {
+    activeJobId.current = jobId;
+    seenLogCount.current = 0;
+    if (pollJobRef.current) clearInterval(pollJobRef.current);
+    pollJobRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/agent/jobs/${jobId}`);
+        const data = await res.json();
+        const logs: Record<string, unknown>[] = data.logs || [];
+        // Only process new log entries
+        for (let i = seenLogCount.current; i < logs.length; i++) {
+          processEvent(logs[i]);
+        }
+        seenLogCount.current = logs.length;
+        // Load any clips from DB that aren't in local state yet
+        if (data.clips?.length) {
+          setClips(prev => {
+            const existingIds = new Set(prev.map((c) => c.id));
+            const newClips: WorkspaceClip[] = (data.clips as Record<string, unknown>[])
+              .filter(c => !existingIds.has(c.id as string))
+              .map(c => {
+                const st = c.status as string;
+                return {
+                  id: c.id as string, title: c.title as string, downloadUrl: c.downloadUrl as string,
+                  thumbnailUrl: c.thumbnailUrl as string, startTime: c.startTime as number, endTime: c.endTime as number,
+                  viralityScore: c.viralityScore as string, reason: c.reason as string, hook: c.hook as string,
+                  caption: c.caption as string, platformFit: c.platformFit as string, sourceTitle: "",
+                  status: (st === "approved" ? "approved" : st === "discarded" ? "discarded" : "pending") as WorkspaceClip["status"],
+                };
+              });
+            return newClips.length ? [...prev, ...newClips] : prev;
+          });
+        }
+        if (data.status === "completed" || data.status === "error") {
+          clearInterval(pollJobRef.current!);
+          pollJobRef.current = null;
+          if (data.status === "completed") setStatus("complete");
+          else setStatus("error");
+        }
+      } catch { /* ignore poll errors */ }
+    }, 2000);
+  }, [processEvent]);
+
   const handleRun = async () => {
     if (status === "running") {
-      abortRef.current?.abort();
+      // Can't stop a background job easily — just update UI
       setStatus("idle");
+      if (pollJobRef.current) { clearInterval(pollJobRef.current); pollJobRef.current = null; }
       return;
     }
-
     setStatus("running");
     setJobCount((n) => n + 1);
-    abortRef.current = new AbortController();
-
+    addLog({ time: now(), message: "🚀 Starting agent in background...", status: "started" });
     try {
       const res = await fetch("/api/agent/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ campaignId: campaign.id }),
-        signal: abortRef.current.signal,
       });
-
-      if (!res.body) throw new Error("No response body");
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const event = JSON.parse(line.slice(6));
-            if (event.step === "source_start") {
-              addLog({ time: now(), message: event.message, status: "info", isGroupHeader: true });
-              setSourcesProcessed(event.sourceIndex);
-            } else if (event.step === "source_complete") {
-              setSourcesProcessed(event.sourceIndex + 1);
-              addLog({ time: now(), message: `🎉 Video ${event.sourceIndex + 1} complete — ${event.clipsFromSource} clips`, status: "info" });
-            } else if (event.step === "clip_ready" && event.clip) {
-              setTotalClips(event.totalClips);
-              setCurrentClipInSource((prev) => prev + 1);
-              addLog({ time: now(), message: event.message, status: "complete" });
-              const newClip: WorkspaceClip = {
-                id: event.clip.id,
-                title: event.clip.title,
-                downloadUrl: event.clip.downloadUrl,
-                thumbnailUrl: event.clip.thumbnailUrl,
-                startTime: event.clip.startTime,
-                endTime: event.clip.endTime,
-                viralityScore: event.clip.viralityScore,
-                reason: event.clip.reason,
-                hook: event.clip.hook,
-                caption: event.clip.caption,
-                platformFit: event.clip.platformFit,
-                sourceTitle: event.clip.sourceTitle,
-                status: "pending",
-              };
-              setClips((prev) => [...prev, newClip]);
-            } else if (event.step === "analyze" && event.momentCount) {
-              setClipsInCurrentSource(event.momentCount);
-              setCurrentClipInSource(0);
-              addLog({ time: now(), message: event.message, status: "complete" });
-            } else if (event.step === "done") {
-              setStatus("complete");
-              addLog({ time: now(), message: event.message, status: "info" });
-              toast.success(`${campaign.name}: ${event.totalClips} clips generated!`);
-            } else {
-              addLog({ time: now(), message: event.message, status: event.status as LogLine["status"] });
-            }
-          } catch { /* skip */ }
-        }
-      }
+      const data = await res.json();
+      if (!data.jobId) throw new Error(data.error || "Failed to start job");
+      addLog({ time: now(), message: `✅ Job started — you can navigate away freely`, status: "info" });
+      startPolling(data.jobId);
     } catch (err: unknown) {
-      if ((err as Error).name !== "AbortError") {
-        setStatus("error");
-        addLog({ time: now(), message: `❌ ${(err as Error).message}`, status: "error" });
-      }
+      setStatus("error");
+      addLog({ time: now(), message: `❌ ${(err as Error).message}`, status: "error" });
     }
   };
 
-  const handleAutoEditAll = () => toast.info("Auto-editing all clips... (coming soon)");
+  const handleAutoEditAll = async () => {
+    if (status === "running") {
+      setStatus("idle");
+      if (pollJobRef.current) { clearInterval(pollJobRef.current); pollJobRef.current = null; }
+      return;
+    }
+    setStatus("running");
+    setJobCount((n) => n + 1);
+    addLog({ time: now(), message: "🔍 Scanning all channels for latest videos...", status: "started" });
+    try {
+      const srcRes = await fetch("/api/brief/findsources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaignId: campaign.id }),
+      });
+      const srcData = await srcRes.json();
+      if (srcData.errors?.length) {
+        for (const e of srcData.errors) addLog({ time: now(), message: `⚠️ ${e.url}: ${e.error.slice(0,80)}`, status: "info" });
+      }
+      const total = srcData.totalVideos || 0;
+      addLog({ time: now(), message: `✅ ${total} videos queued — starting agent in background...`, status: "complete", isGroupHeader: true });
+
+      const res = await fetch("/api/agent/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaignId: campaign.id }),
+      });
+      const data = await res.json();
+      if (!data.jobId) throw new Error(data.error || "Failed to start job");
+      addLog({ time: now(), message: `✅ Job started — you can navigate away freely`, status: "info" });
+      startPolling(data.jobId);
+    } catch (err: unknown) {
+      setStatus("error");
+      addLog({ time: now(), message: `❌ ${(err as Error).message}`, status: "error" });
+    }
+  };
 
   const handleApprove = (id: string) => {
     const clip = clips.find((c) => c.id === id);
@@ -177,7 +241,7 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove }: P
             <span className="text-xs bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full font-semibold">
               ${campaign.cpm} CPM
             </span>
-            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold">
+            <span className="text-xs bg-red-50 text-red-800 px-2 py-0.5 rounded-full font-semibold">
               Max ${campaign.maxPerClip}
             </span>
             {totalClips > 0 && (
@@ -225,7 +289,8 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove }: P
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg z-10 py-1 w-44">
-                <button className="w-full text-left px-4 py-2 text-sm text-[#111827] hover:bg-gray-50">
+                <button onClick={() => { setMenuOpen(false); setShowEdit(true); }}
+                  className="w-full text-left px-4 py-2 text-sm text-[#111827] hover:bg-gray-50">
                   Edit Brief
                 </button>
                 <button
@@ -266,9 +331,20 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove }: P
             />
           </div>
           <div className="overflow-hidden flex flex-col">
-            <ClipsOutputPanel clips={clips} onApprove={handleApprove} onDiscard={handleDiscard} />
+            <ClipsOutputPanel clips={clips} onApprove={handleApprove} onDiscard={handleDiscard} onPreview={setPreviewClip} />
           </div>
         </div>
+      )}
+
+      {previewClip && (
+        <ClipPreviewModal
+          clip={previewClip}
+          clips={clips}
+          onClose={() => setPreviewClip(null)}
+          onApprove={handleApprove}
+          onDiscard={handleDiscard}
+          onNavigate={setPreviewClip}
+        />
       )}
 
       {checklistClip && (
@@ -283,6 +359,14 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove }: P
             toast.success("Clip marked as posted!");
           }}
           onClose={() => setChecklistClip(null)}
+        />
+      )}
+
+      {showEdit && (
+        <EditBriefModal
+          campaign={campaign}
+          onSave={(updated) => { onUpdate?.(updated); setShowEdit(false); }}
+          onClose={() => setShowEdit(false)}
         />
       )}
     </div>

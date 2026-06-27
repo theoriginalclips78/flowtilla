@@ -6,6 +6,8 @@ export interface SourceVideo {
   duration: number;
   url: string;
   platform: string;
+  viewCount: number;
+  uploadDate: string;
   status: "pending";
 }
 
@@ -42,21 +44,22 @@ function detectPlatform(url: string): string {
 
 function buildArgs(url: string, platform: string): string[] {
   const PRINT = "--print";
-  const FMT = "%(id)s|||%(title)s|||%(duration)s|||%(webpage_url)s";
+  // id | title | duration | webpage_url | view_count | upload_date
+  const FMT = "%(id)s|||%(title)s|||%(duration)s|||%(webpage_url)s|||%(view_count)s|||%(upload_date)s";
 
   switch (platform) {
     case "youtube":
       if (url.includes("/watch") || url.includes("youtu.be/")) {
         return [PRINT, FMT, url];
       }
-      // channel or playlist — get last 30
+      // channel/playlist — get 30 most recent (default order is newest first)
       return ["--flat-playlist", "--playlist-end", "30", PRINT, FMT, url];
 
     case "tiktok":
       if (url.includes("/video/")) {
         return [PRINT, FMT, url];
       }
-      return ["--flat-playlist", "--playlist-end", "20", PRINT, FMT, url];
+      return ["--flat-playlist", "--playlist-end", "30", "--no-check-certificate", PRINT, FMT, url];
 
     case "instagram":
       return [
@@ -87,7 +90,7 @@ function parseOutput(output: string, platform: string): SourceVideo[] {
   for (const line of lines) {
     const parts = line.split("|||");
     if (parts.length < 4) continue;
-    const [videoId, title, durationStr, videoUrl] = parts;
+    const [videoId, title, durationStr, videoUrl, viewCountStr, uploadDate] = parts;
     const duration = parseInt(durationStr, 10) || 0;
     if (!videoId || videoId === "NA" || !videoUrl || videoUrl === "NA") continue;
 
@@ -97,11 +100,14 @@ function parseOutput(output: string, platform: string): SourceVideo[] {
       duration,
       url: videoUrl.trim(),
       platform,
+      viewCount: parseInt(viewCountStr || "0", 10) || 0,
+      uploadDate: (uploadDate || "").trim(),
       status: "pending",
     });
   }
 
-  return videos;
+  // Sort newest first (uploadDate is YYYYMMDD format)
+  return videos.sort((a, b) => (b.uploadDate || "").localeCompare(a.uploadDate || ""));
 }
 
 export async function findVideosFromUrl(url: string): Promise<FindResult> {
@@ -142,6 +148,9 @@ export async function findAllVideos(sourceUrls: string[]): Promise<{
       all.push(...result.videos);
     }
   }
+
+  // Keep newest-first across all platforms
+  all.sort((a, b) => (b.uploadDate || "").localeCompare(a.uploadDate || ""));
 
   return { all, byPlatform, errors };
 }

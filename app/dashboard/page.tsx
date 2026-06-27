@@ -1,80 +1,165 @@
-import { Film, Layers, Clock, ChevronRight, Plus, Play } from "lucide-react";
+"use client";
+import { useEffect, useState } from "react";
+import { Film, Layers, Clock, ChevronRight, Plus, Play, RefreshCw } from "lucide-react";
+import Link from "next/link";
+
+interface Clip { id: string; title: string; thumbnailUrl: string; downloadUrl: string; status: string; campaignId: string; createdAt: string; viralityScore: string; }
+interface Campaign { id: string; name: string; status: string; }
 
 export default function DashboardPage() {
+  const [clips, setClips] = useState<Clip[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/clips").then(r => r.json()).catch(() => []),
+      fetch("/api/campaigns").then(r => r.json()).catch(() => []),
+    ]).then(([c, camp]) => {
+      setClips(Array.isArray(c) ? c : []);
+      setCampaigns(Array.isArray(camp) ? camp : []);
+      setLoading(false);
+    });
+  }, []);
+
+  const today = new Date().toDateString();
+  const clipsToday = clips.filter(c => new Date(c.createdAt).toDateString() === today).length;
+  const activeCampaigns = campaigns.filter(c => c.status === "active").length;
+  const recentClips = clips.slice(0, 6);
+  const campaignMap: Record<string, string> = {};
+  campaigns.forEach(c => { campaignMap[c.id] = c.name; });
+
   return (
     <div className="space-y-6">
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4 animate-fade-up delay-1">
         <StatCard
-          icon={<Film size={20} className="text-white" />}
+          icon={<Film size={20} className="text-red-800" />}
           label="Clips Today"
-          value="0"
-          sub="No clips generated yet"
+          value={loading ? "…" : String(clipsToday)}
+          sub={loading ? "" : clips.length > 0 ? `${clips.length} total clips` : "No clips generated yet"}
         />
         <StatCard
-          icon={<Layers size={20} className="text-white" />}
+          icon={<Layers size={20} className="text-red-800" />}
           label="Active Campaigns"
-          value="0"
-          sub="Add your first campaign"
+          value={loading ? "…" : String(activeCampaigns)}
+          sub={loading ? "" : activeCampaigns > 0 ? campaigns.filter(c=>c.status==="active").map(c=>c.name).join(", ").slice(0,40) : "Add your first campaign"}
         />
         <StatCard
-          icon={<Clock size={20} className="text-white" />}
-          label="Next Scheduled Run"
-          value="—"
-          sub="No schedule set"
+          icon={<Clock size={20} className="text-red-800" />}
+          label="Approved Clips"
+          value={loading ? "…" : String(clips.filter(c=>c.status==="approved").length)}
+          sub={loading ? "" : `${clips.filter(c=>c.status==="pending").length} pending review`}
         />
       </div>
 
       {/* Two-column grid */}
       <div className="grid grid-cols-2 gap-4 animate-fade-up delay-2">
         {/* Recent Clips */}
-        <div className="liquid-glass rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="panel p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-medium text-white">Recent Clips</h2>
-            <button className="text-sm text-white/50 hover:text-white flex items-center gap-1 transition-colors">
+            <h2 className="font-semibold text-[#0F1E3C]">Recent Clips</h2>
+            <Link href="/clips" className="text-sm text-[#64748B] hover:text-[#0F1E3C] flex items-center gap-1 transition-colors">
               View all <ChevronRight size={14} />
-            </button>
+            </Link>
           </div>
-          <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <div className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center mb-1" style={{ background: "rgba(255,255,255,0.08)" }}>
-              <Film size={22} className="text-white/30" />
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <RefreshCw size={18} className="animate-spin text-[#94A3B8]" />
             </div>
-            <p className="text-sm font-medium text-white/70">No clips yet</p>
-            <p className="text-xs text-white/40">Run the agent to start generating clips</p>
-          </div>
+          ) : recentClips.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-2">
+              <div className="w-12 h-12 rounded-full bg-[#FFF5F5] flex items-center justify-center mb-1">
+                <Film size={22} className="text-red-600" />
+              </div>
+              <p className="text-sm font-medium text-[#0F1E3C]">No clips yet</p>
+              <p className="text-xs text-[#94A3B8]">Run the agent to start generating clips</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {recentClips.map(clip => (
+                <Link href="/clips" key={clip.id} className="group relative rounded-xl overflow-hidden bg-[#0F1E3C] aspect-video block">
+                  {clip.thumbnailUrl
+                    ? <img src={clip.thumbnailUrl} alt={clip.title} className="w-full h-full object-cover" />
+                    : <video src={clip.downloadUrl} className="w-full h-full object-cover" preload="none" />
+                  }
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Play size={14} className="text-white" fill="white" />
+                  </div>
+                  {clip.status === "approved" && (
+                    <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-[8px] text-white font-bold">✓</span>
+                  )}
+                  <p className="absolute bottom-0 left-0 right-0 text-[9px] text-white px-1.5 py-1 truncate" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}>
+                    {campaignMap[clip.campaignId] || ""}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Agent Activity */}
-        <div className="liquid-glass rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.06)" }}>
+        {/* Campaign Overview */}
+        <div className="panel p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-medium text-white">Agent Activity</h2>
-            <span className="text-xs liquid-glass rounded-lg px-2.5 py-1 text-white/50" style={{ background: "rgba(255,255,255,0.08)" }}>
-              Idle
-            </span>
+            <h2 className="font-semibold text-[#0F1E3C]">Campaigns</h2>
+            <Link href="/agent" className="text-sm text-[#64748B] hover:text-[#0F1E3C] flex items-center gap-1 transition-colors">
+              Manage <ChevronRight size={14} />
+            </Link>
           </div>
-          <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <div className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center mb-1" style={{ background: "rgba(255,255,255,0.08)" }}>
-              <Play size={22} className="text-white/30 ml-0.5" />
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <RefreshCw size={18} className="animate-spin text-[#94A3B8]" />
             </div>
-            <p className="text-sm font-medium text-white/70">Agent is idle</p>
-            <p className="text-xs text-white/40">Go to Agent to start a campaign</p>
-          </div>
+          ) : campaigns.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-2">
+              <div className="w-12 h-12 rounded-full bg-[#FFF5F5] flex items-center justify-center mb-1">
+                <Play size={22} className="text-red-600 ml-0.5" />
+              </div>
+              <p className="text-sm font-medium text-[#0F1E3C]">No campaigns yet</p>
+              <p className="text-xs text-[#94A3B8]">Go to Agent to create your first campaign</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {campaigns.map(c => {
+                const campClips = clips.filter(cl => cl.campaignId === c.id);
+                const approved = campClips.filter(cl => cl.status === "approved").length;
+                const pending = campClips.filter(cl => cl.status === "pending").length;
+                return (
+                  <Link href="/agent" key={c.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#FFF5F5] transition-colors group">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                        style={{ background: "#9B1C1C" }}>
+                        {c.name[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[#0F1E3C] group-hover:text-[#9B1C1C] transition-colors">{c.name}</p>
+                        <p className="text-[10px] text-[#94A3B8]">{campClips.length} clips · {approved} approved · {pending} pending</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: c.status === "active" ? "#F0FDF4" : "#F1F5F9", color: c.status === "active" ? "#16A34A" : "#64748B" }}>
+                      {c.status}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="liquid-glass rounded-2xl p-5 animate-fade-up delay-3" style={{ background: "rgba(255,255,255,0.06)" }}>
-        <h2 className="font-medium text-white mb-4">Quick Actions</h2>
+      <div className="panel p-5 animate-fade-up delay-3">
+        <h2 className="font-semibold text-[#0F1E3C] mb-4">Quick Actions</h2>
         <div className="flex gap-3">
-          <a href="/agent" className="btn-primary">
+          <Link href="/agent" className="btn-primary">
             <Plus size={15} /> Add Campaign
-          </a>
-          <a href="/agent" className="btn-secondary">
-            <Play size={15} fill="white" /> Run Agent
-          </a>
-          <a href="/assets" className="btn-secondary">
-            <Film size={15} /> View Assets
-          </a>
+          </Link>
+          <Link href="/agent" className="btn-secondary">
+            <Play size={15} /> Run Agent
+          </Link>
+          <Link href="/clips" className="btn-secondary">
+            <Film size={15} /> Review Clips
+          </Link>
         </div>
       </div>
     </div>
@@ -83,13 +168,13 @@ export default function DashboardPage() {
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
   return (
-    <div className="liquid-glass rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.06)" }}>
-      <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center mb-3" style={{ background: "rgba(255,255,255,0.12)" }}>
+    <div className="panel p-6">
+      <div className="w-10 h-10 rounded-xl bg-[#FFF5F5] flex items-center justify-center mb-3">
         {icon}
       </div>
-      <p className="text-white/50 text-xs uppercase tracking-wider">{label}</p>
-      <p className="text-white text-3xl font-light mt-1 mb-1">{value}</p>
-      <p className="text-white/40 text-xs">{sub}</p>
+      <p className="text-[#64748B] text-xs uppercase tracking-wider font-medium">{label}</p>
+      <p className="text-[#0F1E3C] text-3xl font-bold mt-1 mb-1">{value}</p>
+      <p className="text-[#94A3B8] text-xs truncate">{sub}</p>
     </div>
   );
 }

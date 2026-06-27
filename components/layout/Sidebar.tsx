@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Bot, FolderKanban, HardDrive, Wrench, Settings } from "lucide-react";
+import { LayoutDashboard, Bot, Film, HardDrive, Wrench, Settings, Zap, BookOpen } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/agent",     icon: Bot,             label: "Agent" },
-  { href: "/projects",  icon: FolderKanban,    label: "Projects" },
+  { href: "/clips",     icon: Film,            label: "Clips" },
   { href: "/assets",    icon: HardDrive,       label: "Assets" },
   { href: "/tools",     icon: Wrench,          label: "Tools" },
+  { href: "/guide",     icon: BookOpen,        label: "Guide" },
 ];
 
 export default function Sidebar() {
@@ -17,16 +18,22 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-[72px] flex flex-col items-center py-4 z-50 liquid-glass"
-      style={{ background: "rgba(0,0,0,0.35)" }}
+      className="fixed left-0 top-0 h-screen w-[72px] flex flex-col items-center py-5 z-50"
+      style={{
+        background: "#0F1E3C",
+        borderRight: "1px solid rgba(255,255,255,0.08)",
+      }}
     >
       {/* Logo */}
       <Link
         href="/dashboard"
-        className="mb-8 w-10 h-10 rounded-xl flex items-center justify-center liquid-glass"
-        style={{ background: "rgba(192,57,43,0.7)" }}
+        className="mb-8 w-10 h-10 rounded-2xl flex items-center justify-center"
+        style={{
+          background: "#9B1C1C",
+          boxShadow: "0 4px 14px rgba(155,28,28,0.45)",
+        }}
       >
-        <span className="text-white font-black text-[15px] tracking-tight">CF</span>
+        <Zap size={17} className="text-white" fill="white" />
       </Link>
 
       {/* Nav */}
@@ -38,38 +45,43 @@ export default function Sidebar() {
               key={href}
               href={href}
               title={label}
-              className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
-                active
-                  ? "liquid-glass text-white"
-                  : "text-white/50 hover:text-white hover:bg-white/10"
-              }`}
-              style={active ? { background: "rgba(255,255,255,0.15)" } : {}}
+              className="relative w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200"
+              style={{
+                background: active ? "rgba(155,28,28,0.25)" : "transparent",
+                color: active ? "#FCA5A5" : "rgba(255,255,255,0.38)",
+              }}
             >
+              {active && (
+                <span
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                  style={{ background: "#B91C1C", boxShadow: "0 0 8px rgba(185,28,28,0.7)" }}
+                />
+              )}
               <Icon size={20} />
             </Link>
           );
         })}
       </nav>
 
-      {/* Settings + avatar */}
+      {/* Bottom */}
       <div className="flex flex-col items-center gap-3">
         <Link
           href="/settings"
           title="Settings"
-          className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
-            pathname.startsWith("/settings")
-              ? "liquid-glass text-white"
-              : "text-white/50 hover:text-white hover:bg-white/10"
-          }`}
-          style={pathname.startsWith("/settings") ? { background: "rgba(255,255,255,0.15)" } : {}}
+          className="w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200"
+          style={{
+            background: pathname.startsWith("/settings") ? "rgba(155,28,28,0.25)" : "transparent",
+            color: pathname.startsWith("/settings") ? "#FCA5A5" : "rgba(255,255,255,0.38)",
+          }}
         >
           <Settings size={20} />
         </Link>
+
         <div
-          className="w-9 h-9 rounded-full liquid-glass flex items-center justify-center"
-          style={{ background: "rgba(255,255,255,0.12)" }}
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
+          style={{ background: "#9B1C1C", boxShadow: "0 2px 8px rgba(155,28,28,0.4)" }}
         >
-          <span className="text-white text-xs font-semibold">A</span>
+          A
         </div>
       </div>
     </aside>

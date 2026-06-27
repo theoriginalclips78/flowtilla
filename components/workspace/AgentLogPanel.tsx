@@ -23,9 +23,9 @@ interface Props {
 const lineColor: Record<string, string> = {
   complete: "text-green-400",
   error:    "text-red-400",
-  started:  "text-white/80",
-  progress: "text-white/60",
-  info:     "text-yellow-300",
+  started:  "text-slate-200",
+  progress: "text-slate-400",
+  info:     "text-red-300",
 };
 
 export default function AgentLogPanel({
@@ -55,13 +55,13 @@ export default function AgentLogPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 font-mono text-[12px] leading-relaxed" style={{ minHeight: 0, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)" }}>
-        {logs.length === 0 && <p className="text-white/25">Waiting for agent to start...</p>}
+        {logs.length === 0 && <p className="text-slate-500">Waiting for agent to start...</p>}
         {logs.map((line, i) => (
           <div key={i} className={line.isGroupHeader ? "mt-3 mb-1 border-t border-white/10 pt-2" : ""}>
             {line.isGroupHeader ? (
-              <span className="text-white/35">{line.message}</span>
+              <span className="text-slate-400">{line.message}</span>
             ) : (
-              <span className={lineColor[line.status] || "text-white/60"}>
+              <span className={lineColor[line.status] || "text-slate-300"}>
                 [{line.time}] {line.message}
               </span>
             )}
