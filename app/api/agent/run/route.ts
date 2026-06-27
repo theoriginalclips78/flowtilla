@@ -397,8 +397,8 @@ export async function POST(req: NextRequest) {
     let totalClips = 0;
     const onClip = () => ++totalClips;
     // null controller — logs go to DB only (no SSE needed for background mode)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const nullCtrl = { enqueue: () => {} } as unknown as ReadableStreamDefaultController;
-    void nullCtrl;
 
     try {
       let sourceVideos = await prisma.sourceVideo.findMany({ where: { campaignId, status: "pending" }, orderBy: { createdAt: "desc" }, take: 50 });
