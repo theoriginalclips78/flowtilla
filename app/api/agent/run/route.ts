@@ -398,7 +398,7 @@ export async function POST(req: NextRequest) {
     const onClip = () => ++totalClips;
     // null controller — logs go to DB only (no SSE needed for background mode)
     const nullCtrl = { enqueue: () => {} } as unknown as ReadableStreamDefaultController;
-    const log = (data: object) => { sse(nullCtrl, data); void dbLog(data); };
+    void nullCtrl;
 
     try {
       let sourceVideos = await prisma.sourceVideo.findMany({ where: { campaignId, status: "pending" }, orderBy: { createdAt: "desc" }, take: 50 });
