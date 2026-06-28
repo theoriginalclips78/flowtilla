@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 import { spawn } from "child_process";
-import { mkdirSync, createReadStream, writeFileSync, readdirSync, readFileSync } from "fs";
+import { mkdirSync, createReadStream, writeFileSync, readdirSync, readFileSync, renameSync } from "fs";
 import path from "path";
 import { createId } from "@paralleldrive/cuid2";
 // Use absolute path — ffmpeg-static path gets mangled by Next.js bundler at runtime
@@ -37,6 +37,78 @@ function ffmpegRun(args: string[]): Promise<void> {
     proc.stderr.on("data", (d) => { err += d.toString(); });
     proc.on("close", (c) => c === 0 ? resolve() : reject(new Error(err.slice(-500))));
   });
+}
+
+// Run ffmpeg and return its stderr (for silencedetect / volumedetect parsing).
+function ffmpegCapture(args: string[]): Promise<string> {
+  return new Promise((resolve) => {
+    const proc = spawn(FFMPEG_BIN, ["-hide_banner", ...args]);
+    let err = "";
+    proc.stderr.on("data", (d) => { err += d.toString(); });
+    proc.on("close", () => resolve(err));
+  });
+}
+
+/**
+ * Tighten pacing by trimming dead air — viral clips have no slow lead-in or pauses.
+ * ADAPTIVE + SAFE: the silence threshold is set relative to the clip's own loudness
+ * (so it works whether audio is quiet or music-heavy), and it bails out if it would
+ * cut too little to matter or so much that it's clearly mis-detecting (music clips).
+ * Cuts video + audio + burned captions together, so A/V and captions stay in sync.
+ * Returns true if it produced a tightened file, false if the original should be kept.
+ */
+async function tightenClip(inPath: string, outPath: string, duration: number): Promise<boolean> {
+  try {
+    // 1) measure loudness to pick an adaptive silence floor
+    const volOut = await ffmpegCapture(["-i", inPath, "-af", "volumedetect", "-f", "null", "-"]);
+    const meanMatch = volOut.match(/mean_volume:\s*(-?\d+(?:\.\d+)?)\s*dB/);
+    const mean = meanMatch ? parseFloat(meanMatch[1]) : -20;
+    // conservative: only cut audio well below the average level (true pauses, not music dips)
+    const thresh = Math.min(Math.round(mean - 14), -24);
+
+    // 2) detect silences
+    const silOut = await ffmpegCapture(["-i", inPath, "-af", `silencedetect=noise=${thresh}dB:d=0.45`, "-f", "null", "-"]);
+    const starts = Array.from(silOut.matchAll(/silence_start:\s*(-?\d+(?:\.\d+)?)/g)).map(m => parseFloat(m[1]));
+    const ends = Array.from(silOut.matchAll(/silence_end:\s*(-?\d+(?:\.\d+)?)/g)).map(m => parseFloat(m[1]));
+
+    // pair up silence intervals
+    const silences: [number, number][] = [];
+    for (let i = 0; i < starts.length; i++) {
+      const s = starts[i];
+      const e = ends[i] !== undefined ? ends[i] : duration;
+      if (e > s) silences.push([s, e]);
+    }
+    if (silences.length === 0) return false;
+
+    // 3) build KEEP ranges = video minus silences, with 0.12s padding so speech isn't clipped
+    const pad = 0.12;
+    const keeps: [number, number][] = [];
+    let cursor = 0;
+    for (const [s, e] of silences) {
+      const keepEnd = Math.max(cursor, s + pad);
+      if (keepEnd - cursor > 0.15) keeps.push([cursor, keepEnd]);
+      cursor = Math.max(cursor, e - pad);
+    }
+    if (duration - cursor > 0.15) keeps.push([cursor, duration]);
+
+    const keptTotal = keeps.reduce((a, [s, e]) => a + (e - s), 0);
+    const removed = duration - keptTotal;
+    // 4) safety: skip if it barely helps (<0.5s) or removes too much (>45% = mis-detect on music)
+    if (removed < 0.5 || removed > duration * 0.45 || keeps.length === 0) return false;
+
+    // 5) build select/aselect filter that drops the silent ranges and re-sequences timestamps
+    const between = keeps.map(([s, e]) => `between(t,${s.toFixed(3)},${e.toFixed(3)})`).join("+");
+    await ffmpegRun([
+      "-i", inPath,
+      "-vf", `select='${between}',setpts=N/FRAME_RATE/TB`,
+      "-af", `aselect='${between}',asetpts=N/SR/TB`,
+      "-c:v", "libx264", "-preset", "ultrafast", "-crf", "26",
+      "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", outPath,
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function detectPlatform(url: string): string {
@@ -442,13 +514,19 @@ HOW TO PICK (in priority order):
 3. SHORT WINS. Best length is 8-25 seconds. Only go longer if the payoff genuinely needs it. NEVER over 45 seconds. A tight 12s clip beats a loose 60s clip every time.
 4. The moment must be self-explanatory without outside context.
 
-THE "hook" FIELD IS CRITICAL — it becomes on-screen text in the first seconds. Write a SCROLL-STOPPING curiosity line, 3-7 words, like a real viral creator:
-GOOD: "He eats HOW much?!", "Wait for the reaction 👀", "This is actually insane", "POV: leg day got real", "Nobody does this anymore"
-BAD (never do this): copying the video title, descriptions like "Gym haul reaction", anything boring or explanatory.
+THE "hook" FIELD IS CRITICAL — it becomes on-screen text in the first seconds. Write a SCROLL-STOPPING line, 3-7 words, using one of these PROVEN viral formulas (these are the only patterns that consistently hold 70%+ of viewers past 3s):
+- OUTCOME-FIRST (state the result/payoff up front): "He benched 405 raw", "This cost him $10k"
+- CURIOSITY GAP: "He eats HOW much?!", "Wait for the reaction 👀"
+- CONTRARIAN / BOLD CLAIM: "Stop doing cardio", "Rest days are a scam"
+- OPEN LOOP: "Nobody talks about this", "This changes everything"
+- CONFESSION: "I was doing this wrong for years"
+NEVER use a STORY-SETUP opener ("Let me tell you about the time...", "So basically...") — they need trust before the payoff and they kill retention. NEVER copy the video title or write a dull description ("Gym haul reaction").
+
+"virality_score" — be HONEST and strict. "high" = genuinely scroll-stopping (a real payoff + a strong hook). "medium" = decent but not special. "low" = filler. Most moments are NOT high; only the truly great ones are.
 
 Rules: ${campaign.contentRules || "feel authentic and organic"}. Target platforms: ${campaign.platforms || "tiktok,instagram,youtube"}.
 
-Keep "reason" under 12 words. "caption": ORIGINAL organic line under 100 chars, NOT the title, NOT promotional. "virality_score" exactly "high"/"medium"/"low". Rank STRICTLY by scroll-stopping power, best first — only include genuinely good moments (it's fine to return fewer than 8 if the video only has a few).
+Keep "reason" under 12 words. "caption": ORIGINAL organic line under 100 chars, NOT the title, NOT promotional. Rank STRICTLY by scroll-stopping power, best first — only include genuinely good moments (it's fine to return fewer than 8 if the video only has a few).
 
 Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips.`,
       messages: [{ role: "user", content: `Video: "${videoTitle}" (${videoDuration}s)\n\nWhat to look for: ${campaign.aiInstructions || "high-energy, funny, emotional, impressive, or quotable moments"}\n\nTranscript:\n${transcriptText.slice(0, 8000)}\n\nReturn the best self-contained scroll-stopping moments (8-25s ideal, never >45s). Each: {start_time, end_time, title, reason, virality_score, hook, caption, platform_fit}${(campaign as Record<string,unknown>).extraContext ? `\n\nContext:\n${String((campaign as Record<string,unknown>).extraContext).slice(0,400)}` : ""}` }],
@@ -473,6 +551,10 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
   // Clamp to the video and cap length for virality — long clips kill retention.
   // Hard ceiling of 45s; anything longer is trimmed to its first 45s (keeps the hook).
   const HARD_MAX = 45;
+  // Only-high-virality filter: drop weak moments so you review bankers, not duds.
+  const rank: Record<string, number> = { high: 3, medium: 2, low: 1 };
+  const minViral = String((campaign as Record<string,unknown>).minVirality || "medium").toLowerCase();
+  const minRank = rank[minViral] || 1;
   let clipJobs = moments
     .map(m => {
       const start = Math.max(0, Number(m.start_time) || 0);
@@ -481,10 +563,20 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
       return { ...m, start_time: start, end_time: end };
     })
     .filter(m => m.start_time < videoDuration && (m.end_time - m.start_time) >= 3)
+    .filter(m => {
+      // auto-generated/time-based clips have score "medium"; keep them if filter allows
+      const score = String(m.virality_score || "medium").toLowerCase();
+      return (rank[score] || 2) >= minRank;
+    })
     .slice(0, 12);
 
-  // Last-resort safety net: if everything got clamped away, force time-based clips.
-  if (clipJobs.length === 0) {
+  if (moments.length > 0 && clipJobs.length === 0 && minRank > 1) {
+    sse(ctrl, { step: "filter", status: "warn", message: `⚠️ No clips met the "${minViral}+" virality bar for this video — skipping it` });
+  }
+
+  // Last-resort safety net: if everything got clamped away (and we're NOT filtering
+  // for high virality), force time-based clips so the video still produces something.
+  if (clipJobs.length === 0 && minRank <= 1) {
     clipJobs = makeTimeMoments(videoDuration, videoTitle, 30, 12)
       .map(m => ({ ...m, start_time: m.start_time, end_time: m.end_time }));
   }
@@ -508,6 +600,16 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     // The top overlay should be the scroll-stopping HOOK, not the dull video title.
     const overlayText = (m.hook && m.hook.trim()) ? m.hook.trim() : m.title;
     await cutClip(srcPath, clipFile, m.start_time, dur, useTranscript, overlayText, i, useWords, presetId);
+
+    // Tighten pacing — trim dead air for a faster, more retentive edit. Safely
+    // no-ops on music-heavy clips. Only swap in the tightened file if it succeeded.
+    const tightEdit = (campaign as Record<string,unknown>).tightEdit !== false;
+    if (tightEdit) {
+      const tightFile = path.join(clipsDir, `clip-${i}-tight.mp4`);
+      const ok = await tightenClip(clipFile, tightFile, dur);
+      if (ok) { try { renameSync(tightFile, clipFile); } catch { /* keep original */ } }
+    }
+
     return await saveAndStream(clipFile, thumbFile, { ...m, end_time: safeEnd });
   }));
 

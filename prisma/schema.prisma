@@ -28,6 +28,8 @@ model Campaign {
   extraContext        String           @default("")
   subtitlesEnabled    Boolean          @default(true)
   captionPresetId     String           @default("")
+  minVirality         String           @default("medium")  // all | medium | high — drop clips below this
+  tightEdit           Boolean          @default(true)       // trim dead air for tighter pacing
   aspectRatio         String           @default("9:16")
   scheduleEnabled     Boolean          @default(false)
   scheduleFrequency   String?
