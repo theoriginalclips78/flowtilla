@@ -79,13 +79,26 @@ export function buildWordAss(
   duration: number,
   preset: CaptionPreset,
 ): string | null {
-  const ws = allWords
+  const raw = allWords
     .filter(w => w.end > offset && w.start < offset + duration && w.word)
     .map(w => ({
       word: preset.upper ? w.word.toUpperCase() : w.word,
       start: Math.max(0, w.start - offset),
       end: Math.min(duration, w.end - offset),
-    }));
+    }))
+    .sort((a, b) => a.start - b.start);
+
+  // De-dupe overlapping/repeated word timings (whisper sometimes emits the same
+  // word twice with overlapping times → "AT THAT. OH AT THAT. OH"). Drop a word
+  // if it's identical to the previous one and starts before the previous ended.
+  const ws: typeof raw = [];
+  for (const w of raw) {
+    const prev = ws[ws.length - 1];
+    if (prev && prev.word === w.word && w.start < prev.end + 0.05) continue;
+    if (prev && w.start < prev.end) w.start = prev.end; // remove time overlaps
+    if (w.end <= w.start) w.end = w.start + 0.2;
+    ws.push(w);
+  }
   if (ws.length === 0) return null;
 
   const lines: { words: typeof ws }[] = [];

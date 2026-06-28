@@ -53,8 +53,13 @@ async function downloadVideo(url: string, outDir: string, platform: string): Pro
   const args = [
     url,
     "-o", path.join(outDir, "source.%(ext)s"),
-    "-f", "bestvideo[ext=mp4][height<=720]+bestaudio[ext=m4a]/best[ext=mp4][height<=720]/best[height<=720]/best",
+    // Prefer a merged video+audio stream; fall back to progressive formats that
+    // ALWAYS contain audio (never a bare video-only stream).
+    "-f", "bestvideo[ext=mp4][height<=720]+bestaudio[ext=m4a]/best[ext=mp4][height<=720][acodec!=none]/best[height<=720][acodec!=none]/best[acodec!=none]/best",
     "--merge-output-format", "mp4",
+    // yt-dlp needs ffmpeg to merge separate video+audio tracks — point it at ffmpeg-static
+    // so the merge always succeeds and the clip keeps its audio.
+    "--ffmpeg-location", FFMPEG_BIN,
     "--no-playlist",
     "--retries", "3",
     "--write-info-json",   // writes source.info.json — gives title + duration without --print
@@ -221,7 +226,10 @@ async function cutClip(
 
   const safeTitle = escapeDrawtext(title);
   const cropFilter = buildCrop(style);
-  const hookDraw = `drawtext=fontfile=${FONT}:text='${safeTitle}':fontsize=28:fontcolor=${style.hookColor}:x=(w-text_w)/2:y=${style.hookY}:box=1:boxcolor=${style.hookBox}:boxborderw=14`;
+  // Big, bold scroll-stopping hook in the upper third. Only shown for the first ~4s
+  // (where it matters) so it doesn't cover the action for the whole clip.
+  const hookY = Math.round(1920 * 0.16);
+  const hookDraw = `drawtext=fontfile=${FONT}:text='${safeTitle}':fontsize=58:fontcolor=${style.hookColor}:borderw=3:bordercolor=black:x=(w-text_w)/2:y=${hookY}:box=1:boxcolor=${style.hookBox}:boxborderw=20:enable='lt(t,4)'`;
 
   // Attempt 0: BEST look — reframe + animated word-pop ASS captions + hook.
   const assContent = words.length > 0 ? buildWordAss(words, startTime, duration, preset) : null;
@@ -422,16 +430,24 @@ async function processOneVideo(
     const msg = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 4096,
-      system: `You are a world-class viral short-form clipper for the campaign "${campaign.name}". Find the moments MOST LIKELY TO GO VIRAL — the funniest lines, biggest reactions, impressive feats, hot takes, surprising/relatable/emotional beats, satisfying payoffs, and strong hooks. Skip boring filler. Each clip must start ON a hook (the first 1-2 seconds must grab attention) and contain a complete, self-explanatory moment.
+      system: `You are a world-class viral short-form clipper for the campaign "${campaign.name}". Your ONLY job is picking moments that make someone STOP SCROLLING and watch.
+
+HOW TO PICK (in priority order):
+1. Pick moments with a clear PAYOFF or PUNCH — a funny line, a shocking reaction, an impressive feat, a hot take, a "wait what?" beat, a satisfying reveal. NO boring setup, NO rambling, NO mid-conversation filler.
+2. The clip MUST start exactly ON the attention-grabbing instant. Trim all dead air before it. The first 1.5 seconds decide everything.
+3. SHORT WINS. Best length is 8-25 seconds. Only go longer if the payoff genuinely needs it. NEVER over 45 seconds. A tight 12s clip beats a loose 60s clip every time.
+4. The moment must be self-explanatory without outside context.
+
+THE "hook" FIELD IS CRITICAL — it becomes on-screen text in the first seconds. Write a SCROLL-STOPPING curiosity line, 3-7 words, like a real viral creator:
+GOOD: "He eats HOW much?!", "Wait for the reaction 👀", "This is actually insane", "POV: leg day got real", "Nobody does this anymore"
+BAD (never do this): copying the video title, descriptions like "Gym haul reaction", anything boring or explanatory.
 
 Rules: ${campaign.contentRules || "feel authentic and organic"}. Target platforms: ${campaign.platforms || "tiktok,instagram,youtube"}.
-Aim for clips roughly ${clipMin}-${clipMax}s, but prioritise picking a GREAT self-contained moment over hitting an exact length.
 
-Keep "reason" under 12 words and "caption" under 100 chars. "virality_score" must be exactly "high", "medium", or "low".
-For "caption": an ORIGINAL, organic, hook-driven line a real creator would write — NOT a copy of the title, NOT promotional.
+Keep "reason" under 12 words. "caption": ORIGINAL organic line under 100 chars, NOT the title, NOT promotional. "virality_score" exactly "high"/"medium"/"low". Rank STRICTLY by scroll-stopping power, best first — only include genuinely good moments (it's fine to return fewer than 8 if the video only has a few).
 
-Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips, best ones first.`,
-      messages: [{ role: "user", content: `Video: "${videoTitle}" (${videoDuration}s)\n\nWhat to look for: ${campaign.aiInstructions || "high-energy, funny, emotional, impressive, or quotable moments"}\n\nTranscript:\n${transcriptText.slice(0, 8000)}\n\nReturn up to 8 clips, best first. Each: {start_time, end_time, title, reason, virality_score, hook, caption, platform_fit}${(campaign as Record<string,unknown>).extraContext ? `\n\nContext:\n${String((campaign as Record<string,unknown>).extraContext).slice(0,400)}` : ""}` }],
+Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips.`,
+      messages: [{ role: "user", content: `Video: "${videoTitle}" (${videoDuration}s)\n\nWhat to look for: ${campaign.aiInstructions || "high-energy, funny, emotional, impressive, or quotable moments"}\n\nTranscript:\n${transcriptText.slice(0, 8000)}\n\nReturn the best self-contained scroll-stopping moments (8-25s ideal, never >45s). Each: {start_time, end_time, title, reason, virality_score, hook, caption, platform_fit}${(campaign as Record<string,unknown>).extraContext ? `\n\nContext:\n${String((campaign as Record<string,unknown>).extraContext).slice(0,400)}` : ""}` }],
     });
 
     const raw = (msg.content[0] as { text: string }).text;
@@ -449,9 +465,17 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     sse(ctrl, { step: "analyze", status: "complete", message: `✂️ Auto-generated ${moments.length} clips from this video`, momentCount: moments.length });
   }
 
-  // ── CUT CLIPS (parallel) — accept ANY duration, just clamp to the video ──
+  // ── CUT CLIPS (parallel) ──
+  // Clamp to the video and cap length for virality — long clips kill retention.
+  // Hard ceiling of 45s; anything longer is trimmed to its first 45s (keeps the hook).
+  const HARD_MAX = 45;
   let clipJobs = moments
-    .map(m => ({ ...m, start_time: Math.max(0, Number(m.start_time) || 0), end_time: Math.min(Number(m.end_time) || 0, videoDuration) }))
+    .map(m => {
+      const start = Math.max(0, Number(m.start_time) || 0);
+      let end = Math.min(Number(m.end_time) || 0, videoDuration);
+      if (end - start > HARD_MAX) end = start + HARD_MAX;
+      return { ...m, start_time: start, end_time: end };
+    })
     .filter(m => m.start_time < videoDuration && (m.end_time - m.start_time) >= 3)
     .slice(0, 12);
 
@@ -472,7 +496,9 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     const thumbFile = path.join(clipsDir, `thumb-${i}.jpg`);
 
     const presetId = (campaign as Record<string,unknown>).captionPresetId as string | undefined;
-    await cutClip(srcPath, clipFile, m.start_time, dur, transcript, m.title, i, words, presetId);
+    // The top overlay should be the scroll-stopping HOOK, not the dull video title.
+    const overlayText = (m.hook && m.hook.trim()) ? m.hook.trim() : m.title;
+    await cutClip(srcPath, clipFile, m.start_time, dur, transcript, overlayText, i, words, presetId);
     return await saveAndStream(clipFile, thumbFile, { ...m, end_time: safeEnd });
   }));
 
