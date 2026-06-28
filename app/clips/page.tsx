@@ -24,9 +24,10 @@ function buildPostCaption(clip: Clip, platform: "tiktok" | "instagram" | "youtub
     instagram: ["#reels", "#reelsinstagram", "#explore", "#viral"],
     youtube:   ["#shorts", "#shortsfeed", "#viral"],
   };
-  const niche = ["#gym", "#gymtok", "#fitness", "#gymmotivation", "#fyptiktok"];
-  const tags = [...reach[platform], ...niche];
-  if (camp) tags.push(`#${camp}`);
+  // Universal viral/reach tags that work for ANY campaign niche.
+  const universal = ["#trending", "#viralvideo", "#blowthisup", "#fypシ", "#trend"];
+  // Campaign-specific niche anchor (the brand/topic), derived from the campaign name.
+  const tags = [...reach[platform], `#${camp}`.length > 1 ? `#${camp}` : "", ...universal].filter(Boolean);
   // de-dupe + cap at 12
   const seen = new Set<string>();
   const finalTags = tags.filter(t => { const k = t.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 12);
