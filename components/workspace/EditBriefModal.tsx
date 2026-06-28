@@ -28,6 +28,8 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
   const [postDuration, setPostDuration]     = useState(c.postDuration || "");
   const [extraContext, setExtraContext]     = useState(c.extraContext || "");
   const [subtitlesEnabled, setSubtitlesEnabled] = useState(c.subtitlesEnabled !== false);
+  const [minVirality, setMinVirality]       = useState((c as CampaignExt & { minVirality?: string }).minVirality || "medium");
+  const [tightEdit, setTightEdit]           = useState((c as CampaignExt & { tightEdit?: boolean }).tightEdit !== false);
   const [saving, setSaving]                 = useState(false);
   const [error, setError]                   = useState("");
 
@@ -51,6 +53,8 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
         postDuration,
         extraContext,
         subtitlesEnabled,
+        minVirality,
+        tightEdit,
       };
       const res = await fetch(`/api/campaigns/${c.id}`, {
         method: "PATCH",
@@ -146,6 +150,46 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
               </span>
               <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: subtitlesEnabled ? "#9B1C1C" : "#CBD5E1" }}>
                 <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: subtitlesEnabled ? "22px" : "2px" }} />
+              </span>
+            </button>
+          </div>
+
+          {/* Virality filter */}
+          <div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">CLIP QUALITY BAR</label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { v: "all",    label: "All clips",   desc: "Keep everything" },
+                { v: "medium", label: "Good+",       desc: "Drop weak ones" },
+                { v: "high",   label: "Only 🔥 high", desc: "Bankers only" },
+              ] as const).map(opt => (
+                <button key={opt.v} type="button" onClick={() => setMinVirality(opt.v)}
+                  className="px-2 py-2.5 rounded-xl text-center transition-all"
+                  style={minVirality === opt.v
+                    ? { background: "#9B1C1C", color: "#fff", border: "1px solid #9B1C1C" }
+                    : { background: "#fff", color: "#64748B", border: "1px solid #E2E8F0" }}>
+                  <span className="block text-xs font-bold">{opt.label}</span>
+                  <span className="block text-[10px] mt-0.5 opacity-80">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#94A3B8] mt-1.5">&ldquo;Only high&rdquo; produces fewer clips but every one is a strong, view-worthy moment.</p>
+          </div>
+
+          {/* Tight edit toggle */}
+          <div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">TIGHT EDIT (fast pacing)</label>
+            <button type="button" onClick={() => setTightEdit(v => !v)}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all"
+              style={{ background: tightEdit ? "#FFF5F5" : "#F1F5F9", border: `1px solid ${tightEdit ? "#FECACA" : "#E2E8F0"}` }}>
+              <span className="text-left">
+                <span className="font-semibold" style={{ color: tightEdit ? "#9B1C1C" : "#64748B" }}>
+                  {tightEdit ? "On — trim dead air for snappy pacing" : "Off — keep original pacing"}
+                </span>
+                <span className="block text-[11px] text-[#94A3B8] mt-0.5">Cuts silent pauses to boost retention. Safely skips music-heavy clips.</span>
+              </span>
+              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: tightEdit ? "#9B1C1C" : "#CBD5E1" }}>
+                <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: tightEdit ? "22px" : "2px" }} />
               </span>
             </button>
           </div>
