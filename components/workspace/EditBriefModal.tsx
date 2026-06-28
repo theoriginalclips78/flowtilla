@@ -4,7 +4,7 @@ import { useState } from "react";
 import { X, Loader2, Save, Link } from "lucide-react";
 import { Campaign } from "@/store/campaignStore";
 
-type CampaignExt = Campaign & { clipLengthMin?: number; clipLengthMax?: number; extraContext?: string; captionRules?: string };
+type CampaignExt = Campaign & { clipLengthMin?: number; clipLengthMax?: number; extraContext?: string; captionRules?: string; subtitlesEnabled?: boolean };
 
 interface Props {
   campaign: Campaign;
@@ -27,6 +27,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
   const [audienceReq, setAudienceReq]       = useState(c.audienceRequirement || "");
   const [postDuration, setPostDuration]     = useState(c.postDuration || "");
   const [extraContext, setExtraContext]     = useState(c.extraContext || "");
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState(c.subtitlesEnabled !== false);
   const [saving, setSaving]                 = useState(false);
   const [error, setError]                   = useState("");
 
@@ -49,6 +50,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
         audienceRequirement: audienceReq,
         postDuration,
         extraContext,
+        subtitlesEnabled,
       };
       const res = await fetch(`/api/campaigns/${c.id}`, {
         method: "PATCH",
@@ -128,6 +130,24 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
               <span className="font-semibold">Auto</span>
               <span className="text-[#7F1D1D]">— the AI picks the best length for each clip (no limits to set).</span>
             </div>
+          </div>
+
+          {/* Auto subtitles toggle */}
+          <div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">AUTO SUBTITLES</label>
+            <button type="button" onClick={() => setSubtitlesEnabled(v => !v)}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all"
+              style={{ background: subtitlesEnabled ? "#FFF5F5" : "#F1F5F9", border: `1px solid ${subtitlesEnabled ? "#FECACA" : "#E2E8F0"}` }}>
+              <span className="text-left">
+                <span className="font-semibold" style={{ color: subtitlesEnabled ? "#9B1C1C" : "#64748B" }}>
+                  {subtitlesEnabled ? "On — add animated captions" : "Off — no captions added"}
+                </span>
+                <span className="block text-[11px] text-[#94A3B8] mt-0.5">Turn OFF if the source footage already has its own subtitles (avoids double captions).</span>
+              </span>
+              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: subtitlesEnabled ? "#9B1C1C" : "#CBD5E1" }}>
+                <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: subtitlesEnabled ? "22px" : "2px" }} />
+              </span>
+            </button>
           </div>
 
           {/* Platforms */}

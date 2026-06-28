@@ -499,10 +499,15 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     const clipFile = path.join(clipsDir, `clip-${i}.mp4`);
     const thumbFile = path.join(clipsDir, `thumb-${i}.jpg`);
 
-    const presetId = (campaign as Record<string,unknown>).captionPresetId as string | undefined;
+    const presetId = ((campaign as Record<string,unknown>).captionPresetId as string) || undefined;
+    // Some source footage already has burned-in captions; turn ours OFF for those
+    // campaigns so clips never show double subtitles.
+    const subsOn = (campaign as Record<string,unknown>).subtitlesEnabled !== false;
+    const useWords = subsOn ? words : [];
+    const useTranscript = subsOn ? transcript : [];
     // The top overlay should be the scroll-stopping HOOK, not the dull video title.
     const overlayText = (m.hook && m.hook.trim()) ? m.hook.trim() : m.title;
-    await cutClip(srcPath, clipFile, m.start_time, dur, transcript, overlayText, i, words, presetId);
+    await cutClip(srcPath, clipFile, m.start_time, dur, useTranscript, overlayText, i, useWords, presetId);
     return await saveAndStream(clipFile, thumbFile, { ...m, end_time: safeEnd });
   }));
 
