@@ -8,15 +8,30 @@ const BASE = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001";
 async function postToTikTok(token: string, filePath: string, caption: string) {
   const stat   = statSync(filePath);
   const size   = stat.size;
-  const chunkSize = 10 * 1024 * 1024; // 10MB chunks
+
+  // TikTok chunk rules: each chunk 5MB–64MB. A video <= 64MB MUST be sent as a
+  // single chunk where chunk_size === video_size and total_chunk_count === 1.
+  // Larger videos are split into 10MB chunks (the final chunk carries the remainder).
+  const MAX_SINGLE = 64 * 1024 * 1024;
+  let chunkSize: number;
+  let totalChunks: number;
+  if (size <= MAX_SINGLE) {
+    chunkSize   = size;
+    totalChunks = 1;
+  } else {
+    chunkSize   = 10 * 1024 * 1024;
+    totalChunks = Math.floor(size / chunkSize); // last chunk absorbs the remainder
+  }
 
   // Step 1 — init upload
   const init = await fetch("https://open.tiktokapis.com/v2/post/publish/video/init/", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json; charset=UTF-8" },
     body: JSON.stringify({
-      post_info: { title: caption.slice(0, 150), privacy_level: "PUBLIC_TO_EVERYONE", disable_duet: false, disable_comment: false, disable_stitch: false },
-      source_info: { source: "FILE_UPLOAD", video_size: size, chunk_size: chunkSize, total_chunk_count: Math.ceil(size / chunkSize) },
+      // Unaudited / Sandbox apps may ONLY post as SELF_ONLY (private). Switch to
+      // PUBLIC_TO_EVERYONE once the app passes TikTok review. Override via env.
+      post_info: { title: caption.slice(0, 150), privacy_level: process.env.TIKTOK_PRIVACY_LEVEL || "SELF_ONLY", disable_duet: false, disable_comment: false, disable_stitch: false },
+      source_info: { source: "FILE_UPLOAD", video_size: size, chunk_size: chunkSize, total_chunk_count: totalChunks },
     }),
   }).then(r => r.json());
 
@@ -25,10 +40,10 @@ async function postToTikTok(token: string, filePath: string, caption: string) {
   const { publish_id, upload_url } = init.data;
 
   // Step 2 — upload chunks
-  const totalChunks = Math.ceil(size / chunkSize);
   for (let i = 0; i < totalChunks; i++) {
     const start = i * chunkSize;
-    const end   = Math.min(start + chunkSize - 1, size - 1);
+    // last chunk runs to the end of the file (absorbs any remainder)
+    const end   = i === totalChunks - 1 ? size - 1 : start + chunkSize - 1;
     const buf   = await new Promise<Buffer>((res, rej) => {
       const chunks: Buffer[] = [];
       createReadStream(filePath, { start, end }).on("data", d => chunks.push(d as Buffer)).on("end", () => res(Buffer.concat(chunks))).on("error", rej);

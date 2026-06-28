@@ -16,7 +16,24 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
     take: 200,
   });
-  return NextResponse.json(clips);
+
+  // Attach each clip's campaign tagging so the UI can render a ready-to-paste
+  // caption with the correct @mention + hashtags per platform.
+  const campaignIds = Array.from(new Set(clips.map(c => c.campaignId)));
+  const campaigns = await prisma.campaign.findMany({
+    where: { id: { in: campaignIds } },
+    select: { id: true, name: true, taggingJson: true },
+  });
+  const cmap = new Map(campaigns.map(c => [c.id, c]));
+
+  const enriched = clips.map(c => {
+    const camp = cmap.get(c.campaignId);
+    let tags: Record<string, string> = {};
+    try { tags = JSON.parse(camp?.taggingJson || "{}"); } catch { /* ignore */ }
+    return { ...c, campaignName: camp?.name || "", tags };
+  });
+
+  return NextResponse.json(enriched);
 }
 
 export async function PATCH(req: NextRequest) {

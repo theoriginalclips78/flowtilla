@@ -9,6 +9,7 @@ const FFMPEG_BIN = "/Users/ahmedsaciidabdullahi/clipflow/node_modules/ffmpeg-sta
 import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
+import { CAPTION_PRESETS, presetById, buildWordAss } from "@/lib/editor/captionStyles";
 
 const CONCURRENCY = 1; // sequential: finish all clips from one video before moving to next
 const FONT = "/System/Library/Fonts/Helvetica.ttc";
@@ -127,8 +128,79 @@ function buildSrt(segs: { start: number; end: number; text: string }[], offset: 
   return lines.join("\n\n");
 }
 
+// Tolerant parser for the AI moments array. Handles markdown fences AND truncated
+// responses (max_tokens cutoff) by salvaging every complete {...} object it can.
+function parseMomentsLoose(raw: string): { start_time: number; end_time: number; title: string; reason: string; virality_score: string; hook: string; caption: string; platform_fit: string[] }[] {
+  const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
+  // First try a straight parse.
+  try {
+    const p = JSON.parse(cleaned);
+    if (Array.isArray(p)) return p;
+  } catch { /* fall through to salvage */ }
+  // Salvage: pull each balanced {...} block and parse individually.
+  const out: ReturnType<typeof parseMomentsLoose> = [];
+  let depth = 0, start = -1;
+  for (let i = 0; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (ch === "{") { if (depth === 0) start = i; depth++; }
+    else if (ch === "}") { depth--; if (depth === 0 && start >= 0) {
+      try { const obj = JSON.parse(cleaned.slice(start, i + 1)); if (obj && obj.start_time !== undefined) out.push(obj); } catch { /* skip */ }
+      start = -1;
+    } }
+  }
+  return out;
+}
+
+// Guaranteed clip generator — chops a video into evenly-spaced clips so we ALWAYS
+// produce output even when AI analysis fails or returns nothing.
+function makeTimeMoments(videoDuration: number, videoTitle: string, targetLen = 30, max = 12) {
+  const moments: { start_time: number; end_time: number; title: string; reason: string; virality_score: string; hook: string; caption: string; platform_fit: string[] }[] = [];
+  if (videoDuration < 5) return moments;
+  const len = Math.min(targetLen, Math.max(8, Math.floor(videoDuration / 2)));
+  let t = videoDuration > 20 ? 3 : 0; // skip a few intro seconds on longer videos
+  let i = 0;
+  while (t + 4 < videoDuration && i < max) {
+    const end = Math.min(t + len, videoDuration);
+    moments.push({ start_time: t, end_time: end, title: videoTitle.slice(0, 50), reason: "auto", virality_score: "medium", hook: "", caption: "", platform_fit: ["tiktok","instagram","youtube"] });
+    t += len;
+    i++;
+  }
+  return moments;
+}
+
 function escapeDrawtext(str: string): string {
   return str.replace(/[\\:'"[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 55);
+}
+
+// Each clip gets a different visual treatment so no two clips look the same —
+// this defeats TikTok/IG "unoriginal / reposted content" detection and gives reach.
+// Colours are ASS format &HAABBGGRR (alpha, blue, green, red).
+type ClipStyle = {
+  name: string;
+  grade: string;        // ffmpeg eq color grade
+  zoom: number;         // punch-in factor (1.0 = none)
+  subColor: string;     // subtitle primary colour
+  subOutline: string;   // subtitle outline colour
+  subSize: number;      // subtitle font size
+  subMargin: number;    // distance from bottom
+  hookColor: string;    // hook text colour (drawtext)
+  hookBox: string;      // hook box colour@alpha
+  hookY: number;        // hook vertical position
+};
+
+const CLIP_STYLES: ClipStyle[] = [
+  { name: "yellow-pop",  grade: "saturation=1.25:contrast=1.10:gamma=1.02", zoom: 1.10, subColor: "&H0000F0FF", subOutline: "&H00000000", subSize: 24, subMargin: 90,  hookColor: "white",  hookBox: "black@0.6",  hookY: 60 },
+  { name: "clean-white", grade: "saturation=1.12:contrast=1.06",            zoom: 1.05, subColor: "&H00FFFFFF", subOutline: "&H000000FF", subSize: 22, subMargin: 110, hookColor: "yellow", hookBox: "black@0.55", hookY: 80 },
+  { name: "green-punch", grade: "saturation=1.30:contrast=1.12",            zoom: 1.14, subColor: "&H0000FF66", subOutline: "&H00000000", subSize: 26, subMargin: 130, hookColor: "white",  hookBox: "#1c1c9b@0.6", hookY: 56 },
+  { name: "warm-bold",   grade: "saturation=1.18:contrast=1.08:gamma=1.05", zoom: 1.08, subColor: "&H00FFFFFF", subOutline: "&H001212C8", subSize: 23, subMargin: 100, hookColor: "white",  hookBox: "#9b1c1c@0.6", hookY: 70 },
+  { name: "cyan-edge",   grade: "saturation=1.22:contrast=1.10",            zoom: 1.12, subColor: "&H00FFFF00", subOutline: "&H00000000", subSize: 25, subMargin: 120, hookColor: "black",  hookBox: "white@0.7",  hookY: 64 },
+];
+
+function buildCrop(style: ClipStyle): string {
+  // Scale up by the zoom factor, then crop back to 1080x1920 = a punch-in reframe.
+  const w = Math.round(1080 * style.zoom);
+  const h = Math.round(1920 * style.zoom);
+  return `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=1080:1920,eq=${style.grade}`;
 }
 
 async function cutClip(
@@ -136,23 +208,53 @@ async function cutClip(
   startTime: number, duration: number,
   transcript: { start: number; end: number; text: string }[],
   title: string,
+  variant: number = 0,
+  words: { word: string; start: number; end: number }[] = [],
+  captionPresetId?: string,
 ): Promise<void> {
+  const style = CLIP_STYLES[variant % CLIP_STYLES.length];
+
+  // Pick an animated caption preset: campaign-fixed if set, otherwise rotate for uniqueness.
+  const preset = captionPresetId
+    ? presetById(captionPresetId)
+    : CAPTION_PRESETS[variant % CAPTION_PRESETS.length];
+
+  const safeTitle = escapeDrawtext(title);
+  const cropFilter = buildCrop(style);
+  const hookDraw = `drawtext=fontfile=${FONT}:text='${safeTitle}':fontsize=28:fontcolor=${style.hookColor}:x=(w-text_w)/2:y=${style.hookY}:box=1:boxcolor=${style.hookBox}:boxborderw=14`;
+
+  // Attempt 0: BEST look — reframe + animated word-pop ASS captions + hook.
+  const assContent = words.length > 0 ? buildWordAss(words, startTime, duration, preset) : null;
+  if (assContent) {
+    const assPath = outPath.replace(".mp4", ".ass");
+    writeFileSync(assPath, assContent, "utf8");
+    try {
+      await ffmpegRun([
+        "-ss", String(startTime), "-i", srcPath, "-t", String(duration),
+        "-vf", [cropFilter, `subtitles=${assPath}`, hookDraw].join(","),
+        "-af", "dynaudnorm=f=150:g=15",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "26",
+        "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", outPath,
+      ]);
+      return;
+    } catch { /* fall back to plain SRT */ }
+  }
+
+  // Fallback subtitle path: plain SRT from sentence-level transcript.
   const srtContent = buildSrt(transcript, startTime, duration);
   const srtPath = outPath.replace(".mp4", ".srt");
   if (srtContent) writeFileSync(srtPath, srtContent, "utf8");
+  const subStyle = `Fontname=Helvetica,FontSize=${style.subSize},Alignment=2,PrimaryColour=${style.subColor},OutlineColour=${style.subOutline},Outline=3,Shadow=0.6,Bold=1,MarginV=${style.subMargin}`;
 
-  const safeTitle = escapeDrawtext(title);
-  const cropFilter = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,eq=saturation=1.12:contrast=1.06";
-
-  // Attempt 1: full pipeline — crop + subtitles + title
+  // Attempt 1: reframe + SRT subtitles + hook
   if (srtContent) {
     try {
       await ffmpegRun([
         "-ss", String(startTime), "-i", srcPath, "-t", String(duration),
         "-vf", [
           cropFilter,
-          `subtitles=${srtPath}:force_style='Fontname=Helvetica,FontSize=20,Alignment=2,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Outline=2.5,Shadow=0.5,Bold=1,MarginV=80'`,
-          `drawtext=fontfile=${FONT}:text='${safeTitle}':fontsize=26:fontcolor=white:x=(w-text_w)/2:y=52:box=1:boxcolor=black@0.55:boxborderw=12`,
+          `subtitles=${srtPath}:force_style='${subStyle}'`,
+          hookDraw,
         ].join(","),
         "-af", "dynaudnorm=f=150:g=15",
         "-c:v", "libx264", "-preset", "ultrafast", "-crf", "26",
@@ -162,14 +264,11 @@ async function cutClip(
     } catch { /* try next */ }
   }
 
-  // Attempt 2: crop + title only (no subtitles)
+  // Attempt 2: reframe + hook only (no subtitles)
   try {
     await ffmpegRun([
       "-ss", String(startTime), "-i", srcPath, "-t", String(duration),
-      "-vf", [
-        cropFilter,
-        `drawtext=fontfile=${FONT}:text='${safeTitle}':fontsize=26:fontcolor=white:x=(w-text_w)/2:y=52:box=1:boxcolor=black@0.55:boxborderw=12`,
-      ].join(","),
+      "-vf", [cropFilter, hookDraw].join(","),
       "-af", "dynaudnorm=f=150:g=15",
       "-c:v", "libx264", "-preset", "ultrafast", "-crf", "26",
       "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", outPath,
@@ -177,7 +276,7 @@ async function cutClip(
     return;
   } catch { /* try next */ }
 
-  // Attempt 3: crop only, no text overlays
+  // Attempt 3: reframe only, no text overlays
   try {
     await ffmpegRun([
       "-ss", String(startTime), "-i", srcPath, "-t", String(duration),
@@ -291,16 +390,21 @@ async function processOneVideo(
   // ── TRANSCRIBE ─────────────────────────────────────────────────
   sse(ctrl, { step: "transcribe", status: "started", message: `🎙️ Transcribing audio...` });
   let transcript: { start: number; end: number; text: string }[] = [];
+  let words: { word: string; start: number; end: number }[] = [];
   try {
     const audioPath = dir + "/audio.wav";
     await extractAudio(srcPath, audioPath);
     const res = await groq.audio.transcriptions.create({
       file: createReadStream(audioPath) as Parameters<typeof groq.audio.transcriptions.create>[0]["file"],
       model: "whisper-large-v3", response_format: "verbose_json",
-    });
-    const segs = (res as { segments?: { start: number; end: number; text: string }[] }).segments || [];
+      // word-level timing powers the animated "active word pops in colour" captions
+      timestamp_granularities: ["word", "segment"],
+    } as Parameters<typeof groq.audio.transcriptions.create>[0]);
+    const r = res as { segments?: { start: number; end: number; text: string }[]; words?: { word: string; start: number; end: number }[] };
+    const segs = r.segments || [];
     transcript = segs.map(s => ({ start: s.start, end: s.end, text: s.text.trim() }));
-    sse(ctrl, { step: "transcribe", status: "complete", message: `✅ Transcribed (${transcript.length} segments)` });
+    words = (r.words || []).map(w => ({ word: w.word.trim(), start: w.start, end: w.end })).filter(w => w.word);
+    sse(ctrl, { step: "transcribe", status: "complete", message: `✅ Transcribed (${transcript.length} segments, ${words.length} words)` });
   } catch {
     sse(ctrl, { step: "transcribe", status: "warn", message: `⚠️ Transcription failed — using time-based clips` });
   }
@@ -317,49 +421,58 @@ async function processOneVideo(
 
     const msg = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3000,
-      system: `You are a viral short-form content strategist for the campaign "${campaign.name}". Identify the most compelling clip moments from the transcript. Rules: ${campaign.contentRules || "feel authentic and organic"}. Target platforms: ${campaign.platforms || "tiktok,instagram,youtube"}.
+      max_tokens: 4096,
+      system: `You are a world-class viral short-form clipper for the campaign "${campaign.name}". Find the moments MOST LIKELY TO GO VIRAL — the funniest lines, biggest reactions, impressive feats, hot takes, surprising/relatable/emotional beats, satisfying payoffs, and strong hooks. Skip boring filler. Each clip must start ON a hook (the first 1-2 seconds must grab attention) and contain a complete, self-explanatory moment.
 
-CLIP LENGTH: Each clip must be between ${clipMin}s and ${clipMax}s. Do not suggest clips shorter or longer than this range.
+Rules: ${campaign.contentRules || "feel authentic and organic"}. Target platforms: ${campaign.platforms || "tiktok,instagram,youtube"}.
+Aim for clips roughly ${clipMin}-${clipMax}s, but prioritise picking a GREAT self-contained moment over hitting an exact length.
 
-For the "caption" field: write an ORIGINAL caption for the clip — do NOT copy the video's title or description. The caption should be conversational, hook-driven, and platform-native (like something a creator would write themselves, not a copy of the source). Max 150 chars, no hashtag spam.
+Keep "reason" under 12 words and "caption" under 100 chars. "virality_score" must be exactly "high", "medium", or "low".
+For "caption": an ORIGINAL, organic, hook-driven line a real creator would write — NOT a copy of the title, NOT promotional.
 
-Return ONLY a valid JSON array, no markdown, no explanation.`,
-      messages: [{ role: "user", content: `Video: "${videoTitle}" (${videoDuration}s)\n\nInstructions: ${campaign.aiInstructions || "find high-energy, emotional, or quotable moments"}\n\nTranscript:\n${transcriptText.slice(0, 8000)}\n\nFind 5–10 clips (${clipMin}–${clipMax}s each). Each entry: {start_time, end_time, title, reason, virality_score, hook, caption, platform_fit}${(campaign as Record<string,unknown>).extraContext ? `\n\nExtra campaign context:\n${(campaign as Record<string,unknown>).extraContext}` : ""}` }],
+Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips, best ones first.`,
+      messages: [{ role: "user", content: `Video: "${videoTitle}" (${videoDuration}s)\n\nWhat to look for: ${campaign.aiInstructions || "high-energy, funny, emotional, impressive, or quotable moments"}\n\nTranscript:\n${transcriptText.slice(0, 8000)}\n\nReturn up to 8 clips, best first. Each: {start_time, end_time, title, reason, virality_score, hook, caption, platform_fit}${(campaign as Record<string,unknown>).extraContext ? `\n\nContext:\n${String((campaign as Record<string,unknown>).extraContext).slice(0,400)}` : ""}` }],
     });
 
     const raw = (msg.content[0] as { text: string }).text;
-    moments = JSON.parse(raw.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/i,"").trim());
-    if (!Array.isArray(moments)) throw new Error("not array");
-    sse(ctrl, { step: "analyze", status: "complete", message: `✅ Found ${moments.length} moments`, momentCount: moments.length });
+    moments = parseMomentsLoose(raw);
+    if (moments.length === 0) throw new Error("no parseable moments");
+    sse(ctrl, { step: "analyze", status: "complete", message: `✅ Found ${moments.length} viral moments`, momentCount: moments.length });
   } catch (err) {
-    sse(ctrl, { step: "analyze", status: "error", message: `❌ Analysis: ${(err as Error).message.slice(0,80)}` });
-    return 0;
+    sse(ctrl, { step: "analyze", status: "warn", message: `⚠️ AI analysis unavailable (${(err as Error).message.slice(0,50)}) — auto-clipping the video instead` });
+    moments = [];
   }
 
-  // ── CUT CLIPS (parallel) ───────────────────────────────────────
-  const clipJobs = moments.filter(m => {
-    const d = Math.round(m.end_time - m.start_time);
-    const passes = d >= clipMin && d <= clipMax && m.start_time < videoDuration;
-    if (!passes) sse(ctrl, { step: "filter", status: "warn", message: `⏭️ Skipped "${(m.title||"").slice(0,35)}" — ${d}s (limit: ${clipMin}–${clipMax}s)` });
-    return passes;
-  }).slice(0, 12);
+  // GUARANTEE clips: if the AI gave us nothing usable, chop the video into even clips.
+  if (moments.length === 0) {
+    moments = makeTimeMoments(videoDuration, videoTitle, Math.round((clipMin + clipMax) / 2) || 30, 12);
+    sse(ctrl, { step: "analyze", status: "complete", message: `✂️ Auto-generated ${moments.length} clips from this video`, momentCount: moments.length });
+  }
 
-  if (moments.length > 0 && clipJobs.length === 0) {
-    sse(ctrl, { step: "filter", status: "warn", message: `⚠️ All ${moments.length} moments filtered out — open Edit Brief and widen min/max clip length (currently ${clipMin}–${clipMax}s)` });
+  // ── CUT CLIPS (parallel) — accept ANY duration, just clamp to the video ──
+  let clipJobs = moments
+    .map(m => ({ ...m, start_time: Math.max(0, Number(m.start_time) || 0), end_time: Math.min(Number(m.end_time) || 0, videoDuration) }))
+    .filter(m => m.start_time < videoDuration && (m.end_time - m.start_time) >= 3)
+    .slice(0, 12);
+
+  // Last-resort safety net: if everything got clamped away, force time-based clips.
+  if (clipJobs.length === 0) {
+    clipJobs = makeTimeMoments(videoDuration, videoTitle, 30, 12)
+      .map(m => ({ ...m, start_time: m.start_time, end_time: m.end_time }));
   }
 
   let clipsFromSource = 0;
   const results = await Promise.allSettled(clipJobs.map(async (m, i) => {
     const safeEnd = Math.min(m.end_time, videoDuration);
     const dur = Math.round(safeEnd - m.start_time);
-    if (dur < 10) return null;
+    if (dur < 3) return null;
 
     sse(ctrl, { step: "cut", status: "progress", message: `✂️ Clip ${i+1}/${clipJobs.length}: ${m.title}` });
     const clipFile = path.join(clipsDir, `clip-${i}.mp4`);
     const thumbFile = path.join(clipsDir, `thumb-${i}.jpg`);
 
-    await cutClip(srcPath, clipFile, m.start_time, dur, transcript, m.title);
+    const presetId = (campaign as Record<string,unknown>).captionPresetId as string | undefined;
+    await cutClip(srcPath, clipFile, m.start_time, dur, transcript, m.title, i, words, presetId);
     return await saveAndStream(clipFile, thumbFile, { ...m, end_time: safeEnd });
   }));
 
