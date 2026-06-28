@@ -26,6 +26,8 @@ model Campaign {
   clipLengthMin       Int              @default(30)
   clipLengthMax       Int              @default(90)
   extraContext        String           @default("")
+  subtitlesEnabled    Boolean          @default(true)
+  captionPresetId     String           @default("")
   aspectRatio         String           @default("9:16")
   scheduleEnabled     Boolean          @default(false)
   scheduleFrequency   String?

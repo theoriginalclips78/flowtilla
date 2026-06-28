@@ -8,6 +8,20 @@ interface Clip {
   startTime: number; endTime: number; viralityScore: string;
   reason: string; hook: string; caption: string; platformFit: string;
   status: string; campaignId: string; filePath: string; createdAt: string;
+  campaignName?: string; tags?: Record<string, string>;
+}
+
+// Build a ready-to-paste caption: organic caption + required @mention + a few hashtags.
+function buildPostCaption(clip: Clip, platform: "tiktok" | "instagram" | "youtube"): string {
+  const base = (clip.caption || clip.title || "").trim();
+  const mention = clip.tags?.[platform] || "";
+  const camp = (clip.campaignName || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  const tagSet: Record<string, string> = {
+    tiktok: `#fyp #foryou #gymtok #fitness${camp ? ` #${camp}` : ""}`,
+    instagram: `#reels #gym #fitness #explore${camp ? ` #${camp}` : ""}`,
+    youtube: `#shorts #gym #fitness${camp ? ` #${camp}` : ""}`,
+  };
+  return [base, mention, tagSet[platform]].filter(Boolean).join("\n\n");
 }
 interface Campaign { id: string; name: string; }
 interface SocialAccount { id: string; platform: string; accountName: string; }
@@ -158,10 +172,11 @@ function PostModal({ clip, accounts, onClose, campaignName }: {
 }
 
 /* ──────────── Preview Modal ──────────── */
-function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus }: {
+function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus, onNavigate }: {
   clip: Clip; clips: Clip[]; campaigns: Record<string, string>;
   accounts: SocialAccount[]; onClose: () => void;
   onStatus: (id: string, s: string) => void;
+  onNavigate: (clip: Clip) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [showPost, setShowPost] = useState(false);
@@ -175,10 +190,12 @@ function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus }: {
       if (e.key === "Escape") onClose();
       if (e.key === "a" || e.key === "A") onStatus(clip.id, "approved");
       if (e.key === "d" || e.key === "D") { onStatus(clip.id, "discarded"); onClose(); }
+      if (e.key === "ArrowLeft" && idx > 0) onNavigate(visible[idx - 1]);
+      if (e.key === "ArrowRight" && idx < visible.length - 1) onNavigate(visible[idx + 1]);
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [clip.id]);
+  }, [clip.id, idx, visible.length]);
 
   return (
     <>
@@ -193,12 +210,12 @@ function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus }: {
           </button>
 
           {idx > 0 && (
-            <button onClick={() => { onClose(); }} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100" style={{ border: "1px solid #E2E8F0" }}>
+            <button onClick={() => onNavigate(visible[idx - 1])} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-white hover:bg-gray-100 shadow-md" style={{ border: "1px solid #E2E8F0" }}>
               <ChevronLeft size={18} className="text-[#64748B]" />
             </button>
           )}
           {idx < visible.length - 1 && (
-            <button onClick={() => { onClose(); }} className="absolute right-12 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100" style={{ border: "1px solid #E2E8F0" }}>
+            <button onClick={() => onNavigate(visible[idx + 1])} className="absolute right-12 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-white hover:bg-gray-100 shadow-md" style={{ border: "1px solid #E2E8F0" }}>
               <ChevronRight size={18} className="text-[#64748B]" />
             </button>
           )}
@@ -309,9 +326,13 @@ function ClipCard({ clip, campaigns, onPreview, onStatus, accounts }: {
   accounts: SocialAccount[];
 }) {
   const [showPost, setShowPost] = useState(false);
+  const [capPlatform, setCapPlatform] = useState<"tiktok" | "instagram" | "youtube">("tiktok");
+  const [copied, setCopied] = useState(false);
   const v = viral[clip.viralityScore] || viral.low;
   const duration = Math.round(clip.endTime - clip.startTime);
-  const campaignName = campaigns[clip.campaignId] || "—";
+  const campaignName = campaigns[clip.campaignId] || clip.campaignName || "—";
+  const hasTags = clip.tags && Object.keys(clip.tags).length > 0;
+  const postCaption = buildPostCaption(clip, capPlatform);
 
   return (
     <>
@@ -343,6 +364,31 @@ function ClipCard({ clip, campaigns, onPreview, onStatus, accounts }: {
           <p className="text-[10px] font-semibold text-[#9B1C1C] mb-0.5 truncate">{campaignName}</p>
           <p className="text-sm font-semibold text-[#0F1E3C] truncate mb-0.5">{clip.title}</p>
           <p className="text-[11px] text-[#94A3B8] truncate">{new Date(clip.createdAt).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })}</p>
+
+          {/* Ready-to-paste caption with required @mention + hashtags */}
+          <div className="mt-2.5 rounded-lg border p-2" style={{ borderColor: "#FECACA", background: "#FFF9F9" }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[9px] font-bold uppercase tracking-wide text-[#9B1C1C]">Caption to copy</span>
+              <div className="flex gap-0.5">
+                {(["tiktok","instagram","youtube"] as const).map(p => (
+                  <button key={p} onClick={() => setCapPlatform(p)}
+                    className="text-[8px] font-bold px-1.5 py-0.5 rounded transition-all"
+                    style={capPlatform === p ? { background: "#9B1C1C", color: "#fff" } : { background: "#FECACA", color: "#9B1C1C" }}>
+                    {p === "tiktok" ? "TT" : p === "instagram" ? "IG" : "YT"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-[11px] text-[#334155] leading-relaxed whitespace-pre-line mb-1.5" style={{ maxHeight: 84, overflowY: "auto" }}>{postCaption}</p>
+            {hasTags && (
+              <p className="text-[9px] font-semibold text-[#DC2626] mb-1.5">⚠ Must tag {clip.tags?.[capPlatform] || "the brand account"} — keep likes visible, no ad wording</p>
+            )}
+            <button onClick={() => { navigator.clipboard.writeText(postCaption); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+              className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-bold transition-all"
+              style={{ background: copied ? "#16A34A" : "#9B1C1C", color: "#fff" }}>
+              {copied ? <><Check size={10}/> Copied!</> : <><Copy size={10}/> Copy caption</>}
+            </button>
+          </div>
 
           <div className="flex gap-1.5 mt-2.5">
             {clip.status !== "approved" ? (
@@ -512,7 +558,7 @@ export default function ClipsPage() {
 
       {preview && (
         <PreviewModal clip={preview} clips={clips} campaigns={campaigns} accounts={accounts}
-          onClose={() => setPreview(null)} onStatus={updateStatus} />
+          onClose={() => setPreview(null)} onStatus={updateStatus} onNavigate={(c) => setPreview(c)} />
       )}
     </div>
   );

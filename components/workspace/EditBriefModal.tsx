@@ -4,7 +4,7 @@ import { useState } from "react";
 import { X, Loader2, Save, Link } from "lucide-react";
 import { Campaign } from "@/store/campaignStore";
 
-type CampaignExt = Campaign & { clipLengthMin?: number; clipLengthMax?: number; extraContext?: string; captionRules?: string };
+type CampaignExt = Campaign & { clipLengthMin?: number; clipLengthMax?: number; extraContext?: string; captionRules?: string; subtitlesEnabled?: boolean };
 
 interface Props {
   campaign: Campaign;
@@ -24,18 +24,14 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
   const [rejectionReasons, setRejectionReasons] = useState(c.rejectionReasons || "");
   const [captionRules, setCaptionRules]     = useState(c.captionRules || "");
   const [clipCount, setClipCount]           = useState(String(c.clipCount));
-  const [clipLengthMin, setClipLengthMin]   = useState(String(c.clipLengthMin ?? 30));
-  const [clipLengthMax, setClipLengthMax]   = useState(String(c.clipLengthMax ?? 90));
   const [audienceReq, setAudienceReq]       = useState(c.audienceRequirement || "");
   const [postDuration, setPostDuration]     = useState(c.postDuration || "");
   const [extraContext, setExtraContext]     = useState(c.extraContext || "");
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState(c.subtitlesEnabled !== false);
   const [saving, setSaving]                 = useState(false);
   const [error, setError]                   = useState("");
 
   const save = async () => {
-    const min = parseInt(clipLengthMin) || 30;
-    const max = parseInt(clipLengthMax) || 90;
-    if (min >= max) { setError("Min clip length must be less than max"); return; }
     setSaving(true);
     setError("");
     try {
@@ -47,12 +43,14 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
         platforms, aiInstructions, contentRules,
         rejectionReasons, captionRules,
         clipCount: parseInt(clipCount) || 10,
-        clipLength: Math.round((min + max) / 2), // keep legacy field as midpoint
-        clipLengthMin: min,
-        clipLengthMax: max,
+        // Length is fully automatic now — wide bounds so the AI picks freely.
+        clipLength: 30,
+        clipLengthMin: 0,
+        clipLengthMax: 0,
         audienceRequirement: audienceReq,
         postDuration,
         extraContext,
+        subtitlesEnabled,
       };
       const res = await fetch(`/api/campaigns/${c.id}`, {
         method: "PATCH",
@@ -123,28 +121,33 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
             </div>
           </div>
 
-          {/* Clip length range */}
+          {/* Clip length — fully automatic */}
           <div>
-            <label className="text-xs font-bold text-[#64748B] block mb-2">CLIP LENGTH RANGE (seconds)</label>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="text-[10px] text-[#94A3B8] block mb-1">MINIMUM</label>
-                <input type="number" value={clipLengthMin} onChange={e => setClipLengthMin(e.target.value)}
-                  className="glass-input" placeholder="30" min="10" max="300" />
-              </div>
-              <div className="text-[#CBD5E1] font-bold mt-4">—</div>
-              <div className="flex-1">
-                <label className="text-[10px] text-[#94A3B8] block mb-1">MAXIMUM</label>
-                <input type="number" value={clipLengthMax} onChange={e => setClipLengthMax(e.target.value)}
-                  className="glass-input" placeholder="90" min="10" max="300" />
-              </div>
-              <div className="flex-shrink-0 mt-4">
-                <div className="px-3 py-2 rounded-xl text-sm font-semibold text-[#9B1C1C]"
-                  style={{ background: "#FFF5F5", border: "1px solid #FECACA" }}>
-                  {clipLengthMin}s – {clipLengthMax}s
-                </div>
-              </div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">CLIP LENGTH</label>
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm"
+              style={{ background: "#FFF5F5", border: "1px solid #FECACA", color: "#9B1C1C" }}>
+              <span>✨</span>
+              <span className="font-semibold">Auto</span>
+              <span className="text-[#7F1D1D]">— the AI picks the best length for each clip (no limits to set).</span>
             </div>
+          </div>
+
+          {/* Auto subtitles toggle */}
+          <div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">AUTO SUBTITLES</label>
+            <button type="button" onClick={() => setSubtitlesEnabled(v => !v)}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all"
+              style={{ background: subtitlesEnabled ? "#FFF5F5" : "#F1F5F9", border: `1px solid ${subtitlesEnabled ? "#FECACA" : "#E2E8F0"}` }}>
+              <span className="text-left">
+                <span className="font-semibold" style={{ color: subtitlesEnabled ? "#9B1C1C" : "#64748B" }}>
+                  {subtitlesEnabled ? "On — add animated captions" : "Off — no captions added"}
+                </span>
+                <span className="block text-[11px] text-[#94A3B8] mt-0.5">Turn OFF if the source footage already has its own subtitles (avoids double captions).</span>
+              </span>
+              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: subtitlesEnabled ? "#9B1C1C" : "#CBD5E1" }}>
+                <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: subtitlesEnabled ? "22px" : "2px" }} />
+              </span>
+            </button>
           </div>
 
           {/* Platforms */}
