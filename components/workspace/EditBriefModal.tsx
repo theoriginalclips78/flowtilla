@@ -24,8 +24,6 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
   const [rejectionReasons, setRejectionReasons] = useState(c.rejectionReasons || "");
   const [captionRules, setCaptionRules]     = useState(c.captionRules || "");
   const [clipCount, setClipCount]           = useState(String(c.clipCount));
-  const [clipLengthMin, setClipLengthMin]   = useState(String(c.clipLengthMin ?? 30));
-  const [clipLengthMax, setClipLengthMax]   = useState(String(c.clipLengthMax ?? 90));
   const [audienceReq, setAudienceReq]       = useState(c.audienceRequirement || "");
   const [postDuration, setPostDuration]     = useState(c.postDuration || "");
   const [extraContext, setExtraContext]     = useState(c.extraContext || "");
@@ -33,9 +31,6 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
   const [error, setError]                   = useState("");
 
   const save = async () => {
-    const min = parseInt(clipLengthMin) || 30;
-    const max = parseInt(clipLengthMax) || 90;
-    if (min >= max) { setError("Min clip length must be less than max"); return; }
     setSaving(true);
     setError("");
     try {
@@ -47,9 +42,10 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
         platforms, aiInstructions, contentRules,
         rejectionReasons, captionRules,
         clipCount: parseInt(clipCount) || 10,
-        clipLength: Math.round((min + max) / 2), // keep legacy field as midpoint
-        clipLengthMin: min,
-        clipLengthMax: max,
+        // Length is fully automatic now — wide bounds so the AI picks freely.
+        clipLength: 30,
+        clipLengthMin: 0,
+        clipLengthMax: 0,
         audienceRequirement: audienceReq,
         postDuration,
         extraContext,
@@ -123,27 +119,14 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
             </div>
           </div>
 
-          {/* Clip length range */}
+          {/* Clip length — fully automatic */}
           <div>
-            <label className="text-xs font-bold text-[#64748B] block mb-2">CLIP LENGTH RANGE (seconds)</label>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="text-[10px] text-[#94A3B8] block mb-1">MINIMUM</label>
-                <input type="number" value={clipLengthMin} onChange={e => setClipLengthMin(e.target.value)}
-                  className="glass-input" placeholder="30" min="10" max="300" />
-              </div>
-              <div className="text-[#CBD5E1] font-bold mt-4">—</div>
-              <div className="flex-1">
-                <label className="text-[10px] text-[#94A3B8] block mb-1">MAXIMUM</label>
-                <input type="number" value={clipLengthMax} onChange={e => setClipLengthMax(e.target.value)}
-                  className="glass-input" placeholder="90" min="10" max="300" />
-              </div>
-              <div className="flex-shrink-0 mt-4">
-                <div className="px-3 py-2 rounded-xl text-sm font-semibold text-[#9B1C1C]"
-                  style={{ background: "#FFF5F5", border: "1px solid #FECACA" }}>
-                  {clipLengthMin}s – {clipLengthMax}s
-                </div>
-              </div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">CLIP LENGTH</label>
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm"
+              style={{ background: "#FFF5F5", border: "1px solid #FECACA", color: "#9B1C1C" }}>
+              <span>✨</span>
+              <span className="font-semibold">Auto</span>
+              <span className="text-[#7F1D1D]">— the AI picks the best length for each clip (no limits to set).</span>
             </div>
           </div>
 

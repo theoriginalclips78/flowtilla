@@ -420,8 +420,12 @@ async function processOneVideo(
   // ── ANALYZE ────────────────────────────────────────────────────
   sse(ctrl, { step: "analyze", status: "started", message: `🤖 Claude finding viral moments...` });
   let moments: { start_time: number; end_time: number; title: string; reason: string; virality_score: string; hook: string; caption: string; platform_fit: string[] }[] = [];
-  const clipMin = Number((campaign as Record<string,unknown>).clipLengthMin ?? 30);
-  const clipMax = Number((campaign as Record<string,unknown>).clipLengthMax ?? 90);
+  // Length is fully automatic — the AI decides per clip. These defaults only feed
+  // the no-transcript / time-based fallback paths (0 or unset = use smart defaults).
+  const rawMin = Number((campaign as Record<string,unknown>).clipLengthMin);
+  const rawMax = Number((campaign as Record<string,unknown>).clipLengthMax);
+  const clipMin = rawMin > 0 ? rawMin : 12;
+  const clipMax = rawMax > 0 ? rawMax : 30;
   try {
     const transcriptText = transcript.length > 0
       ? transcript.map(s => `[${s.start.toFixed(1)}s] ${s.text}`).join("\n")
