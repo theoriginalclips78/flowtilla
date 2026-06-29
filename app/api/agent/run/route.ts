@@ -280,6 +280,25 @@ function buildCrop(style: ClipStyle): string {
   return `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=1080:1920,eq=${style.grade}`;
 }
 
+// Animated reframe: a continuous slow push-in/out (Ken Burns) adds MOTION so the clip
+// is never a static crop — a real "creative edit" that helps with platform originality
+// detection and looks more pro. `variant` rotates direction/speed for per-clip uniqueness.
+function buildMotionCrop(style: ClipStyle, variant: number): string {
+  // headroom to zoom into (scale a bit larger than the 1080x1920 target)
+  const head = 1.18;
+  const w = Math.round(1080 * head);
+  const h = Math.round(1920 * head);
+  const base = `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h}`;
+  // 3 motion modes rotating per clip: slow push-in, slow push-out, gentle pan-in
+  const mode = variant % 3;
+  const sp = 0.00045 + (variant % 2) * 0.0002; // slight speed variation
+  let z: string;
+  if (mode === 0) z = `min(1+${sp}*on,1.14)`;            // push in
+  else if (mode === 1) z = `max(1.14-${sp}*on,1.0)`;     // push out (starts zoomed)
+  else z = `min(1+${(sp * 0.7).toFixed(5)}*on,1.10)`;    // gentle push in
+  return `${base},zoompan=z='${z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30,eq=${style.grade}`;
+}
+
 async function cutClip(
   srcPath: string, outPath: string,
   startTime: number, duration: number,
@@ -288,6 +307,7 @@ async function cutClip(
   variant: number = 0,
   words: { word: string; start: number; end: number }[] = [],
   captionPresetId?: string,
+  motion: boolean = true,
 ): Promise<void> {
   const style = CLIP_STYLES[variant % CLIP_STYLES.length];
 
@@ -297,7 +317,9 @@ async function cutClip(
     : CAPTION_PRESETS[variant % CAPTION_PRESETS.length];
 
   const safeTitle = escapeDrawtext(title);
-  const cropFilter = buildCrop(style);
+  // Animated motion reframe by default (adds a real creative edit); falls back to a
+  // static reframe if motion is disabled.
+  const cropFilter = motion ? buildMotionCrop(style, variant) : buildCrop(style);
   // Big, bold scroll-stopping hook in the upper third. Only shown for the first ~4s
   // (where it matters) so it doesn't cover the action for the whole clip.
   const hookY = Math.round(1920 * 0.16);
@@ -599,7 +621,8 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     const useTranscript = subsOn ? transcript : [];
     // The top overlay should be the scroll-stopping HOOK, not the dull video title.
     const overlayText = (m.hook && m.hook.trim()) ? m.hook.trim() : m.title;
-    await cutClip(srcPath, clipFile, m.start_time, dur, useTranscript, overlayText, i, useWords, presetId);
+    const motionOn = (campaign as Record<string,unknown>).motionEnabled !== false;
+    await cutClip(srcPath, clipFile, m.start_time, dur, useTranscript, overlayText, i, useWords, presetId, motionOn);
 
     // Tighten pacing — trim dead air for a faster, more retentive edit. Safely
     // no-ops on music-heavy clips. Only swap in the tightened file if it succeeded.
