@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ChevronDown, ChevronUp, Play, CheckCircle, MoreHorizontal, Zap, Trash2, Pause } from "lucide-react";
+import { ChevronDown, ChevronUp, Play, CheckCircle, MoreHorizontal, Zap, Trash2, Pause, Image as ImageIcon } from "lucide-react";
 import { Campaign } from "@/store/campaignStore";
 import { toast } from "sonner";
 import AgentLogPanel, { LogLine } from "./AgentLogPanel";
@@ -294,6 +294,11 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove, onU
                   className="w-full text-left px-4 py-2 text-sm text-[#111827] hover:bg-gray-50">
                   Edit Brief
                 </button>
+                <a href={`/api/campaigns/${campaign.id}/avatar`} download
+                  onClick={() => setMenuOpen(false)}
+                  className="block w-full text-left px-4 py-2 text-sm text-[#111827] hover:bg-gray-50 flex items-center gap-2">
+                  <ImageIcon size={13} /> Download profile pic
+                </a>
                 <button
                   onClick={() => { setMenuOpen(false); onRemove(campaign.id); }}
                   className="w-full text-left px-4 py-2 text-sm text-[#C0392B] hover:bg-[#C0392B]/5 flex items-center gap-2"
