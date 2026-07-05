@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
         minimumEngagement: data.minimumEngagement || "",
         audienceRequirement: data.audienceRequirement || "",
         postDuration: data.postDuration || "",
+        videoLayout: "letterbox",
+        minVirality: "medium",
         status: "active",
       },
     });

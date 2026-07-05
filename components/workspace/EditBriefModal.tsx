@@ -30,6 +30,10 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
   const [subtitlesEnabled, setSubtitlesEnabled] = useState(c.subtitlesEnabled !== false);
   const [minVirality, setMinVirality]       = useState((c as CampaignExt & { minVirality?: string }).minVirality || "medium");
   const [tightEdit, setTightEdit]           = useState((c as CampaignExt & { tightEdit?: boolean }).tightEdit !== false);
+  const [videoLayout, setVideoLayout]       = useState((c as CampaignExt & { videoLayout?: string }).videoLayout || "letterbox");
+  const [captionMode, setCaptionMode]       = useState((c as CampaignExt & { captionMode?: string }).captionMode || "lines");
+  const [captionPosition, setCaptionPosition] = useState((c as CampaignExt & { captionPosition?: string }).captionPosition || "auto");
+  const [watermarkText, setWatermarkText]   = useState((c as CampaignExt & { watermarkText?: string }).watermarkText || "");
   const [saving, setSaving]                 = useState(false);
   const [error, setError]                   = useState("");
 
@@ -55,6 +59,10 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
         subtitlesEnabled,
         minVirality,
         tightEdit,
+        videoLayout,
+        captionMode,
+        captionPosition,
+        watermarkText,
       };
       const res = await fetch(`/api/campaigns/${c.id}`, {
         method: "PATCH",
@@ -129,10 +137,10 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
           <div>
             <label className="text-xs font-bold text-[#64748B] block mb-2">CLIP LENGTH</label>
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm"
-              style={{ background: "#FFF5F5", border: "1px solid #FECACA", color: "#9B1C1C" }}>
+              style={{ background: "#EEF1F7", border: "1px solid #C9D3E6", color: "#22304F" }}>
               <span>✨</span>
               <span className="font-semibold">Auto</span>
-              <span className="text-[#7F1D1D]">— the AI picks the best length for each clip (no limits to set).</span>
+              <span className="text-[#1A2540]">— the AI picks the best length for each clip (no limits to set).</span>
             </div>
           </div>
 
@@ -141,14 +149,14 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
             <label className="text-xs font-bold text-[#64748B] block mb-2">AUTO SUBTITLES</label>
             <button type="button" onClick={() => setSubtitlesEnabled(v => !v)}
               className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all"
-              style={{ background: subtitlesEnabled ? "#FFF5F5" : "#F1F5F9", border: `1px solid ${subtitlesEnabled ? "#FECACA" : "#E2E8F0"}` }}>
+              style={{ background: subtitlesEnabled ? "#EEF1F7" : "#F1F5F9", border: `1px solid ${subtitlesEnabled ? "#C9D3E6" : "#E2E8F0"}` }}>
               <span className="text-left">
-                <span className="font-semibold" style={{ color: subtitlesEnabled ? "#9B1C1C" : "#64748B" }}>
+                <span className="font-semibold" style={{ color: subtitlesEnabled ? "#22304F" : "#64748B" }}>
                   {subtitlesEnabled ? "On — add animated captions" : "Off — no captions added"}
                 </span>
                 <span className="block text-[11px] text-[#94A3B8] mt-0.5">Turn OFF if the source footage already has its own subtitles (avoids double captions).</span>
               </span>
-              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: subtitlesEnabled ? "#9B1C1C" : "#CBD5E1" }}>
+              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: subtitlesEnabled ? "#22304F" : "#CBD5E1" }}>
                 <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: subtitlesEnabled ? "22px" : "2px" }} />
               </span>
             </button>
@@ -166,7 +174,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
                 <button key={opt.v} type="button" onClick={() => setMinVirality(opt.v)}
                   className="px-2 py-2.5 rounded-xl text-center transition-all"
                   style={minVirality === opt.v
-                    ? { background: "#9B1C1C", color: "#fff", border: "1px solid #9B1C1C" }
+                    ? { background: "#22304F", color: "#fff", border: "1px solid #22304F" }
                     : { background: "#fff", color: "#64748B", border: "1px solid #E2E8F0" }}>
                   <span className="block text-xs font-bold">{opt.label}</span>
                   <span className="block text-[10px] mt-0.5 opacity-80">{opt.desc}</span>
@@ -176,19 +184,113 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
             <p className="text-[11px] text-[#94A3B8] mt-1.5">&ldquo;Only high&rdquo; produces fewer clips but every one is a strong, view-worthy moment.</p>
           </div>
 
+          {/* ── Section: how the clips LOOK ── */}
+          <div className="flex items-center gap-3 pt-1">
+            <span className="text-[11px] font-extrabold tracking-wider text-[#22304F]">🎬 LOOK &amp; STYLE</span>
+            <span className="flex-1 h-px" style={{ background: "linear-gradient(to right, #C9D3E6, transparent)" }} />
+          </div>
+
+          {/* Frame layout */}
+          <div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">FRAME LAYOUT</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { v: "letterbox", label: "Letterbox", desc: "Clean black bars + title card" },
+                { v: "blur",  label: "Blur fill", desc: "Whole frame, premium" },
+                { v: "crop",  label: "Reframe",   desc: "Zoom + motion" },
+                { v: "split", label: "Gameplay",  desc: "Clip + game below" },
+              ] as const).map(opt => (
+                <button key={opt.v} type="button" onClick={() => setVideoLayout(opt.v)}
+                  className="px-2 py-2.5 rounded-xl text-center transition-all"
+                  style={videoLayout === opt.v
+                    ? { background: "#22304F", color: "#fff", border: "1px solid #22304F" }
+                    : { background: "#fff", color: "#64748B", border: "1px solid #E2E8F0" }}>
+                  <span className="block text-xs font-bold">{opt.label}</span>
+                  <span className="block text-[10px] mt-0.5 opacity-80">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#94A3B8] mt-1.5">
+              {videoLayout === "split"
+                ? "Needs a gameplay.mp4 in your Downloads folder — falls back to Blur fill if missing."
+                : videoLayout === "letterbox"
+                ? "Best for streams & screen-recordings — clean black bars, persistent title card up top."
+                : videoLayout === "blur"
+                ? "Best for low-res or horizontal footage — no cropped faces, no black bars."
+                : "Punch-in reframe with a slow Ken Burns motion."}
+            </p>
+          </div>
+
+          {/* Caption mode */}
+          <div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">CAPTION STYLE</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { v: "lines", label: "Lines",    desc: "A few words at a time" },
+                { v: "word",  label: "One Word", desc: "Karaoke, one word" },
+              ] as const).map(opt => (
+                <button key={opt.v} type="button" onClick={() => setCaptionMode(opt.v)}
+                  className="px-2 py-2.5 rounded-xl text-center transition-all"
+                  style={captionMode === opt.v
+                    ? { background: "#22304F", color: "#fff", border: "1px solid #22304F" }
+                    : { background: "#fff", color: "#64748B", border: "1px solid #E2E8F0" }}>
+                  <span className="block text-xs font-bold">{opt.label}</span>
+                  <span className="block text-[10px] mt-0.5 opacity-80">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Caption position */}
+          <div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">CAPTION POSITION</label>
+            <div className="grid grid-cols-4 gap-2">
+              {([
+                { v: "auto",   label: "Auto",   desc: "Best per layout" },
+                { v: "top",    label: "Top",    desc: "Upper third" },
+                { v: "middle", label: "Middle", desc: "Centered" },
+                { v: "bottom", label: "Bottom", desc: "Lower third" },
+              ] as const).map(opt => (
+                <button key={opt.v} type="button" onClick={() => setCaptionPosition(opt.v)}
+                  className="px-2 py-2.5 rounded-xl text-center transition-all"
+                  style={captionPosition === opt.v
+                    ? { background: "#22304F", color: "#fff", border: "1px solid #22304F" }
+                    : { background: "#fff", color: "#64748B", border: "1px solid #E2E8F0" }}>
+                  <span className="block text-xs font-bold">{opt.label}</span>
+                  <span className="block text-[10px] mt-0.5 opacity-80">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#94A3B8] mt-1.5">Auto sits captions in the middle for Blur fill and lower-third for Reframe/Gameplay.</p>
+          </div>
+
+          {/* Watermark */}
+          <div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">WATERMARK HANDLE</label>
+            <input
+              type="text"
+              value={watermarkText}
+              onChange={e => setWatermarkText(e.target.value)}
+              placeholder="@yourhandle (leave blank for none)"
+              className="w-full px-3 py-2.5 rounded-xl text-sm"
+              style={{ background: "#fff", color: "#0F172A", border: "1px solid #E2E8F0" }}
+            />
+            <p className="text-[11px] text-[#94A3B8] mt-1.5">Stamped small at the bottom of every clip — brands it and deters reposters.</p>
+          </div>
+
           {/* Tight edit toggle */}
           <div>
             <label className="text-xs font-bold text-[#64748B] block mb-2">TIGHT EDIT (fast pacing)</label>
             <button type="button" onClick={() => setTightEdit(v => !v)}
               className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all"
-              style={{ background: tightEdit ? "#FFF5F5" : "#F1F5F9", border: `1px solid ${tightEdit ? "#FECACA" : "#E2E8F0"}` }}>
+              style={{ background: tightEdit ? "#EEF1F7" : "#F1F5F9", border: `1px solid ${tightEdit ? "#C9D3E6" : "#E2E8F0"}` }}>
               <span className="text-left">
-                <span className="font-semibold" style={{ color: tightEdit ? "#9B1C1C" : "#64748B" }}>
+                <span className="font-semibold" style={{ color: tightEdit ? "#22304F" : "#64748B" }}>
                   {tightEdit ? "On — trim dead air for snappy pacing" : "Off — keep original pacing"}
                 </span>
                 <span className="block text-[11px] text-[#94A3B8] mt-0.5">Cuts silent pauses to boost retention. Safely skips music-heavy clips.</span>
               </span>
-              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: tightEdit ? "#9B1C1C" : "#CBD5E1" }}>
+              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: tightEdit ? "#22304F" : "#CBD5E1" }}>
                 <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: tightEdit ? "22px" : "2px" }} />
               </span>
             </button>
@@ -238,7 +340,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <label className="text-xs font-bold text-[#64748B]">EXTRA CONTEXT</label>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "#FFF5F5", color: "#9B1C1C", border: "1px solid #FECACA" }}>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "#EEF1F7", color: "#22304F", border: "1px solid #C9D3E6" }}>
                 Optional
               </span>
             </div>

@@ -28,8 +28,13 @@ model Campaign {
   extraContext        String           @default("")
   subtitlesEnabled    Boolean          @default(true)
   captionPresetId     String           @default("")
+  captionMode         String           @default("lines")    // lines | word — "One Word" karaoke mode
   minVirality         String           @default("medium")  // all | medium | high — drop clips below this
   tightEdit           Boolean          @default(true)       // trim dead air for tighter pacing
+  motionEnabled       Boolean          @default(true)       // Ken Burns push-in motion (crop layout)
+  videoLayout         String           @default("letterbox") // letterbox | blur | crop | split (gameplay)
+  captionPosition     String           @default("auto")     // auto | top | middle | bottom
+  watermarkText       String           @default("")         // @handle overlay; empty = none
   aspectRatio         String           @default("9:16")
   scheduleEnabled     Boolean          @default(false)
   scheduleFrequency   String?
@@ -138,4 +143,6 @@ model UserSettings {
   metaAppId          String @default("")
   metaAppSecret      String @default("")
   youtubeApiKey      String @default("")
+  higgsfieldKey      String @default("")
+  higgsfieldSecret   String @default("")
 }

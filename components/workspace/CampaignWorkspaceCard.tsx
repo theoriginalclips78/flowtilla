@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ChevronDown, ChevronUp, Play, CheckCircle, MoreHorizontal, Zap, Trash2, Pause, Image as ImageIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, Play, CheckCircle, MoreHorizontal, Zap, Trash2, Pause, Image as ImageIcon, Download } from "lucide-react";
 import { Campaign } from "@/store/campaignStore";
 import { toast } from "sonner";
 import AgentLogPanel, { LogLine } from "./AgentLogPanel";
@@ -24,6 +24,7 @@ interface Props {
   campaign: Campaign;
   sources: Source[];
   index?: number;
+  autoRun?: boolean;
   onRemove: (id: string) => void;
   onUpdate?: (updated: Campaign) => void;
 }
@@ -43,7 +44,7 @@ function now() {
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
 }
 
-export default function CampaignWorkspaceCard({ campaign, sources, onRemove, onUpdate }: Props) {
+export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRemove, onUpdate }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [status, setStatus] = useState<AgentStatus>("idle");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -136,11 +137,11 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove, onU
             return newClips.length ? [...prev, ...newClips] : prev;
           });
         }
-        if (data.status === "completed" || data.status === "error") {
+        if (data.status === "completed" || data.status === "error" || data.status === "blocked") {
           clearInterval(pollJobRef.current!);
           pollJobRef.current = null;
           if (data.status === "completed") setStatus("complete");
-          else setStatus("error");
+          else setStatus("error"); // "blocked" shows as error chip; the preflight log line explains why
         }
       } catch { /* ignore poll errors */ }
     }, 2000);
@@ -171,6 +172,17 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove, onU
       addLog({ time: now(), message: `❌ ${(err as Error).message}`, status: "error" });
     }
   };
+
+  // One-shot "Create & Start Clipping": auto-fire the run once when the card mounts
+  // with autoRun set (fresh campaigns already had their sources found during creation).
+  const autoRanRef = useRef(false);
+  useEffect(() => {
+    if (autoRun && !autoRanRef.current) {
+      autoRanRef.current = true;
+      handleRun();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun]);
 
   const handleAutoEditAll = async () => {
     if (status === "running") {
@@ -280,6 +292,14 @@ export default function CampaignWorkspaceCard({ campaign, sources, onRemove, onU
           >
             <Zap size={13} /> Auto Edit All
           </button>
+
+          {totalClips > 0 && (
+            <a href={`/api/campaigns/${campaign.id}/zip`} download
+              title="Download every clip as one zip"
+              className="flex items-center gap-1.5 bg-white text-[#0F1E3C] border border-gray-200 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-50">
+              <Download size={13} /> Download all
+            </a>
+          )}
 
           <div className="relative">
             <button

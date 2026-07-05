@@ -49,6 +49,8 @@ export const CAPTION_PRESETS: CaptionPreset[] = [
   { id: "pink-italic", label: "Pink Word Pop",    font: "Arial",                 fontSize: 60, bold: -1, italic: -1, upper: true,  primary: ass("FFFFFF"), highlight: ass("F4A6C0"), outline: ass("000000"), outlineW: 4, shadow: 1, back: ass("000000"), borderStyle: 1, wordsPerLine: 3, marginV: 230 },
   { id: "black-box",   label: "Black Box",        font: "Arial",                 fontSize: 56, bold: -1, italic: 0,  upper: false, primary: ass("FFFFFF"), highlight: ass("FFFFFF"), outline: ass("000000"), outlineW: 0, shadow: 0, back: ass("000000","BB"), borderStyle: 3, wordsPerLine: 3, marginV: 230 },
   { id: "purple-pop",  label: "Purple Word Pop",  font: "Arial",                 fontSize: 60, bold: -1, italic: 0,  upper: true,  primary: ass("FFFFFF"), highlight: ass("C9B6F5"), outline: ass("000000"), outlineW: 4, shadow: 1, back: ass("000000"), borderStyle: 1, wordsPerLine: 3, marginV: 230 },
+  { id: "light-box",   label: "Light Box",        font: "Arial",                 fontSize: 56, bold: -1, italic: 0,  upper: false, primary: ass("111111"), highlight: ass("111111"), outline: ass("FFFFFF"), outlineW: 0, shadow: 0, back: ass("F1F1F1","E6"), borderStyle: 3, wordsPerLine: 3, marginV: 230 },
+  { id: "blue-box",    label: "Blue Box",         font: "Arial",                 fontSize: 56, bold: -1, italic: 0,  upper: true,  primary: ass("FFFFFF"), highlight: ass("FFFFFF"), outline: ass("2E6BFF"), outlineW: 0, shadow: 0, back: ass("2E6BFF","CC"), borderStyle: 3, wordsPerLine: 3, marginV: 230 },
 ];
 
 export function presetById(id: string): CaptionPreset {
@@ -73,12 +75,26 @@ function esc(s: string): string {
  * spoken word is shown in the preset's highlight colour. Returns null if there
  * are no usable words in the time window.
  */
+// ASS numpad alignment + vertical margin for a caption position. marginV is measured
+// from the bottom for bottom alignment, from the top for top, and is centred for middle.
+export type CaptionPlacement = { alignment: number; marginV: number };
+export const CAPTION_PLACEMENTS: Record<"top" | "middle" | "bottom", CaptionPlacement> = {
+  top:    { alignment: 8, marginV: 230 },
+  middle: { alignment: 5, marginV: 0 },
+  bottom: { alignment: 2, marginV: 230 },
+};
+
 export function buildWordAss(
   allWords: Word[],
   offset: number,
   duration: number,
   preset: CaptionPreset,
+  wordsPerLineOverride?: number,   // "One Word" mode passes 1; default uses the preset
+  placement?: CaptionPlacement,    // caption vertical position; defaults to preset bottom
 ): string | null {
+  const wordsPerLine = Math.max(1, wordsPerLineOverride ?? preset.wordsPerLine);
+  const align = placement?.alignment ?? 2;
+  const marginV = placement?.marginV ?? preset.marginV;
   const raw = allWords
     .filter(w => w.end > offset && w.start < offset + duration && w.word)
     .map(w => ({
@@ -102,7 +118,7 @@ export function buildWordAss(
   if (ws.length === 0) return null;
 
   const lines: { words: typeof ws }[] = [];
-  for (let i = 0; i < ws.length; i += preset.wordsPerLine) lines.push({ words: ws.slice(i, i + preset.wordsPerLine) });
+  for (let i = 0; i < ws.length; i += wordsPerLine) lines.push({ words: ws.slice(i, i + wordsPerLine) });
 
   const header = `[Script Info]
 ScriptType: v4.00+
@@ -113,7 +129,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Main,${preset.font},${preset.fontSize},${preset.primary},${preset.primary},${preset.outline},${preset.back},${preset.bold},${preset.italic},0,0,100,100,0,0,${preset.borderStyle},${preset.outlineW},${preset.shadow},2,60,60,${preset.marginV},1
+Style: Main,${preset.font},${preset.fontSize},${preset.primary},${preset.primary},${preset.outline},${preset.back},${preset.bold},${preset.italic},0,0,100,100,0,0,${preset.borderStyle},${preset.outlineW},${preset.shadow},${align},60,60,${marginV},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`;
@@ -135,4 +151,61 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`
   }
   if (events.length === 0) return null;
   return `${header}\n${events.join("\n")}\n`;
+}
+
+// A rotating library of TITLE-CARD looks so clips vary instead of all looking identical.
+// Mix of "floating" outlined text (no box) and clean pills. Rendered via libass so every
+// one is bold, auto-wrapping, and per-line centred.
+export type TitleStyle = {
+  id: string;
+  font: string;
+  fontSize: number;
+  upper: boolean;
+  primary: string;   // ASS
+  outline: string;   // ASS
+  back: string;      // ASS (box fill when borderStyle 3)
+  borderStyle: number; // 1 = outline+shadow (floating), 3 = solid box (pill)
+  outlineW: number;
+  shadow: number;
+};
+
+export const TITLE_STYLES: TitleStyle[] = [
+  { id: "float-white", font: "Arial Black",           fontSize: 72, upper: false, primary: ass("FFFFFF"), outline: ass("000000"),         back: ass("000000"),      borderStyle: 1, outlineW: 5, shadow: 4 },
+  { id: "white-pill",  font: "Arial Black",           fontSize: 64, upper: false, primary: ass("151515"), outline: ass("FFFFFF"),         back: ass("FFFFFF"),      borderStyle: 3, outlineW: 14, shadow: 0 },
+  { id: "black-pill",  font: "Arial Black",           fontSize: 64, upper: false, primary: ass("FFFFFF"), outline: ass("000000"),         back: ass("000000","10"), borderStyle: 3, outlineW: 14, shadow: 0 },
+  { id: "float-caps",  font: "Arial Black",           fontSize: 64, upper: true,  primary: ass("FFFFFF"), outline: ass("000000"),         back: ass("000000"),      borderStyle: 1, outlineW: 6, shadow: 4 },
+  { id: "yellow-pop",  font: "Arial Black",           fontSize: 68, upper: false, primary: ass("FFE94A"), outline: ass("111111"),         back: ass("000000"),      borderStyle: 1, outlineW: 6, shadow: 4 },
+  { id: "comic-white", font: "Arial Rounded MT Bold", fontSize: 70, upper: false, primary: ass("FFFFFF"), outline: ass("000000"),         back: ass("000000"),      borderStyle: 1, outlineW: 9, shadow: 3 },
+];
+
+/**
+ * Build a persistent TITLE CARD (ASS). Auto-wraps so long titles never clip at the frame
+ * edges, bold and per-line centred. `variant` rotates the look across clips for variety;
+ * `topMargin` places it (higher for letterbox's black bar).
+ */
+export function buildTitleAss(title: string, duration: number, variant = 0, opts?: { topMargin?: number }): string | null {
+  const text = (title || "").trim().replace(/\s+/g, " ");
+  if (!text) return null;
+  const topMargin = opts?.topMargin ?? 240;
+  const st = TITLE_STYLES[((variant % TITLE_STYLES.length) + TITLE_STYLES.length) % TITLE_STYLES.length];
+  // strip ASS-control chars; emoji are dropped (libass renders them as tofu boxes)
+  let safe = text.replace(/[{}\\]/g, "")
+    .replace(/([\uD800-\uDBFF][\uDC00-\uDFFF])|[←-⇿⌀-➿⬀-⯿️]/g, "")
+    .replace(/\s+/g, " ").trim();
+  if (!safe) return null;
+  if (st.upper) safe = safe.toUpperCase();
+  const header = `[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Title,${st.font},${st.fontSize},${st.primary},${st.primary},${st.outline},${st.back},-1,0,0,0,100,100,0,0,${st.borderStyle},${st.outlineW},${st.shadow},8,90,90,${topMargin},1`;
+  const events = `[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,${toAssTime(duration)},Title,,0,0,0,,${safe}`;
+  return `${header}\n\n${events}\n`;
 }

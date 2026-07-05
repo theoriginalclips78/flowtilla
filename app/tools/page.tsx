@@ -41,7 +41,7 @@ export default function ToolsPage() {
               onClick={() => router.push(t.href)}
               className="panel p-5 flex items-center gap-4 text-left hover:border-red-300 hover:shadow-md transition-all hover:-translate-y-0.5"
             >
-              <div className="w-11 h-11 rounded-xl bg-[#FFF5F5] flex items-center justify-center flex-shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-[#EEF1F7] flex items-center justify-center flex-shrink-0">
                 <t.icon size={20} className="text-red-800" />
               </div>
               <div>
@@ -62,7 +62,7 @@ export default function ToolsPage() {
               key={t.label}
               className="panel p-5 flex flex-col gap-3 hover:border-red-300 hover:shadow-md hover:-translate-y-0.5 transition-all"
             >
-              <div className="w-10 h-10 rounded-xl bg-[#FFF5F5] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#EEF1F7] flex items-center justify-center">
                 <t.icon size={18} className="text-red-800" />
               </div>
               <div className="flex-1">

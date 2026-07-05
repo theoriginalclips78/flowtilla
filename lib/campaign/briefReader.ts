@@ -56,9 +56,44 @@ const SYSTEM_PROMPT = `You are a universal campaign brief parser for content cre
   "submissionProcess": "how to submit clips for payment"
 }
 
-CRITICAL for sourceUrls: Always try to populate this. If the brief mentions a creator handle like @davidfilterbuy and says to clip from their podcast/content on YouTube/TikTok/Instagram, generate the URLs for all mentioned platforms. Never return an empty sourceUrls array if handles are present.
+CRITICAL for sourceUrls: Always try to populate this. Include EVERY explicit video URL in the brief (YouTube, youtu.be, etc.). If the brief mentions a creator handle like @davidfilterbuy and says to clip from their content, also generate channel URLs for the mentioned platforms. Never return an empty sourceUrls array if URLs or handles are present. Cap at 40 URLs.
 
-If a field is not found, set it to null. Return ONLY the JSON.`;
+CRITICAL for rejectionReasons: capture EVERY reason a clip gets rejected or unpaid, including brief-specific bans (e.g. "no clips of [person]"), spelling/branding requirements (e.g. "auto-captions must spell the brand correctly"), effort rules ("no low-effort slop/bait", "no raw rips"), tone rules ("no negativity toward the brand or talent"), and content bans ("nothing political/controversial", "no other brand watermarks").
+
+For captionRules: capture the exact posting requirements — what the caption MUST mention, required tags/handles, and any per-platform difference (e.g. "X = tracking URL, all other platforms = @tag").
+
+Keep every string field concise (under ~400 chars) and output COMPACT minified JSON on a single line. If a field is not found, set it to null. Return ONLY the JSON.`;
+
+// Tolerant JSON extraction for the LLM's brief output. Handles markdown fences, trailing
+// commas, and — most importantly — responses truncated by the token limit, which it
+// salvages by balancing any unclosed strings/braces. Never throws the raw
+// "Expected double-quoted property name" error at the user.
+function closeTruncatedJson(s: string): string {
+  let t = s.replace(/,\s*"[^"]*"\s*:?\s*("(?:[^"\\]|\\[\s\S])*)?$/, ""); // drop a dangling trailing property
+  t = t.replace(/,\s*$/, "");
+  const stack: string[] = [];
+  let inStr = false, esc = false;
+  for (const ch of t) {
+    if (inStr) { if (esc) esc = false; else if (ch === "\\") esc = true; else if (ch === '"') inStr = false; continue; }
+    if (ch === '"') inStr = true;
+    else if (ch === "{" || ch === "[") stack.push(ch);
+    else if (ch === "}") { if (stack[stack.length - 1] === "{") stack.pop(); }
+    else if (ch === "]") { if (stack[stack.length - 1] === "[") stack.pop(); }
+  }
+  if (inStr) t += '"';
+  while (stack.length) { t += stack.pop() === "{" ? "}" : "]"; }
+  return t;
+}
+
+function parseBriefJson(raw: string): BriefData {
+  let s = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  const start = s.indexOf("{"), end = s.lastIndexOf("}");
+  if (start !== -1 && end > start) s = s.slice(start, end + 1);
+  const tryParse = (t: string): BriefData | null => { try { return JSON.parse(t) as BriefData; } catch { return null; } };
+  const candidates = [s, s.replace(/,(\s*[}\]])/g, "$1"), closeTruncatedJson(s)];
+  for (const c of candidates) { const d = tryParse(c); if (d) return d; }
+  throw new Error("Couldn't read this brief automatically. Try shortening it, or use the Quick Add tab.");
+}
 
 async function scrapeUrl(url: string): Promise<{ text: string; loginWall: boolean }> {
   try {
@@ -113,14 +148,13 @@ export async function readAnyBrief(
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const msg = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 2000,
+    max_tokens: 4096,
     system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: rawText.slice(0, 12000) }],
+    messages: [{ role: "user", content: rawText.slice(0, 16000) }],
   });
 
   const raw = (msg.content[0] as { type: string; text: string }).text;
-  const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
-  const data = JSON.parse(cleaned) as BriefData;
+  const data = parseBriefJson(raw);
 
   return { data, loginWall, rawText };
 }

@@ -9,8 +9,8 @@ import Navbar from "@/components/layout/Navbar";
 import BottomTabBar from "@/components/layout/BottomTabBar";
 
 export const metadata: Metadata = {
-  title: "FlowTilla — AI Video Clipping",
-  description: "AI-powered video clipping agent",
+  title: "Montview Clips — Precision Clips. Premium Results.",
+  description: "Montview Clipping Agency — AI-powered video clipping",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

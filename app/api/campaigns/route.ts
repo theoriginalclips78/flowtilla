@@ -18,6 +18,10 @@ export async function POST(req: NextRequest) {
     const campaign = await prisma.campaign.create({
       data: {
         ...campaignData,
+        // Default new campaigns to the premium look unless the UI specifies otherwise.
+        videoLayout: campaignData.videoLayout || "letterbox",
+        // Keep medium+ moments (drops only filler); the engine ranks high clips first.
+        minVirality: campaignData.minVirality || "medium",
         sources: {
           create: sources || [],
         },

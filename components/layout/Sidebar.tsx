@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Bot, Film, HardDrive, Wrench, Settings, Zap, BookOpen } from "lucide-react";
+import { LayoutDashboard, Bot, Film, HardDrive, Wrench, Settings, BookOpen } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -24,16 +24,18 @@ export default function Sidebar() {
         borderRight: "1px solid rgba(255,255,255,0.08)",
       }}
     >
-      {/* Logo */}
+      {/* Montview logo — mountain "M" in cream */}
       <Link
         href="/dashboard"
-        className="mb-8 w-10 h-10 rounded-2xl flex items-center justify-center"
-        style={{
-          background: "#9B1C1C",
-          boxShadow: "0 4px 14px rgba(155,28,28,0.45)",
-        }}
+        title="Montview Clips"
+        className="mb-8 w-11 h-11 rounded-2xl flex items-center justify-center"
+        style={{ background: "#1B2740", border: "1px solid rgba(245,240,230,0.14)" }}
       >
-        <Zap size={17} className="text-white" fill="white" />
+        <svg width="26" height="26" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+          <path d="M14 80 L34 26 L50 58 L66 26 L86 80"
+            stroke="#F5F0E6" strokeWidth="9" strokeLinejoin="round" strokeLinecap="round" fill="none" />
+          <path d="M46 40 L50 32 L54 40 Z" fill="#F5F0E6" />
+        </svg>
       </Link>
 
       {/* Nav */}
@@ -47,14 +49,14 @@ export default function Sidebar() {
               title={label}
               className="relative w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200"
               style={{
-                background: active ? "rgba(155,28,28,0.25)" : "transparent",
-                color: active ? "#FCA5A5" : "rgba(255,255,255,0.38)",
+                background: active ? "rgba(245,240,230,0.12)" : "transparent",
+                color: active ? "#F5F0E6" : "rgba(245,240,230,0.42)",
               }}
             >
               {active && (
                 <span
                   className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                  style={{ background: "#B91C1C", boxShadow: "0 0 8px rgba(185,28,28,0.7)" }}
+                  style={{ background: "#F5F0E6", boxShadow: "0 0 8px rgba(245,240,230,0.6)" }}
                 />
               )}
               <Icon size={20} />
@@ -79,7 +81,7 @@ export default function Sidebar() {
 
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
-          style={{ background: "#9B1C1C", boxShadow: "0 2px 8px rgba(155,28,28,0.4)" }}
+          style={{ background: "#22304F", boxShadow: "0 2px 8px rgba(155,28,28,0.4)" }}
         >
           A
         </div>

@@ -35,7 +35,7 @@ function ConnectedAccounts() {
     <div id="social" className="panel p-6">
       <div className="mb-4">
         <h2 className="font-semibold text-[#0F1E3C]">Connected Accounts</h2>
-        <p className="text-xs text-[#64748B] mt-0.5">Connect your social accounts to post clips directly from FlowTilla.</p>
+        <p className="text-xs text-[#64748B] mt-0.5">Connect your social accounts to post clips directly from Montview.</p>
       </div>
       <div className="h-px bg-[#E2E8F0] -mx-6 mb-4" />
       <div className="space-y-3">
@@ -72,13 +72,13 @@ function ConnectedAccounts() {
 }
 
 function AppCredentials() {
-  const [keys, setKeys] = useState({ tiktokClientKey: "", tiktokClientSecret: "", metaAppId: "", metaAppSecret: "", youtubeApiKey: "" });
+  const [keys, setKeys] = useState({ tiktokClientKey: "", tiktokClientSecret: "", metaAppId: "", metaAppSecret: "", youtubeApiKey: "", higgsfieldKey: "", higgsfieldSecret: "" });
   const [saved, setSaved] = useState(false);
   const [show, setShow] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch("/api/settings").then(r => r.json()).then(d => {
-      setKeys({ tiktokClientKey: d.tiktokClientKey || "", tiktokClientSecret: d.tiktokClientSecret || "", metaAppId: d.metaAppId || "", metaAppSecret: d.metaAppSecret || "", youtubeApiKey: d.youtubeApiKey || "" });
+      setKeys({ tiktokClientKey: d.tiktokClientKey || "", tiktokClientSecret: d.tiktokClientSecret || "", metaAppId: d.metaAppId || "", metaAppSecret: d.metaAppSecret || "", youtubeApiKey: d.youtubeApiKey || "", higgsfieldKey: d.higgsfieldKey || "", higgsfieldSecret: d.higgsfieldSecret || "" });
     });
   }, []);
 
@@ -170,6 +170,25 @@ function AppCredentials() {
         {field("API Key", "youtubeApiKey", "Paste YouTube Data API v3 key...")}
         <p className="text-[11px] text-[#94A3B8] mt-2">
           Google Cloud Console → Enable YouTube Data API v3 → Create API Key. Used for discovering creator videos.
+        </p>
+      </div>
+
+      {/* Higgsfield — AI thumbnails */}
+      <div className="mt-5 pt-5 border-t border-[#E2E8F0]">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-base">🖼️</span>
+          <p className="font-semibold text-sm text-[#0F1E3C]">Higgsfield (AI thumbnails)</p>
+          <a href="https://higgsfield.ai" target="_blank" rel="noopener noreferrer"
+            className="ml-auto text-[11px] text-[#22304F] hover:underline">
+            Get keys → higgsfield.ai
+          </a>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {field("API Key", "higgsfieldKey", "Paste Higgsfield API key...")}
+          {field("Secret", "higgsfieldSecret", "Paste Higgsfield secret...")}
+        </div>
+        <p className="text-[11px] text-[#94A3B8] mt-2">
+          Paste your key here — no need to touch any files. Once saved, Montview can generate AI cover thumbnails. Optional; face-frame covers already work without it.
         </p>
       </div>
     </div>
@@ -289,7 +308,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between mb-2 animate-fade-up delay-1">
         <div>
           <h1 className="text-2xl font-bold text-[#0F1E3C]">Settings</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Configure FlowTilla to work with your accounts and preferences</p>
+          <p className="text-sm text-[#64748B] mt-0.5">Configure Montview to work with your accounts and preferences</p>
         </div>
         <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2 disabled:opacity-50">
           {saving ? <Loader2 size={15} className="animate-spin" /> : saved ? <CheckCircle size={15} /> : <Save size={15} />}
@@ -325,7 +344,7 @@ export default function SettingsPage() {
               </div>
               <input type="range" min={15} max={180} step={15} value={settings.defaultLength}
                 onChange={(e) => patch("defaultLength", Number(e.target.value))}
-                className="w-full accent-[#9B1C1C]" />
+                className="w-full accent-[#22304F]" />
               <div className="flex justify-between text-[10px] text-[#94A3B8] mt-1">
                 <span>15s</span><span>30s</span><span>45s</span><span>60s</span><span>90s</span><span>2m</span><span>3m</span>
               </div>
@@ -338,7 +357,7 @@ export default function SettingsPage() {
                   <button key={opt.value} onClick={() => patch("defaultRatio", opt.value)}
                     className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all"
                     style={settings.defaultRatio === opt.value
-                      ? { background: "#FFF5F5", borderColor: "#9B1C1C", color: "#7F1D1D" }
+                      ? { background: "#EEF1F7", borderColor: "#22304F", color: "#1A2540" }
                       : { background: "#FFFFFF", borderColor: "#E2E8F0", color: "#64748B" }}>
                     {opt.label}
                     <span className="block text-[10px] font-normal opacity-70">{opt.desc}</span>
@@ -373,7 +392,7 @@ export default function SettingsPage() {
               </div>
               <input type="range" min={3} max={25} step={1} value={settings.maxClipsPerVideo}
                 onChange={(e) => patch("maxClipsPerVideo", Number(e.target.value))}
-                className="w-full accent-[#9B1C1C]" />
+                className="w-full accent-[#22304F]" />
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-[#E2E8F0]">
@@ -383,7 +402,7 @@ export default function SettingsPage() {
               </div>
               <button onClick={() => patch("autoEdit", !settings.autoEdit)}
                 className="w-11 h-6 rounded-full transition-colors relative flex-shrink-0"
-                style={{ background: settings.autoEdit ? "#9B1C1C" : "#E2E8F0" }}>
+                style={{ background: settings.autoEdit ? "#22304F" : "#E2E8F0" }}>
                 <div className="w-4 h-4 bg-white rounded-full absolute top-1 transition-all shadow-sm"
                   style={{ left: settings.autoEdit ? "22px" : "2px" }} />
               </button>

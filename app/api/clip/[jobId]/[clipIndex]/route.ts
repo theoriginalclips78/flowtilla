@@ -4,13 +4,14 @@ import { createReadStream, statSync } from "fs";
 import path from "path";
 import { Readable } from "stream";
 import { ReadableStream as WebReadableStream } from "stream/web";
+import { WORK_DIR } from "@/lib/workdir";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { jobId: string; clipIndex: string } }
 ) {
   const { jobId, clipIndex } = params;
-  const filePath = path.join("/tmp/clipflow", jobId, "clips", `clip-${clipIndex}.mp4`);
+  const filePath = path.join(WORK_DIR, jobId, "clips", `clip-${clipIndex}.mp4`);
 
   let stat: ReturnType<typeof statSync>;
   try {

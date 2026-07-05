@@ -16,6 +16,7 @@ interface Source {
 interface WorkspaceEntry {
   campaign: Campaign;
   sources: Source[];
+  autoStart?: boolean;
 }
 
 interface ReadResult {
@@ -50,9 +51,9 @@ export default function AgentPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAdd = (result: ReadResult) => {
+  const handleAdd = (result: ReadResult, autoStart?: boolean) => {
     addCampaign(result.campaign);
-    setEntries((prev) => [...prev, { campaign: result.campaign, sources: [] }]);
+    setEntries((prev) => [...prev, { campaign: result.campaign, sources: [], autoStart: !!autoStart }]);
     setActiveTab(entries.length);
   };
 
@@ -153,6 +154,7 @@ export default function AgentPage() {
               <CampaignWorkspaceCard
                 campaign={entry.campaign}
                 sources={entry.sources}
+                autoRun={entry.autoStart}
                 onRemove={handleRemove}
                 onUpdate={(updated) => setEntries(prev => prev.map(e => e.campaign.id === updated.id ? { ...e, campaign: updated } : e))}
               />

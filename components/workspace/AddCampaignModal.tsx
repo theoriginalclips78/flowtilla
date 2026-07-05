@@ -13,7 +13,7 @@ interface ReadResult {
 }
 
 interface Props {
-  onAdd: (result: ReadResult) => void;
+  onAdd: (result: ReadResult, autoStart?: boolean) => void;
   onClose: () => void;
 }
 
@@ -181,6 +181,13 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
   const handleAdd = () => {
     if (!preview) return;
     onAdd(preview);
+    onClose();
+  };
+
+  // One-shot: add the campaign AND immediately kick off clipping.
+  const handleAddAndRun = () => {
+    if (!preview) return;
+    onAdd(preview, true);
     onClose();
   };
 
@@ -400,9 +407,13 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                   </div>
                 )}
 
+                <button onClick={handleAddAndRun}
+                  className="btn-blue w-full justify-center !py-3 !text-base mt-2">
+                  🚀 Create &amp; Start Clipping
+                </button>
                 <button onClick={handleAdd}
-                  className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] transition-colors mt-2">
-                  Add to Workspace
+                  className="w-full text-[#6B7280] font-medium py-2 rounded-xl hover:bg-gray-50 transition-colors text-sm">
+                  Just add it — I&apos;ll run it later
                 </button>
               </div>
             </div>

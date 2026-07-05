@@ -11,10 +11,10 @@ const AVATAR_DIR = "/tmp/clipflow/avatars";
 
 // A curated palette so every campaign gets a distinct but tasteful colour.
 const PALETTE = [
-  ["#9B1C1C", "#6E1212"], // maroon
+  ["#22304F", "#6E1212"], // maroon
   ["#1E3A8A", "#0F1E3C"], // navy
   ["#047857", "#064E3B"], // emerald
-  ["#7C3AED", "#4C1D95"], // violet
+  ["#22304F", "#4C1D95"], // violet
   ["#B45309", "#7C2D12"], // amber/burnt
   ["#0E7490", "#083344"], // teal
   ["#BE185D", "#831843"], // pink
@@ -69,7 +69,7 @@ export async function GET(_req: NextRequest, { params }: { params: { campaignId:
         // initials
         `drawtext=fontfile=${FONT}:text='${text}':fontsize=440:fontcolor=white:borderw=0:x=(w-text_w)/2:y=(h-text_h)/2-30:shadowcolor=black@0.25:shadowx=0:shadowy=8`,
         // small brand wordmark at the bottom
-        `drawtext=fontfile=${FONT}:text='FLOWTILLA':fontsize=34:fontcolor=white@0.55:x=(w-text_w)/2:y=h-120`,
+        `drawtext=fontfile=${FONT}:text='MONTVIEW':fontsize=34:fontcolor=white@0.55:x=(w-text_w)/2:y=h-120`,
       ].join(","),
       "-frames:v", "1", "-update", "1", outPath,
     ]);

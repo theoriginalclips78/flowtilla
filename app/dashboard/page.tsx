@@ -69,7 +69,7 @@ export default function DashboardPage() {
             </div>
           ) : recentClips.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
-              <div className="w-12 h-12 rounded-full bg-[#FFF5F5] flex items-center justify-center mb-1">
+              <div className="w-12 h-12 rounded-full bg-[#EEF1F7] flex items-center justify-center mb-1">
                 <Film size={22} className="text-red-600" />
               </div>
               <p className="text-sm font-medium text-[#0F1E3C]">No clips yet</p>
@@ -112,7 +112,7 @@ export default function DashboardPage() {
             </div>
           ) : campaigns.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
-              <div className="w-12 h-12 rounded-full bg-[#FFF5F5] flex items-center justify-center mb-1">
+              <div className="w-12 h-12 rounded-full bg-[#EEF1F7] flex items-center justify-center mb-1">
                 <Play size={22} className="text-red-600 ml-0.5" />
               </div>
               <p className="text-sm font-medium text-[#0F1E3C]">No campaigns yet</p>
@@ -125,14 +125,14 @@ export default function DashboardPage() {
                 const approved = campClips.filter(cl => cl.status === "approved").length;
                 const pending = campClips.filter(cl => cl.status === "pending").length;
                 return (
-                  <Link href="/agent" key={c.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#FFF5F5] transition-colors group">
+                  <Link href="/agent" key={c.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#EEF1F7] transition-colors group">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                        style={{ background: "#9B1C1C" }}>
+                        style={{ background: "#22304F" }}>
                         {c.name[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#0F1E3C] group-hover:text-[#9B1C1C] transition-colors">{c.name}</p>
+                        <p className="text-sm font-semibold text-[#0F1E3C] group-hover:text-[#22304F] transition-colors">{c.name}</p>
                         <p className="text-[10px] text-[#94A3B8]">{campClips.length} clips · {approved} approved · {pending} pending</p>
                       </div>
                     </div>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
   return (
     <div className="panel p-6">
-      <div className="w-10 h-10 rounded-xl bg-[#FFF5F5] flex items-center justify-center mb-3">
+      <div className="w-10 h-10 rounded-xl bg-[#EEF1F7] flex items-center justify-center mb-3">
         {icon}
       </div>
       <p className="text-[#64748B] text-xs uppercase tracking-wider font-medium">{label}</p>

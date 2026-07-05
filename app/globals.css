@@ -2,15 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Design tokens — Clean Minimal Light ── */
+/* ── Design tokens — Montview (navy + cream) ── */
 :root {
   --navy:          #18181B;   /* near-black for primary actions */
   --navy-light:    #27272A;
   --navy-muted:    #3F3F46;
-  --red:           #9B1C1C;   /* maroon accent */
-  --red-light:     #B91C1C;
-  --red-pale:      #FCF4F4;
-  --cream:         #FBFBFD;   /* crisp off-white app background */
+  --red:           #22304F;   /* violet accent (brand) */
+  --red-light:     #34456B;
+  --red-pale:      #EEF1F7;
+  --accent-2:      #22304F;   /* fuchsia — gradient partner */
+  --accent-grad:   linear-gradient(120deg, #22304F 0%, #2C3E63 48%, #22304F 100%);
+  --cream:         #F7F3EA;   /* Montview warm cream */
   --cream-dark:    #F4F4F6;
   --border:        #ECEDF1;   /* hairline borders */
   --border-dark:   #DDDFE5;
@@ -28,15 +30,16 @@ body {
   letter-spacing: -0.011em;
 }
 
-/* refined type rhythm */
-h1, h2, h3 { letter-spacing: -0.025em; }
-h1 { font-weight: 700; }
+/* refined type rhythm — bolder, punchier */
+h1, h2, h3 { letter-spacing: -0.03em; }
+h1 { font-weight: 800; }
+h2 { font-weight: 700; }
 
-/* ── Background — airy with a whisper of depth ── */
+/* ── Background — energetic dual-tone creator glow ── */
 .bg-studio {
   background:
-    radial-gradient(1200px 600px at 100% -5%, rgba(155,28,28,0.035), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgba(24,24,27,0.025), transparent 55%),
+    radial-gradient(1100px 620px at 100% -8%, rgba(34,48,79,0.10), transparent 58%),
+    radial-gradient(950px 560px at -8% 108%, rgba(34,48,79,0.08), transparent 55%),
     var(--cream);
 }
 
@@ -58,10 +61,13 @@ h1 { font-weight: 700; }
     0 2px 8px -4px rgba(24,24,27,0.06);
 }
 
-/* ── Accent text ── */
+/* ── Accent text — bold gradient wordmark ── */
 .grad-text {
-  color: var(--red);
-  -webkit-text-fill-color: var(--red);
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ── Buttons ── */
@@ -91,12 +97,12 @@ h1 { font-weight: 700; }
 
 .btn-blue {
   @apply flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold text-white transition-all duration-200;
-  background: linear-gradient(180deg, #B91C1C 0%, #9B1C1C 100%);
-  box-shadow: 0 1px 2px rgba(155,28,28,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
+  background: linear-gradient(120deg, #22304F 0%, #2C3E63 50%, #22304F 100%);
+  box-shadow: 0 2px 10px -2px rgba(34,48,79,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .btn-blue:hover {
-  background: linear-gradient(180deg, #C92626 0%, #A81E1E 100%);
-  box-shadow: 0 8px 20px -8px rgba(155,28,28,0.55), inset 0 1px 0 rgba(255,255,255,0.15);
+  background: linear-gradient(120deg, #2A3A63 0%, #34456B 50%, #2A3A63 100%);
+  box-shadow: 0 12px 28px -8px rgba(26,37,64,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
   transform: translateY(-1px);
 }
 
@@ -121,7 +127,7 @@ h1 { font-weight: 700; }
 .glass-input::placeholder { color: var(--text-light); }
 .glass-input:focus {
   border-color: var(--red);
-  box-shadow: 0 0 0 3px rgba(155,28,28,0.10);
+  box-shadow: 0 0 0 3px rgba(34,48,79,0.10);
 }
 select.glass-input option { background: #FFFFFF; color: var(--text); }
 
@@ -142,7 +148,7 @@ select.glass-input option { background: #FFFFFF; color: var(--text); }
 
 /* ── Glow ring ── */
 .glow-ring {
-  box-shadow: 0 0 0 3px rgba(155,28,28,0.12);
+  box-shadow: 0 0 0 3px rgba(34,48,79,0.12);
 }
 
 /* ── Animations ── */
