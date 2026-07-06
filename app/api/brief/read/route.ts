@@ -45,6 +45,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // If the user also uploaded a folder of footage, attach it as a local source so the
+    // parsed brief + the downloaded clips become ONE campaign.
+    const localFolder: string = typeof body.localFolder === "string" ? body.localFolder.trim() : "";
+    if (localFolder) {
+      await prisma.campaignSource.create({
+        data: { campaignId: campaign.id, platform: "local", url: localFolder },
+      });
+    }
+
     // Save source URLs as CampaignSource rows
     const sourceUrls = data.sourceUrls || [];
     for (const url of sourceUrls) {

@@ -42,6 +42,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
   const [preview, setPreview] = useState<ReadResult | null>(null);
   const [error, setError] = useState("");
   const [loginWall, setLoginWall] = useState(false);
+  const [briefFile, setBriefFile] = useState<File | null>(null);
 
   // Upload a folder of downloaded footage → save on the server → local-footage campaign.
   // Update the text of the most-recent step (used for upload progress).
@@ -69,6 +70,29 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
         setLastStep(`⬆️ Uploading ${i + 1}/${vids.length}...`);
       }
       completeStep();
+
+      // If a brief file was attached, parse it and create the campaign WITH the footage.
+      if (briefFile) {
+        addStep("📄 Reading brief file...");
+        const bf = new FormData(); bf.append("file", briefFile);
+        const ex = await fetch("/api/brief/extract", { method: "POST", body: bf });
+        const exd = await ex.json();
+        if (!ex.ok) throw new Error(exd.error || "Couldn't read the brief file");
+        completeStep();
+        addStep("🤖 Parsing brief + attaching footage...");
+        const rd = await fetch("/api/brief/read", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rawText: exd.text, localFolder: folderPath }),
+        });
+        const rdData = await rd.json();
+        if (!rd.ok) throw new Error(rdData.error || "Couldn't parse the brief");
+        completeStep();
+        addStep(`✅ Ready — brief + ${vids.length} clip${vids.length !== 1 ? "s" : ""}`);
+        completeStep();
+        setPreview({ campaign: rdData.campaign, briefData: rdData.briefData, videoCount: vids.length, breakdown: [] });
+        setLoading(false);
+        return;
+      }
 
       addStep("📁 Creating campaign...");
       const res = await fetch("/api/campaigns", {
@@ -345,6 +369,17 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                 <Upload size={22} className="text-[#C0392B] mb-2" />
                 <div className="text-sm font-bold text-[#111827]">Upload a folder of clips</div>
                 <div className="text-[11px] text-[#94A3B8] mt-1">Click to choose a downloaded folder (or drag files in) — it clips every video inside.</div>
+              </label>
+
+              {/* Optional: attach the campaign brief so it parses the rules too */}
+              <label className="flex items-center justify-between gap-2 border border-gray-200 rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                <span className="text-[#6B7280] truncate flex items-center gap-2">
+                  <FileText size={14} className="shrink-0 text-[#94A3B8]" />
+                  {briefFile ? briefFile.name : "Attach a brief (PDF) — optional, reads the rules"}
+                </span>
+                <input type="file" accept=".pdf,.txt,.md,.rtf" className="hidden"
+                  onChange={(e) => setBriefFile(e.target.files?.[0] || null)} />
+                <span className="text-[#C0392B] font-semibold text-xs shrink-0">{briefFile ? "Change" : "Attach"}</span>
               </label>
 
               <div className="flex items-center gap-3 text-[11px] text-[#94A3B8]">
