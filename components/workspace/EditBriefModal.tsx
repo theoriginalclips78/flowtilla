@@ -34,6 +34,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
   const [captionMode, setCaptionMode]       = useState((c as CampaignExt & { captionMode?: string }).captionMode || "lines");
   const [captionPosition, setCaptionPosition] = useState((c as CampaignExt & { captionPosition?: string }).captionPosition || "auto");
   const [watermarkText, setWatermarkText]   = useState((c as CampaignExt & { watermarkText?: string }).watermarkText || "");
+  const [bottomBanner, setBottomBanner]     = useState((c as CampaignExt & { bottomBanner?: string }).bottomBanner || "");
   const [saving, setSaving]                 = useState(false);
   const [error, setError]                   = useState("");
 
@@ -63,6 +64,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
         captionMode,
         captionPosition,
         watermarkText,
+        bottomBanner,
       };
       const res = await fetch(`/api/campaigns/${c.id}`, {
         method: "PATCH",
@@ -276,6 +278,20 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
               style={{ background: "#fff", color: "#0F172A", border: "1px solid #E2E8F0" }}
             />
             <p className="text-[11px] text-[#94A3B8] mt-1.5">Stamped small at the bottom of every clip — brands it and deters reposters.</p>
+          </div>
+
+          {/* Bottom brand banner */}
+          <div>
+            <label className="text-xs font-bold text-[#64748B] block mb-2">BOTTOM BRAND BANNER</label>
+            <input
+              type="text"
+              value={bottomBanner}
+              onChange={e => setBottomBanner(e.target.value)}
+              placeholder="e.g. SEEDANCE 2.0 ON HIGGSFIELD (leave blank for none)"
+              className="w-full px-3 py-2.5 rounded-xl text-sm"
+              style={{ background: "#fff", color: "#0F172A", border: "1px solid #E2E8F0" }}
+            />
+            <p className="text-[11px] text-[#94A3B8] mt-1.5">Big persistent CTA banner pinned to the bottom — the <b>last word turns lime green</b>. This is the format the top-performing branded clips use.</p>
           </div>
 
           {/* Tight edit toggle */}

@@ -35,6 +35,7 @@ model Campaign {
   videoLayout         String           @default("letterbox") // letterbox | blur | crop | split (gameplay)
   captionPosition     String           @default("auto")     // auto | top | middle | bottom
   watermarkText       String           @default("")         // @handle overlay; empty = none
+  bottomBanner        String           @default("")         // persistent brand CTA banner (last word highlighted); empty = none
   aspectRatio         String           @default("9:16")
   scheduleEnabled     Boolean          @default(false)
   scheduleFrequency   String?

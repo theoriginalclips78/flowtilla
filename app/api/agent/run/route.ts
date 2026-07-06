@@ -11,6 +11,7 @@ import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
 import { CAPTION_PRESETS, presetById, buildWordAss, buildTitleAss, CAPTION_PLACEMENTS, type CaptionPlacement } from "@/lib/editor/captionStyles";
+import { renderOverlay, closeOverlayBrowser } from "@/lib/editor/overlayRender";
 import { WORK_DIR } from "@/lib/workdir";
 
 const CONCURRENCY = 1; // sequential: finish all clips from one video before moving to next
@@ -652,19 +653,25 @@ function layoutBase(layout: Layout, style: ClipStyle, variant: number, motion: b
 
 // Chain post filters (subtitles, hook) onto the [vbase] node and append the
 // audio chain, yielding a complete filter_complex + the -map labels.
-function assembleGraph(base: string, post: string[], withAudio: boolean): { graph: string; maps: string[] } {
+function assembleGraph(base: string, post: string[], withAudio: boolean, overlayPng?: string): { graph: string; maps: string[] } {
   let videoGraph: string;
+  // When a Chrome-rendered overlay PNG (hook + banner + emoji) is present, the post chain
+  // ends in [vpre] and we composite the overlay on top via the `movie` source filter.
+  const finalLabel = overlayPng ? "[vpre]" : "[v]";
   if (post.length === 0) {
-    videoGraph = base.replace(/\[vbase\]$/, "[v]");
+    videoGraph = base.replace(/\[vbase\]$/, finalLabel);
   } else {
     const parts = [base];
     let label = "vbase";
     post.forEach((f, i) => {
-      const out = i === post.length - 1 ? "[v]" : `[p${i}]`;
+      const out = i === post.length - 1 ? finalLabel : `[p${i}]`;
       parts.push(`[${label}]${f}${out}`);
       label = `p${i}`;
     });
     videoGraph = parts.join(";");
+  }
+  if (overlayPng) {
+    videoGraph += `;movie=${overlayPng}[ovl];[vpre][ovl]overlay=0:0[v]`;
   }
   if (withAudio) {
     return { graph: `${videoGraph};[0:a]dynaudnorm=f=150:g=15[a]`, maps: ["-map", "[v]", "-map", "[a]"] };
@@ -685,6 +692,7 @@ async function cutClip(
   captionMode: "lines" | "word" = "lines",
   captionPosition: "auto" | "top" | "middle" | "bottom" = "auto",
   watermarkText: string = "",
+  bottomBanner: string = "",
 ): Promise<void> {
   const style = CLIP_STYLES[variant % CLIP_STYLES.length];
 
@@ -706,17 +714,34 @@ async function cutClip(
   // AUTO-WRAPS (long titles used to clip at the frame edges). For letterbox it sits in
   // the top black bar; for other layouts near the top of the frame. Non-letterbox also
   // keeps the animated 4s drawtext hook as a fallback if the title card can't be built.
-  const titleTop = layout === "letterbox" ? 240 : 150;
+  const titleTop = layout === "letterbox" ? 210 : 150;
+
+  // PRIMARY TITLE PATH: a Chrome-rendered overlay PNG (hook + optional brand banner) so we
+  // get COLOUR EMOJI, a lime-highlighted brand word, and pixel-perfect styling. Composited
+  // as a persistent layer. Falls back to the libass/drawtext title if Chrome fails.
+  const overlayPngPath = outPath.replace(".mp4", ".overlay.png");
+  const overlayOk = await renderOverlay(
+    {
+      hook: title, variant, topMargin: titleTop,
+      banner: bottomBanner.trim() || undefined,
+      bannerKicker: bottomBanner.trim() ? "CREATE VIRAL 4K AI VIDEOS" : undefined,
+    },
+    overlayPngPath,
+  );
+
   const titleAss = buildTitleAss(title, duration, variant, { topMargin: titleTop });
   const hookY = Math.round(1920 * 0.16);
   const hookDraw = `drawtext=fontfile=${FONT}:text='${safeTitle}':fontsize=58:fontcolor=${style.hookColor}:borderw=3:bordercolor=black:x=(w-text_w)/2:y=${hookY}:box=1:boxcolor=${style.hookBox}:boxborderw=20:enable='lt(t,4)'`;
-  // Prefer the wrapped title card; fall back to the drawtext hook.
+  // libass title fallback (used only when the overlay didn't render).
   let titleFilter = hookDraw;
   if (titleAss) {
     const titleAssPath = outPath.replace(".mp4", ".title.ass");
     writeFileSync(titleAssPath, titleAss, "utf8");
     titleFilter = `subtitles=${titleAssPath}`;
   }
+  // When the overlay handles the hook, it's not a post filter — it's composited last.
+  const titlePost = overlayOk ? [] : [titleFilter];
+  const overlayArg = overlayOk ? overlayPngPath : undefined;
 
   // WATERMARK (automated): small, semi-transparent @handle pinned near the bottom edge for
   // the whole clip — brands the clip and deters reposters. Only added when a handle is set.
@@ -729,7 +754,7 @@ async function cutClip(
 
   // Render with a given list of post filters; toggles audio off for the source-has-no-audio retry.
   const render = (post: string[], withAudio = true) => {
-    const { graph, maps } = assembleGraph(base, post, withAudio);
+    const { graph, maps } = assembleGraph(base, post, withAudio, overlayArg);
     return ffmpegRun([
       "-ss", String(startTime), "-i", srcPath, ...inputs, "-t", String(duration),
       "-filter_complex", graph, ...maps,
@@ -744,7 +769,7 @@ async function cutClip(
   if (assContent) {
     const assPath = outPath.replace(".mp4", ".ass");
     writeFileSync(assPath, assContent, "utf8");
-    try { await render([`subtitles=${assPath}`, titleFilter, ...extra]); return; } catch { /* fall back to SRT */ }
+    try { await render([`subtitles=${assPath}`, ...titlePost, ...extra]); return; } catch { /* fall back to SRT */ }
   }
 
   // Fallback subtitle path: plain SRT from sentence-level transcript.
@@ -755,12 +780,12 @@ async function cutClip(
 
   // Attempt 1: layout + SRT subtitles + hook + watermark
   if (srtContent) {
-    try { await render([`subtitles=${srtPath}:force_style='${subStyle}'`, titleFilter, ...extra]); return; } catch { /* try next */ }
+    try { await render([`subtitles=${srtPath}:force_style='${subStyle}'`, ...titlePost, ...extra]); return; } catch { /* try next */ }
   }
   // Attempt 2: layout + title + watermark
-  try { await render([titleFilter, ...extra]); return; } catch { /* try next */ }
-  // Attempt 2b: drawtext hook fallback (if the title-card ASS itself failed)
-  if (titleFilter !== hookDraw) { try { await render([hookDraw, ...extra]); return; } catch { /* try next */ } }
+  try { await render([...titlePost, ...extra]); return; } catch { /* try next */ }
+  // Attempt 2b: drawtext hook fallback (if the overlay AND libass title both failed)
+  if (!overlayOk && titleFilter !== hookDraw) { try { await render([hookDraw, ...extra]); return; } catch { /* try next */ } }
   // Attempt 3: layout + watermark only
   try { await render([...extra]); return; } catch { /* try next */ }
   // Attempt 4: layout only, no audio (source may have no audio stream)
@@ -938,7 +963,7 @@ NEVER use a STORY-SETUP opener ("Let me tell you about the time...", "So basical
 
 Rules: ${campaign.contentRules || "feel authentic and organic"}. Target platforms: ${campaign.platforms || "tiktok,instagram,youtube"}.
 
-Keep "reason" under 12 words. "caption": ORIGINAL organic line under 100 chars that people actually type — include 1-3 RELEVANT emojis (e.g. 🤯🔥😳🏠) to boost engagement, plus 2-4 fitting hashtags. NOT the title, NOT promotional. (The "hook"/on-screen title stays clean text — no emojis there.) Rank STRICTLY by scroll-stopping power, best first — only include genuinely good moments (it's fine to return fewer than 8 if the video only has a few).
+Keep "reason" under 12 words. "caption": ORIGINAL organic line under 100 chars that people actually type — include 1-3 RELEVANT emojis (e.g. 🤯🔥😳🏠) to boost engagement, plus 2-4 fitting hashtags. NOT the title, NOT promotional. The "hook" (on-screen text) may end with 1 well-chosen emoji if it genuinely adds punch (e.g. 🤯🔥😳) — keep it clean and readable, never more than one. Rank STRICTLY by scroll-stopping power, best first — only include genuinely good moments (it's fine to return fewer than 8 if the video only has a few).
 
 Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips.`,
       messages: [{ role: "user", content: `Video: "${videoTitle}" (${videoDuration}s)\n\nWhat to look for: ${campaign.aiInstructions || "high-energy, funny, emotional, impressive, or quotable moments"}\n\nTranscript:\n${transcriptText.slice(0, 8000)}\n\nReturn the best self-contained scroll-stopping moments (8-25s ideal, never >45s). Each: {start_time, end_time, title, reason, virality_score, hook, caption, platform_fit}${(campaign as Record<string,unknown>).extraContext ? `\n\nContext:\n${String((campaign as Record<string,unknown>).extraContext).slice(0,400)}` : ""}` }],
@@ -1050,7 +1075,8 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     const rawPos = String((campaign as Record<string,unknown>).captionPosition || "auto");
     const captionPosition = (["top","middle","bottom"].includes(rawPos) ? rawPos : "auto") as "auto"|"top"|"middle"|"bottom";
     const watermarkText = String((campaign as Record<string,unknown>).watermarkText || "").trim();
-    await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, i, useWords, presetId, motionOn, layout, captionMode, captionPosition, watermarkText);
+    const bottomBanner = String((campaign as Record<string,unknown>).bottomBanner || "").trim();
+    await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, i, useWords, presetId, motionOn, layout, captionMode, captionPosition, watermarkText, bottomBanner);
 
     // Tighten pacing — trim dead air for a faster, more retentive edit. Safely
     // no-ops on music-heavy clips. Only swap in the tightened file if it succeeded.
@@ -1229,6 +1255,8 @@ export async function POST(req: NextRequest) {
       const msg = err instanceof Error ? err.message : String(err);
       void dbLog({ step: "error", status: "error", message: `❌ ${msg}` });
       await prisma.agentJob.update({ where: { id: job.id }, data: { status: "error" } }).catch(() => {});
+    } finally {
+      await closeOverlayBrowser().catch(() => {});   // free the shared Chrome instance
     }
   })();
 
