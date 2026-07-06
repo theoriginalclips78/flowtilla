@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Loader2, CheckCircle, AlertTriangle, Globe, FileText, Zap } from "lucide-react";
+import { X, Loader2, CheckCircle, AlertTriangle, Globe, FileText, Zap, Upload } from "lucide-react";
 import { Campaign } from "@/store/campaignStore";
 import { BriefData } from "@/lib/campaign/briefReader";
 
@@ -42,6 +42,43 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
   const [preview, setPreview] = useState<ReadResult | null>(null);
   const [error, setError] = useState("");
   const [loginWall, setLoginWall] = useState(false);
+
+  // Upload a folder of downloaded footage → save on the server → local-footage campaign.
+  const handleUpload = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    const vids = Array.from(fileList).filter(f => /\.(mp4|mov|webm|mkv|m4v)$/i.test(f.name));
+    if (vids.length === 0) { setError("No video files found in that folder (need .mp4/.mov/.webm)."); return; }
+    setLoading(true); setError(""); setPreview(null); setSteps([]);
+    try {
+      addStep(`⬆️ Uploading ${vids.length} video${vids.length !== 1 ? "s" : ""}...`);
+      const fd = new FormData();
+      vids.forEach(f => fd.append("files", f));
+      const up = await fetch("/api/upload", { method: "POST", body: fd });
+      const upData = await up.json();
+      if (!up.ok) throw new Error(upData.error || "Upload failed");
+      completeStep();
+      addStep("📁 Creating campaign...");
+      const res = await fetch("/api/campaigns", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `Uploaded Footage — ${new Date().toLocaleDateString()}`,
+          cpm: 1, maxPerClip: 0, minPayout: 0, platforms: "tiktok,instagram,youtube",
+          aiInstructions: "Clip the uploaded footage into short, punchy edits with a strong hook.",
+          videoLayout: "letterbox",
+          sources: [{ platform: "local", url: upData.path }],
+        }),
+      });
+      const c = await res.json();
+      if (!res.ok) throw new Error(c.error || "Failed to create campaign");
+      completeStep();
+      addStep(`✅ Ready — ${upData.count} clip${upData.count !== 1 ? "s" : ""} uploaded`);
+      completeStep();
+      setPreview({ campaign: c, briefData: {} as ReadResult["briefData"], videoCount: upData.count, breakdown: [] });
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    }
+    setLoading(false);
+  };
 
   // Quick add form
   const [quickBrand, setQuickBrand] = useState("");
@@ -282,13 +319,29 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
           {/* URL Tab */}
           {tab === "url" && (
             <div className="space-y-3">
+              {/* Upload folder — the easy path for "use only our footage" campaigns */}
+              <label
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files); }}
+                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl px-4 py-6 text-center cursor-pointer hover:border-[#C0392B]/60 hover:bg-[#C0392B]/[0.03] transition-colors">
+                <input
+                  type="file" multiple className="hidden"
+                  onChange={(e) => handleUpload(e.target.files)}
+                  {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
+                />
+                <Upload size={22} className="text-[#C0392B] mb-2" />
+                <div className="text-sm font-bold text-[#111827]">Upload a folder of clips</div>
+                <div className="text-[11px] text-[#94A3B8] mt-1">Click to choose a downloaded folder (or drag files in) — it clips every video inside.</div>
+              </label>
+
+              <div className="flex items-center gap-3 text-[11px] text-[#94A3B8]">
+                <div className="h-px bg-gray-200 flex-1" /> or paste a URL / path <div className="h-px bg-gray-200 flex-1" />
+              </div>
+
               <input value={input} onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !loading && handleRead()}
-                placeholder="Paste a campaign URL — or a local folder path (/Users/you/Downloads/footage) to clip downloaded footage"
+                placeholder="Paste a campaign URL — or a local folder path (/Users/you/Downloads/footage)"
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
-              <p className="text-[11px] text-[#94A3B8] -mt-1">
-                💡 For &quot;use only our footage&quot; campaigns (Superpower, etc.): download the files, then paste the <b>folder path</b> here and it&apos;ll clip them all.
-              </p>
               <button onClick={handleRead} disabled={loading || !input.trim()}
                 className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
                 {loading ? <Loader2 size={16} className="animate-spin" /> : null}
