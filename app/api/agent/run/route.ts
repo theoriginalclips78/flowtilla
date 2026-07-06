@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 import { spawn } from "child_process";
-import { mkdirSync, createReadStream, writeFileSync, readdirSync, readFileSync, renameSync, existsSync } from "fs";
+import { mkdirSync, createReadStream, writeFileSync, readdirSync, readFileSync, renameSync, existsSync, statSync, copyFileSync } from "fs";
 import path from "path";
 import os from "os";
 import { createId } from "@paralleldrive/cuid2";
@@ -214,9 +214,22 @@ The agent CANNOT:
 
 // Instant structural check on a single source URL. Returns a reason string if
 // the URL is a kind the agent fundamentally cannot download, else null.
+// A local file/folder path the user downloaded footage into (for "use only our provided
+// footage" campaigns). Absolute path, ~ home path, or file:// URL.
+function localSourcePath(url: string): string | null {
+  const raw = (url || "").trim();
+  if (!raw) return null;
+  let p = raw;
+  if (p.startsWith("file://")) p = p.slice(7);
+  if (p.startsWith("~")) p = path.join(os.homedir(), p.slice(1));
+  if (p.startsWith("/") && existsSync(p)) return p;
+  return null;
+}
+
 function badSourceReason(url: string): string | null {
   const u = (url || "").toLowerCase().trim();
   if (!u) return "empty URL";
+  if (localSourcePath(url)) return null;   // local file/folder — always usable
   if (u.includes("drive.google.com") && u.includes("folders"))
     return "Google Drive folder — the agent can't enumerate or download Drive folders. Use a direct YouTube/Twitch/TikTok video or channel URL.";
   if (u.includes("drive.google.com"))
@@ -311,6 +324,18 @@ function accountRequirementWarning(campaign: { aiInstructions?: string; contentR
 
 // Download video AND get metadata via --write-info-json (--print skips download!)
 async function downloadVideo(url: string, outDir: string, platform: string): Promise<{ filePath: string; title: string; duration: number }> {
+  // LOCAL FILE: user downloaded the campaign's official footage and pointed us at it.
+  const local = localSourcePath(url);
+  if (local && statSync(local).isFile()) {
+    const ext = path.extname(local) || ".mp4";
+    const dest = path.join(outDir, `source${ext}`);
+    copyFileSync(local, dest);
+    const meta = await ffmpegCapture(["-i", dest]);
+    const m = meta.match(/Duration:\s*(\d+):(\d+):(\d+\.?\d*)/);
+    const dur = m ? (+m[1]) * 3600 + (+m[2]) * 60 + parseFloat(m[3]) : 0;
+    return { filePath: dest, title: path.basename(local, path.extname(local)).slice(0, 80) || "Local clip", duration: dur };
+  }
+
   const args = [
     url,
     "-o", path.join(outDir, "source.%(ext)s"),
@@ -1138,7 +1163,7 @@ export async function POST(req: NextRequest) {
       if (sourceVideos.length === 0 && campaign.sources.length > 0) {
         void dbLog({ step: "discover", status: "started", message: "🔍 Scanning channels for videos..." });
         const { findAllVideos } = await import("@/lib/campaign/sourceFinder");
-        const { all, errors } = await findAllVideos(campaign.sources.filter(s => !badSourceReason(s.url)).map(s => s.url));
+        const { all, errors } = await findAllVideos(campaign.sources.filter(s => !badSourceReason(s.url) && !localSourcePath(s.url)).map(s => s.url));
         for (const e of errors) void dbLog({ step: "discover", status: "warn", message: `⚠️ ${e.error.slice(0,80)}` });
         for (const v of all) {
           const ex = await prisma.sourceVideo.findFirst({ where: { campaignId, videoId: v.videoId } });
@@ -1148,9 +1173,23 @@ export async function POST(req: NextRequest) {
         void dbLog({ step: "discover", status: "complete", message: `✅ ${sourceVideos.length} videos queued` });
       }
 
-      const videos = sourceVideos.length > 0
+      // Local footage the user downloaded — expand a folder into one entry per video file.
+      const localVideos: { url: string; platform: string; title: string; id: string }[] = [];
+      for (const s of campaign.sources) {
+        const lp = localSourcePath(s.url);
+        if (!lp) continue;
+        if (statSync(lp).isDirectory()) {
+          for (const f of readdirSync(lp).filter(f => /\.(mp4|mov|webm|mkv|m4v)$/i.test(f)))
+            localVideos.push({ url: path.join(lp, f), platform: "local", title: f, id: `${s.id}-${f}` });
+        } else {
+          localVideos.push({ url: lp, platform: "local", title: path.basename(lp), id: s.id });
+        }
+      }
+
+      const urlVideos = sourceVideos.length > 0
         ? sourceVideos.map(v => ({ url: v.url, platform: v.platform, title: v.title || v.url, id: v.id }))
-        : campaign.sources.filter(s => !badSourceReason(s.url)).map(s => ({ url: s.url, platform: detectPlatform(s.url), title: s.url, id: s.id }));
+        : campaign.sources.filter(s => !badSourceReason(s.url) && !localSourcePath(s.url)).map(s => ({ url: s.url, platform: detectPlatform(s.url), title: s.url, id: s.id }));
+      const videos = [...localVideos, ...urlVideos];
 
       void dbLog({ step: "start", status: "started", message: `🚀 Processing ${videos.length} videos (newest first, one at a time)...` });
 

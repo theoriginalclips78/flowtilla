@@ -71,6 +71,32 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
     setLoginWall(false);
     setSteps([]);
 
+    // Local folder / file path: user downloaded a campaign's provided footage. Skip the
+    // brief scraper — create a local-footage campaign directly and clip those files.
+    if (/^(~|\/)/.test(input.trim())) {
+      try {
+        addStep("📁 Adding local footage...");
+        const res = await fetch("/api/campaigns", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: `Local Footage — ${new Date().toLocaleDateString()}`,
+            cpm: 1, maxPerClip: 0, minPayout: 0, platforms: "tiktok,instagram,youtube",
+            aiInstructions: "Clip the provided local footage into short, punchy edits with a strong hook.",
+            videoLayout: "letterbox",
+            sources: [{ platform: "local", url: input.trim() }],
+          }),
+        });
+        const c = await res.json();
+        if (!res.ok) throw new Error(c.error || "Failed to add local footage");
+        completeStep();
+        setPreview({ campaign: c, briefData: {} as ReadResult["briefData"], videoCount: 1, breakdown: [] });
+      } catch (e: unknown) {
+        setError((e as Error).message);
+      }
+      setLoading(false);
+      return;
+    }
+
     try {
       addStep("⏳ Reading campaign brief...");
       const body = tab === "url" ? { url: input.trim() } : { rawText: input.trim() };
@@ -224,8 +250,11 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
             <div className="space-y-3">
               <input value={input} onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !loading && handleRead()}
-                placeholder="Paste any campaign URL — ClipFarm, Whop, ContentRewards, any brand page..."
+                placeholder="Paste a campaign URL — or a local folder path (/Users/you/Downloads/footage) to clip downloaded footage"
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
+              <p className="text-[11px] text-[#94A3B8] -mt-1">
+                💡 For &quot;use only our footage&quot; campaigns (Superpower, etc.): download the files, then paste the <b>folder path</b> here and it&apos;ll clip them all.
+              </p>
               <button onClick={handleRead} disabled={loading || !input.trim()}
                 className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
                 {loading ? <Loader2 size={16} className="animate-spin" /> : null}
