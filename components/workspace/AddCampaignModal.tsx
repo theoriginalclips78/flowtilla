@@ -44,19 +44,32 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
   const [loginWall, setLoginWall] = useState(false);
 
   // Upload a folder of downloaded footage → save on the server → local-footage campaign.
+  // Update the text of the most-recent step (used for upload progress).
+  const setLastStep = (text: string) =>
+    setSteps(prev => prev.length ? prev.map((s, i) => i === prev.length - 1 ? { ...s, text } : s) : [{ text, done: false, active: true }]);
+
   const handleUpload = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
     const vids = Array.from(fileList).filter(f => /\.(mp4|mov|webm|mkv|m4v)$/i.test(f.name));
     if (vids.length === 0) { setError("No video files found in that folder (need .mp4/.mov/.webm)."); return; }
     setLoading(true); setError(""); setPreview(null); setSteps([]);
     try {
-      addStep(`⬆️ Uploading ${vids.length} video${vids.length !== 1 ? "s" : ""}...`);
-      const fd = new FormData();
-      vids.forEach(f => fd.append("files", f));
-      const up = await fetch("/api/upload", { method: "POST", body: fd });
-      const upData = await up.json();
-      if (!up.ok) throw new Error(upData.error || "Upload failed");
+      addStep(`⬆️ Uploading 0/${vids.length}...`);
+      // One file per request into the same folder — avoids the request body-size limit.
+      const uploadId = (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      let folderPath = "";
+      for (let i = 0; i < vids.length; i++) {
+        const fd = new FormData();
+        fd.append("uploadId", uploadId);
+        fd.append("files", vids[i]);
+        const up = await fetch("/api/upload", { method: "POST", body: fd });
+        const d = await up.json();
+        if (!up.ok) throw new Error(d.error || "Upload failed");
+        folderPath = d.path;
+        setLastStep(`⬆️ Uploading ${i + 1}/${vids.length}...`);
+      }
       completeStep();
+
       addStep("📁 Creating campaign...");
       const res = await fetch("/api/campaigns", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -65,15 +78,15 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
           cpm: 1, maxPerClip: 0, minPayout: 0, platforms: "tiktok,instagram,youtube",
           aiInstructions: "Clip the uploaded footage into short, punchy edits with a strong hook.",
           videoLayout: "letterbox",
-          sources: [{ platform: "local", url: upData.path }],
+          sources: [{ platform: "local", url: folderPath }],
         }),
       });
       const c = await res.json();
       if (!res.ok) throw new Error(c.error || "Failed to create campaign");
       completeStep();
-      addStep(`✅ Ready — ${upData.count} clip${upData.count !== 1 ? "s" : ""} uploaded`);
+      addStep(`✅ Ready — ${vids.length} clip${vids.length !== 1 ? "s" : ""} uploaded`);
       completeStep();
-      setPreview({ campaign: c, briefData: {} as ReadResult["briefData"], videoCount: upData.count, breakdown: [] });
+      setPreview({ campaign: c, briefData: {} as ReadResult["briefData"], videoCount: vids.length, breakdown: [] });
     } catch (e: unknown) {
       setError((e as Error).message);
     }
