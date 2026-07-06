@@ -4,29 +4,18 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 import { Toaster } from "sonner";
-import Sidebar from "@/components/layout/Sidebar";
-import Navbar from "@/components/layout/Navbar";
-import BottomTabBar from "@/components/layout/BottomTabBar";
+import AppChrome from "@/components/layout/AppChrome";
 
 export const metadata: Metadata = {
-  title: "Montview Clips — Precision Clips. Premium Results.",
-  description: "Montview Clipping Agency — AI-powered video clipping",
+  title: "Montview — Precision Clips. Premium Results.",
+  description: "Montview — AI-powered clipping + agency admin",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} bg-studio min-h-screen`} style={{ fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex flex-col flex-1 ml-[72px]">
-            <Navbar />
-            <main className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6">
-              {children}
-            </main>
-          </div>
-        </div>
-        <BottomTabBar />
+      <body className={`${inter.variable} min-h-screen`} style={{ fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
+        <AppChrome>{children}</AppChrome>
         <Toaster position="top-right" theme="light" richColors />
       </body>
     </html>

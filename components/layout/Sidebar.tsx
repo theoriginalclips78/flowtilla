@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Bot, Film, HardDrive, Wrench, Settings, BookOpen } from "lucide-react";
+import { LayoutDashboard, Bot, Film, HardDrive, Wrench, Settings, BookOpen, Building2 } from "lucide-react";
+import MontviewLogo from "@/components/MontviewLogo";
 
 const NAV_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -11,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/assets",    icon: HardDrive,       label: "Assets" },
   { href: "/tools",     icon: Wrench,          label: "Tools" },
   { href: "/guide",     icon: BookOpen,        label: "Guide" },
+  { href: "/agency",    icon: Building2,       label: "Agency Admin" },
 ];
 
 export default function Sidebar() {
@@ -24,18 +26,9 @@ export default function Sidebar() {
         borderRight: "1px solid rgba(255,255,255,0.08)",
       }}
     >
-      {/* Montview logo — mountain "M" in cream */}
-      <Link
-        href="/dashboard"
-        title="Montview Clips"
-        className="mb-8 w-11 h-11 rounded-2xl flex items-center justify-center"
-        style={{ background: "#1B2740", border: "1px solid rgba(245,240,230,0.14)" }}
-      >
-        <svg width="26" height="26" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-          <path d="M14 80 L34 26 L50 58 L66 26 L86 80"
-            stroke="#F5F0E6" strokeWidth="9" strokeLinejoin="round" strokeLinecap="round" fill="none" />
-          <path d="M46 40 L50 32 L54 40 Z" fill="#F5F0E6" />
-        </svg>
+      {/* Montview logo — mountain-view mark */}
+      <Link href="/dashboard" title="Montview" className="mb-8">
+        <MontviewLogo size={26} />
       </Link>
 
       {/* Nav */}
