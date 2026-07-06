@@ -161,6 +161,40 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
     setError("");
     setSteps([]);
 
+    // Local folder/file paths (downloaded campaign footage) can't survive the brief parser,
+    // so if any are present, create the campaign directly with them as local sources.
+    const lines = quickUrls.split("\n").map(s => s.trim()).filter(Boolean);
+    const hasLocal = lines.some(l => /^(~|\/)/.test(l));
+    if (hasLocal) {
+      try {
+        addStep("📁 Adding folder + instructions...");
+        const sources = lines.map(l => /^(~|\/)/.test(l)
+          ? { platform: "local", url: l }
+          : { platform: "youtube", url: l });
+        const res = await fetch("/api/campaigns", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: quickBrand,
+            cpm: parseFloat(quickCpm) || 1,
+            platforms: quickPlatforms.join(","),
+            aiInstructions: quickInstructions || "Clip the provided footage into short, punchy edits with a strong hook.",
+            videoLayout: "letterbox",
+            sources,
+          }),
+        });
+        const c = await res.json();
+        if (!res.ok) throw new Error(c.error || "Failed to create campaign");
+        completeStep();
+        addStep(`✅ Ready — ${sources.length} source${sources.length !== 1 ? "s" : ""} added`);
+        completeStep();
+        setPreview({ campaign: c, briefData: {} as ReadResult["briefData"], videoCount: sources.length, breakdown: [] });
+      } catch (e: unknown) {
+        setError((e as Error).message);
+      }
+      setLoading(false);
+      return;
+    }
+
     const rawText = [
       `Brand: ${quickBrand}`,
       quickCpm ? `CPM: $${quickCpm} per 1000 views` : "",
@@ -303,10 +337,11 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-1.5">Source URLs (one per line)</label>
+                <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-1.5">Source URLs or local folder (one per line)</label>
                 <textarea value={quickUrls} onChange={(e) => setQuickUrls(e.target.value)} rows={3}
-                  placeholder={"https://www.youtube.com/@brand/videos\nhttps://www.tiktok.com/@brand"}
+                  placeholder={"https://www.youtube.com/@brand/videos\n— or a downloaded folder —\n/Users/ahmedsaciidabdullahi/Downloads/higgsfield"}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none" />
+                <p className="text-[11px] text-[#94A3B8] mt-1">Paste a <b>folder path</b> for &quot;use only our footage&quot; campaigns — it clips every video inside.</p>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-1.5">What makes a good clip?</label>
