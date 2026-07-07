@@ -22,6 +22,7 @@ model Campaign {
   taggingJson         String           @default("{}")
   submissionProcess   String           @default("")
   clipCount           Int              @default(10)
+  variationsPerClip   Int              @default(1)          // 1-3: render N versions of each moment (different hook + title style)
   clipLength          Int              @default(60)
   clipLengthMin       Int              @default(30)
   clipLengthMax       Int              @default(90)

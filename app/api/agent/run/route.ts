@@ -485,6 +485,31 @@ function snapToSentences(
   return { start: s, end: e };
 }
 
+// Generate N alternative on-screen hooks for each moment in ONE cheap call, so variations
+// feel genuinely different (not the same text N times). Fail-open: reuse the base hook.
+async function generateHookVariants(anthropic: Anthropic, hooks: string[], n: number): Promise<string[][]> {
+  const fallback = hooks.map(h => Array.from({ length: n }, () => h));
+  if (n <= 1 || hooks.length === 0) return fallback;
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1200,
+      messages: [{ role: "user", content:
+`For each hook below, write ${n} short, punchy alternative on-screen hook lines for the SAME clip — different angles/wording, each under 60 chars, clean text, no emojis. Return ONLY a JSON array of arrays: one inner array of exactly ${n} strings per hook, in order.\n\nHooks:\n${hooks.map((h, i) => `${i + 1}. ${h}`).join("\n")}` }],
+    });
+    const raw = (msg.content[0] as { text: string }).text;
+    const m = raw.match(/\[[\s\S]*\]/);
+    const parsed = m ? (JSON.parse(m[0]) as string[][]) : null;
+    if (!Array.isArray(parsed)) return fallback;
+    return hooks.map((h, i) => {
+      const arr = Array.isArray(parsed[i]) ? parsed[i].filter(x => typeof x === "string" && x.trim()) : [];
+      const out = [h, ...arr].slice(0, n);            // variant 0 = original hook
+      while (out.length < n) out.push(h);
+      return out;
+    });
+  } catch { return fallback; }
+}
+
 // AUTOMATED SELF-VALIDATION PASS — replaces a manual "review & approve" gate.
 // After the finder picks moments, a strict second pass vets each one and DROPS the
 // duds (weak/generic hook, mid-conversation filler, no clear payoff, near-duplicate
@@ -884,24 +909,45 @@ async function processOneVideo(
     return saved;
   };
 
+  // ── Campaign-level render settings (used by BOTH the short-video path and main loop) ──
+  const cRec = campaign as Record<string, unknown>;
+  const rsPresetId = (cRec.captionPresetId as string) || undefined;
+  const rsSubsOn = cRec.subtitlesEnabled !== false;
+  const rsMotion = cRec.motionEnabled !== false;
+  let rsLayout = ((cRec.videoLayout as string) || "letterbox") as Layout;
+  if (rsLayout === "split" && !gameplayAvailable()) rsLayout = "blur";
+  const rsCaptionMode = ((cRec.captionMode as string) === "word" ? "word" : "lines") as "word" | "lines";
+  const rsRawPos = String(cRec.captionPosition || "auto");
+  const rsCaptionPos = (["top", "middle", "bottom"].includes(rsRawPos) ? rsRawPos : "auto") as "auto" | "top" | "middle" | "bottom";
+  const rsWatermark = String(cRec.watermarkText || "").trim();
+  const rsBanner = String(cRec.bottomBanner || "").trim();
+  const rsVariations = Math.max(1, Math.min(3, Number(cRec.variationsPerClip) || 1));
+
   // ── SHORT VIDEO SHORTCUT ≤90s ──────────────────────────────────
   if (videoDuration > 0 && videoDuration <= 90) {
-    sse(ctrl, { step: "cut", status: "progress", message: `⚡ Short video (${Math.round(videoDuration)}s) — clipping whole video with subtitles...` });
-    const clipFile = clipsDir + "/clip-0.mp4";
-    const thumbFile = clipsDir + "/thumb-0.jpg";
-    try {
-      await cutClip(srcPath, clipFile, 0, videoDuration, [], videoTitle);
-      await saveAndStream(clipFile, thumbFile, {
-        start_time: 0, end_time: videoDuration, title: videoTitle,
-        reason: "Complete short-form video", virality_score: "high",
-        hook: videoTitle, caption: `${videoTitle} #shorts #viral`, platform_fit: src.platform,
-      });
-      sse(ctrl, { step: "source_complete", status: "complete", message: `✅ 1 clip from "${videoTitle.slice(0,40)}"`, sourceIndex: vIdx, clipsFromSource: 1 });
-      return 1;
-    } catch (err) {
-      sse(ctrl, { step: "cut", status: "error", message: `❌ ffmpeg error: ${(err as Error).message.slice(0,120)}` });
-      return 0;
+    sse(ctrl, { step: "cut", status: "progress", message: rsVariations > 1
+      ? `⚡ Short video (${Math.round(videoDuration)}s) — making ${rsVariations} versions...`
+      : `⚡ Short video (${Math.round(videoDuration)}s) — clipping with subtitles...` });
+    const hookSet = rsVariations > 1 ? (await generateHookVariants(anthropic, [videoTitle], rsVariations))[0] : [videoTitle];
+    let made = 0;
+    for (let v = 0; v < rsVariations; v++) {
+      const clipFile = clipsDir + `/clip-${v}.mp4`;
+      const thumbFile = clipsDir + `/thumb-${v}.jpg`;
+      const hook = hookSet[v] || videoTitle;
+      try {
+        await cutClip(srcPath, clipFile, 0, videoDuration, [], hook, v, [], rsPresetId, rsMotion, rsLayout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner);
+        await saveAndStream(clipFile, thumbFile, {
+          start_time: 0, end_time: videoDuration, title: hook,
+          reason: "Complete short-form video", virality_score: "high",
+          hook, caption: `${videoTitle} #shorts #viral`, platform_fit: src.platform,
+        });
+        made++;
+      } catch (err) {
+        sse(ctrl, { step: "cut", status: "error", message: `❌ ffmpeg error: ${(err as Error).message.slice(0,120)}` });
+      }
     }
+    sse(ctrl, { step: "source_complete", status: "complete", message: `✅ ${made} clip${made !== 1 ? "s" : ""} from "${videoTitle.slice(0,40)}"`, sourceIndex: vIdx, clipsFromSource: made });
+    return made;
   }
 
   // ── TRANSCRIBE ─────────────────────────────────────────────────
@@ -1042,9 +1088,26 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
       .map(m => ({ ...m, start_time: m.start_time, end_time: m.end_time }));
   }
 
+  // VARIATIONS: turn each top moment into N posts — same footage, different hook + title
+  // style — so one source yields several clips (great for volume / limited footage).
+  let jobs: (Moment & { _variant?: number })[] = clipJobs;
+  if (rsVariations > 1 && clipJobs.length > 0) {
+    sse(ctrl, { step: "variations", status: "started", message: `🎛️ Making ${rsVariations} versions of each clip...` });
+    const variantHooks = await generateHookVariants(anthropic, clipJobs.map(m => m.hook || m.title || ""), rsVariations);
+    const expanded: (Moment & { _variant?: number })[] = [];
+    clipJobs.forEach((m, mi) => {
+      for (let v = 0; v < rsVariations; v++) {
+        expanded.push({ ...m, hook: variantHooks[mi]?.[v] || m.hook, _variant: mi * rsVariations + v });
+      }
+    });
+    jobs = expanded.slice(0, 15);
+    sse(ctrl, { step: "variations", status: "complete", message: `✅ ${jobs.length} clips queued (${rsVariations}× per moment)` });
+  }
+
   let clipsFromSource = 0;
   const clipSummaries: Record<string, unknown>[] = [];
-  const results = await Promise.allSettled(clipJobs.map(async (m, i) => {
+  const results = await Promise.allSettled(jobs.map(async (m, i) => {
+    const variant = m._variant ?? i;   // variations give each version a distinct title style
     const safeEnd = Math.min(m.end_time, videoDuration);
     // Start on a real face; skip black/flash + animated/no-face intros (OpenCV, with a
     // brightness-only fallback when Python/OpenCV is unavailable).
@@ -1055,28 +1118,16 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     if (dur < 3) return null;
     if (openPush > 0) sse(ctrl, { step: "cut", status: "progress", message: `🎯 Clip ${i+1}: trimmed ${openPush.toFixed(1)}s to open on ${opening.face ? "a face" : "clean footage"}` });
 
-    sse(ctrl, { step: "cut", status: "progress", message: `✂️ Clip ${i+1}/${clipJobs.length}: ${m.title}` });
+    sse(ctrl, { step: "cut", status: "progress", message: `✂️ Clip ${i+1}/${jobs.length}: ${m.title}` });
     const clipFile = path.join(clipsDir, `clip-${i}.mp4`);
     const thumbFile = path.join(clipsDir, `thumb-${i}.jpg`);
 
-    const presetId = ((campaign as Record<string,unknown>).captionPresetId as string) || undefined;
-    // Some source footage already has burned-in captions; turn ours OFF for those
-    // campaigns so clips never show double subtitles.
-    const subsOn = (campaign as Record<string,unknown>).subtitlesEnabled !== false;
-    const useWords = subsOn ? words : [];
-    const useTranscript = subsOn ? transcript : [];
+    // Some source footage already has burned-in captions; turn ours OFF for those.
+    const useWords = rsSubsOn ? words : [];
+    const useTranscript = rsSubsOn ? transcript : [];
     // The top overlay should be the scroll-stopping HOOK, not the dull video title.
     const overlayText = (m.hook && m.hook.trim()) ? m.hook.trim() : m.title;
-    const motionOn = (campaign as Record<string,unknown>).motionEnabled !== false;
-    // Frame layout: crop (reframe), blur (blurred fill), or split (gameplay bottom).
-    let layout = (((campaign as Record<string,unknown>).videoLayout as string) || "letterbox") as Layout;
-    if (layout === "split" && !gameplayAvailable()) layout = "blur"; // graceful fallback when no gameplay.mp4
-    const captionMode = (((campaign as Record<string,unknown>).captionMode as string) === "word" ? "word" : "lines") as "word" | "lines";
-    const rawPos = String((campaign as Record<string,unknown>).captionPosition || "auto");
-    const captionPosition = (["top","middle","bottom"].includes(rawPos) ? rawPos : "auto") as "auto"|"top"|"middle"|"bottom";
-    const watermarkText = String((campaign as Record<string,unknown>).watermarkText || "").trim();
-    const bottomBanner = String((campaign as Record<string,unknown>).bottomBanner || "").trim();
-    await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, i, useWords, presetId, motionOn, layout, captionMode, captionPosition, watermarkText, bottomBanner);
+    await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, variant, useWords, rsPresetId, rsMotion, rsLayout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner);
 
     // Tighten pacing — trim dead air for a faster, more retentive edit. Safely
     // no-ops on music-heavy clips. Only swap in the tightened file if it succeeded.

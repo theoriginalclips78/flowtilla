@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Film, Layers, Clock, ChevronRight, Plus, Play, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import TallyTracker from "@/components/TallyTracker";
+import MontviewLogo from "@/components/MontviewLogo";
 
 interface Clip { id: string; title: string; thumbnailUrl: string; downloadUrl: string; status: string; campaignId: string; createdAt: string; viralityScore: string; }
 interface Campaign { id: string; name: string; status: string; }
@@ -32,6 +33,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Montview brand header */}
+      <div className="flex items-center gap-4 animate-fade-up">
+        <MontviewLogo size={40} />
+        <div>
+          <h1 className="text-[32px] leading-none font-extrabold tracking-tight grad-text">Montview</h1>
+          <p className="text-sm text-[var(--text-muted)] mt-1.5">Precision Clips. Premium Results.</p>
+        </div>
+      </div>
+
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4 animate-fade-up delay-1">
         <StatCard

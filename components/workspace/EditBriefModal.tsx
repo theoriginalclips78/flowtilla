@@ -24,6 +24,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
   const [rejectionReasons, setRejectionReasons] = useState(c.rejectionReasons || "");
   const [captionRules, setCaptionRules]     = useState(c.captionRules || "");
   const [clipCount, setClipCount]           = useState(String(c.clipCount));
+  const [variationsPerClip, setVariationsPerClip] = useState(String((c as CampaignExt & { variationsPerClip?: number }).variationsPerClip || 1));
   const [audienceReq, setAudienceReq]       = useState(c.audienceRequirement || "");
   const [postDuration, setPostDuration]     = useState(c.postDuration || "");
   const [extraContext, setExtraContext]     = useState(c.extraContext || "");
@@ -50,6 +51,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
         platforms, aiInstructions, contentRules,
         rejectionReasons, captionRules,
         clipCount: parseInt(clipCount) || 10,
+        variationsPerClip: parseInt(variationsPerClip) || 1,
         // Length is fully automatic now — wide bounds so the AI picks freely.
         clipLength: 30,
         clipLengthMin: 0,
@@ -133,7 +135,18 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
               <label className="text-xs font-bold text-[var(--text-muted)] block mb-1.5">POST DURATION</label>
               <input value={postDuration} onChange={e => setPostDuration(e.target.value)} className="glass-input" placeholder="e.g. 30 days" />
             </div>
+            <div>
+              <label className="text-xs font-bold text-[var(--text-muted)] block mb-1.5">VERSIONS / CLIP</label>
+              <select value={variationsPerClip} onChange={e => setVariationsPerClip(e.target.value)} className="glass-input">
+                <option value="1">1 — one per moment</option>
+                <option value="2">2 — two versions each</option>
+                <option value="3">3 — three versions each</option>
+              </select>
+            </div>
           </div>
+          {parseInt(variationsPerClip) > 1 && (
+            <p className="text-[11px] text-[var(--text-light)] -mt-2">🎛️ Each strong moment becomes {variationsPerClip} posts — same footage, different hook + title style. Great for volume and A/B testing.</p>
+          )}
 
           {/* Clip length — fully automatic */}
           <div>
