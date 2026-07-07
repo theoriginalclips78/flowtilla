@@ -40,25 +40,25 @@ export default function VocalRemoverPage() {
       <div className="space-y-4">
         <div
           onClick={() => inputRef.current?.click()}
-          className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#C0392B]/40 hover:bg-[#C0392B]/5 transition-colors"
+          className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5 transition-colors"
         >
-          <Upload size={28} className="mx-auto text-[#6B7280] mb-2" />
-          <p className="text-sm font-semibold text-[#111827]">{file ? file.name : "Drop audio/video here or click to upload"}</p>
-          <p className="text-xs text-[#6B7280] mt-1">MP4, MP3, WAV supported</p>
+          <Upload size={28} className="mx-auto text-[var(--text-muted)] mb-2" />
+          <p className="text-sm font-semibold text-[var(--text)]">{file ? file.name : "Drop audio/video here or click to upload"}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">MP4, MP3, WAV supported</p>
           <input ref={inputRef} type="file" accept="video/*,audio/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-2">Output</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-2">Output</label>
           <div className="flex gap-3">
             {([["instrumental", "🎵 Instrumental only", "Remove vocals, keep music"], ["vocals", "🎤 Vocals only", "Remove music, keep voice"]] as const).map(([val, label, desc]) => (
               <button
                 key={val}
                 onClick={() => setMode(val)}
-                className={`flex-1 p-3 rounded-xl border text-left transition-colors ${mode === val ? "border-[#C0392B] bg-[#C0392B]/5" : "border-gray-200"}`}
+                className={`flex-1 p-3 rounded-xl border text-left transition-colors ${mode === val ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-[var(--border)]"}`}
               >
-                <p className={`text-xs font-bold ${mode === val ? "text-[#C0392B]" : "text-[#111827]"}`}>{label}</p>
-                <p className="text-[10px] text-[#6B7280] mt-0.5">{desc}</p>
+                <p className={`text-xs font-bold ${mode === val ? "text-[var(--accent)]" : "text-[var(--text)]"}`}>{label}</p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{desc}</p>
               </button>
             ))}
           </div>
@@ -67,7 +67,7 @@ export default function VocalRemoverPage() {
         <button
           onClick={handleProcess}
           disabled={loading || !file}
-          className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : null}
           {loading ? "Processing..." : "Remove Vocals"}
@@ -75,7 +75,7 @@ export default function VocalRemoverPage() {
 
         {loading && (
           <div className="w-full bg-gray-100 rounded-full h-2">
-            <div className="bg-[#C0392B] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div className="bg-[var(--accent)] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
         )}
 
@@ -90,7 +90,7 @@ export default function VocalRemoverPage() {
           <div className="bg-green-50 border border-green-100 rounded-xl p-4 space-y-3">
             <p className="text-sm font-semibold text-green-700">✅ Done</p>
             {result.instrumentalUrl && (
-              <a href={result.instrumentalUrl} download className="flex items-center justify-center gap-2 w-full bg-[#0F1E3C] text-white font-bold py-2.5 rounded-xl hover:bg-[#0F1E3C]/80 transition-colors text-sm">
+              <a href={result.instrumentalUrl} download className="flex items-center justify-center gap-2 w-full bg-[var(--chip)] text-white font-bold py-2.5 rounded-xl hover:bg-[var(--chip)]/80 transition-colors text-sm">
                 <Download size={14} /> Download Instrumental
               </a>
             )}

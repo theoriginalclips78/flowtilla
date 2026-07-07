@@ -111,23 +111,23 @@ export default function AgentControlPanel() {
   return (
     <div className="flex flex-col gap-4 h-full">
       {/* Status Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col items-center gap-3">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-6 flex flex-col items-center gap-3">
         {agentStatus === "idle" && (
           <>
-            <Bot size={48} className="text-[#6B7280]" />
-            <span className="text-[#6B7280] font-medium">Agent is ready</span>
+            <Bot size={48} className="text-[var(--text-muted)]" />
+            <span className="text-[var(--text-muted)] font-medium">Agent is ready</span>
           </>
         )}
         {agentStatus === "running" && (
           <>
             <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-[#C0392B]/20 animate-ping" />
-              <Bot size={48} className="text-[#C0392B] relative" />
+              <div className="absolute inset-0 rounded-full bg-[var(--accent)]/20 animate-ping" />
+              <Bot size={48} className="text-[var(--accent)] relative" />
             </div>
-            <span className="text-[#111827] font-medium text-center">{currentTask}</span>
+            <span className="text-[var(--text)] font-medium text-center">{currentTask}</span>
             <div className="w-full bg-gray-100 rounded-full h-1.5">
               <div
-                className="bg-[#C0392B] h-1.5 rounded-full transition-all duration-500"
+                className="bg-[var(--accent)] h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -141,8 +141,8 @@ export default function AgentControlPanel() {
         )}
         {agentStatus === "error" && (
           <>
-            <XCircle size={48} className="text-[#C0392B]" />
-            <span className="text-[#C0392B] font-medium">{currentTask || "Something went wrong"}</span>
+            <XCircle size={48} className="text-[var(--accent)]" />
+            <span className="text-[var(--accent)] font-medium">{currentTask || "Something went wrong"}</span>
           </>
         )}
       </div>
@@ -162,7 +162,7 @@ export default function AgentControlPanel() {
         <Button
           onClick={startAgent}
           disabled={agentStatus === "running" || !selectedCampaign}
-          className="bg-[#C0392B] hover:bg-[#C0392B]/90 text-white font-bold px-6"
+          className="bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white font-bold px-6"
         >
           {agentStatus === "running" ? (
             <><Loader2 size={16} className="animate-spin mr-2" /> Running...</>
@@ -173,20 +173,20 @@ export default function AgentControlPanel() {
       </div>
 
       {/* Log terminal */}
-      <div className="bg-[#0F1E3C] rounded-xl flex-1 flex flex-col overflow-hidden min-h-[240px]">
+      <div className="bg-[var(--chip)] rounded-xl flex-1 flex flex-col overflow-hidden min-h-[240px]">
         <div className="flex items-center justify-between px-4 py-2 border-b border-white/10">
-          <span className="text-[12px] text-[#6B7280] font-mono">Agent Log</span>
-          <button onClick={() => resetAgent()} className="text-[12px] text-[#6B7280] hover:text-white flex items-center gap-1">
+          <span className="text-[12px] text-[var(--text-muted)] font-mono">Agent Log</span>
+          <button onClick={() => resetAgent()} className="text-[12px] text-[var(--text-muted)] hover:text-white flex items-center gap-1">
             <Trash2 size={12} /> Clear
           </button>
         </div>
         <div ref={logRef} className="flex-1 overflow-y-auto p-4 font-mono text-[13px] space-y-1">
           {logEntries.length === 0 && (
-            <span className="text-[#6B7280]/60">Waiting for agent to start...</span>
+            <span className="text-[var(--text-muted)]/60">Waiting for agent to start...</span>
           )}
           {logEntries.map((entry, i) => (
             <div key={i} className={logColor(entry)}>
-              <span className="text-[#6B7280]/60 mr-2">[{entry.timestamp}]</span>
+              <span className="text-[var(--text-muted)]/60 mr-2">[{entry.timestamp}]</span>
               <span className="mr-2">{logIcon(entry)}</span>
               {entry.message}
             </div>
@@ -197,7 +197,7 @@ export default function AgentControlPanel() {
       {/* Results */}
       {results.length > 0 && (
         <div>
-          <h3 className="font-bold text-[#111827] mb-3">Generated Clips — Ready for Review</h3>
+          <h3 className="font-bold text-[var(--text)] mb-3">Generated Clips — Ready for Review</h3>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {results.map((clip, i) => (
               <ClipCard

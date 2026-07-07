@@ -16,7 +16,7 @@ interface Props {
 const viralColor: Record<string, string> = {
   high:   "#EF4444",
   medium: "#F59E0B",
-  low:    "#6B7280",
+  low:    "var(--text-muted)",
 };
 
 function fmt(s: number) {
@@ -125,7 +125,7 @@ export default function ClipPreviewModal({ clip, clips, onClose, onApprove, onDi
           {/* Meta row */}
           <div className="flex items-center gap-3 mb-4">
             <span className="text-[11px] font-medium px-2.5 py-1 rounded-full"
-              style={{ background: `${viralColor[clip.viralityScore] || "#6B7280"}22`, color: viralColor[clip.viralityScore] || "#9CA3AF", border: `1px solid ${viralColor[clip.viralityScore] || "#6B7280"}44` }}>
+              style={{ background: `${viralColor[clip.viralityScore] || "var(--text-muted)"}22`, color: viralColor[clip.viralityScore] || "var(--text-light)", border: `1px solid ${viralColor[clip.viralityScore] || "var(--text-muted)"}44` }}>
               {clip.viralityScore === "high" ? "🔥 High virality" : clip.viralityScore === "medium" ? "⚡ Medium" : "💤 Low"}
             </span>
             <span className="text-[12px]" style={{ color: "rgba(186,210,255,0.5)" }}>

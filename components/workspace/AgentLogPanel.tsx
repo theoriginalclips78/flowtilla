@@ -73,7 +73,7 @@ export default function AgentLogPanel({
       {sourcesTotal > 0 && (
         <div className="px-4 py-3 border-t border-black/10 flex-shrink-0" style={{ background: "rgba(255,255,255,0.6)" }}>
           <div className="w-full rounded-full h-1 mb-2" style={{ background: "rgba(0,0,0,0.1)" }}>
-            <div className="bg-[#C0392B] h-1 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div className="bg-[var(--accent)] h-1 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
           <p className="text-[11px] text-black/40">
             Video {Math.min(sourcesProcessed + 1, sourcesTotal)} of {sourcesTotal}

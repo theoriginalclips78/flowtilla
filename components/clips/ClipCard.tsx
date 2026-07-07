@@ -9,9 +9,9 @@ interface Props {
 }
 
 const viralityConfig = {
-  high: { label: "🔥 High", className: "bg-[#C0392B]/10 text-[#C0392B]" },
+  high: { label: "🔥 High", className: "bg-[var(--accent)]/10 text-[var(--accent)]" },
   medium: { label: "⚡ Medium", className: "bg-amber-500/10 text-amber-600" },
-  low: { label: "💤 Low", className: "bg-gray-100 text-[#6B7280]" },
+  low: { label: "💤 Low", className: "bg-gray-100 text-[var(--text-muted)]" },
 };
 
 function formatTime(seconds: number) {
@@ -25,7 +25,7 @@ export default function ClipCard({ clip }: Props) {
   const viral = viralityConfig[clip.viralityScore as keyof typeof viralityConfig] || viralityConfig.low;
 
   return (
-    <div className="w-[280px] flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="w-[280px] flex-shrink-0 bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
       {/* Video player */}
       <div className="relative bg-gray-100 aspect-video">
         <video
@@ -39,19 +39,19 @@ export default function ClipCard({ clip }: Props) {
       </div>
 
       <div className="p-3">
-        <h4 className="font-bold text-[14px] text-[#111827] truncate mb-1">{clip.title}</h4>
-        <p className="text-[12px] text-[#6B7280] mb-1">
+        <h4 className="font-bold text-[14px] text-[var(--text)] truncate mb-1">{clip.title}</h4>
+        <p className="text-[12px] text-[var(--text-muted)] mb-1">
           {formatTime(clip.startTime)} – {formatTime(clip.endTime)}
         </p>
-        <p className="text-[12px] text-[#6B7280] line-clamp-2 mb-3">{clip.reason}</p>
+        <p className="text-[12px] text-[var(--text-muted)] line-clamp-2 mb-3">{clip.reason}</p>
         <div className="flex gap-2">
           <button
             onClick={() => router.push(`/editor/${clip.id}`)}
-            className="flex-1 bg-[#C0392B] text-white text-[13px] font-medium py-1.5 rounded-lg hover:bg-[#C0392B]/90 transition-colors"
+            className="flex-1 bg-[var(--accent)] text-white text-[13px] font-medium py-1.5 rounded-lg hover:bg-[var(--accent)]/90 transition-colors"
           >
             Review & Edit
           </button>
-          <button className="flex-1 border border-gray-200 text-[#6B7280] text-[13px] py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex-1 border border-[var(--border)] text-[var(--text-muted)] text-[13px] py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
             Discard
           </button>
         </div>

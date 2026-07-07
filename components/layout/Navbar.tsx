@@ -23,20 +23,20 @@ export default function Navbar() {
     <header
       className="h-[64px] flex items-center justify-between px-6 flex-shrink-0"
       style={{
-        background: "#FFFFFF",
-        borderBottom: "1px solid #E2E8F0",
+        background: "var(--surface)",
+        borderBottom: "1px solid var(--border)",
         boxShadow: "0 1px 3px rgba(15,30,60,0.06)",
       }}
     >
       <div>
-        <h1 className="font-bold text-base leading-tight tracking-tight" style={{ color: "#0F1E3C" }}>{title}</h1>
-        <p className="text-[11px] mt-0.5 font-medium" style={{ color: "#64748B" }}>{sub}</p>
+        <h1 className="font-bold text-base leading-tight tracking-tight" style={{ color: "var(--chip)" }}>{title}</h1>
+        <p className="text-[11px] mt-0.5 font-medium" style={{ color: "var(--text-muted)" }}>{sub}</p>
       </div>
 
       <div className="flex items-center gap-2">
         <button
           className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-gray-100"
-          style={{ border: "1px solid #E2E8F0", color: "#64748B" }}
+          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
           title="Notifications"
         >
           <Bell size={15} />

@@ -19,13 +19,13 @@ export default class AgentErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-64 gap-3 text-[#C0392B]">
+        <div className="flex flex-col items-center justify-center h-64 gap-3 text-[var(--accent)]">
           <XCircle size={40} />
           <p className="font-semibold">Something went wrong in the agent panel</p>
-          <p className="text-sm text-[#6B7280]">{this.state.message}</p>
+          <p className="text-sm text-[var(--text-muted)]">{this.state.message}</p>
           <button
             onClick={() => this.setState({ hasError: false, message: "" })}
-            className="mt-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-[#111827] hover:bg-gray-50"
+            className="mt-2 px-4 py-2 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] hover:bg-gray-50"
           >
             Try again
           </button>

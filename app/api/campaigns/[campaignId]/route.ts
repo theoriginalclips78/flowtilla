@@ -29,16 +29,17 @@ export async function DELETE(
 ) {
   const id = params.campaignId;
   try {
-    // Must delete in order: Clip → AgentJob → CampaignSource → SourceVideo → Campaign
-    const jobs = await prisma.agentJob.findMany({ where: { campaignId: id }, select: { id: true } });
-    const jobIds = jobs.map(j => j.id);
-    if (jobIds.length) {
-      await prisma.clip.deleteMany({ where: { jobId: { in: jobIds } } });
-      await prisma.agentJob.deleteMany({ where: { id: { in: jobIds } } });
-    }
+    // Delete EVERYTHING tied to this campaign, by campaignId (robust — covers orphaned rows
+    // whose job was already gone), children first so no foreign key can block it. deleteMany
+    // is idempotent, so a re-delete never errors and the campaign stays gone for good.
+    const clips = await prisma.clip.findMany({ where: { campaignId: id }, select: { id: true } });
+    const clipIds = clips.map(c => c.id);
+    if (clipIds.length) await prisma.postLog.deleteMany({ where: { clipId: { in: clipIds } } }).catch(() => {});
+    await prisma.clip.deleteMany({ where: { campaignId: id } });
+    await prisma.agentJob.deleteMany({ where: { campaignId: id } });
     await prisma.campaignSource.deleteMany({ where: { campaignId: id } });
     await prisma.sourceVideo.deleteMany({ where: { campaignId: id } });
-    await prisma.campaign.delete({ where: { id } });
+    await prisma.campaign.deleteMany({ where: { id } });
     return NextResponse.json({ deleted: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

@@ -58,9 +58,17 @@ export default function AgentPage() {
   };
 
   const handleRemove = async (campaignId: string) => {
+    const snapshot = entries;
     setEntries((prev) => prev.filter((e) => e.campaign.id !== campaignId));
     deleteCampaign(campaignId);
-    await fetch(`/api/campaigns/${campaignId}`, { method: "DELETE" });
+    try {
+      const r = await fetch(`/api/campaigns/${campaignId}`, { method: "DELETE" });
+      if (!r.ok) throw new Error();
+    } catch {
+      // Delete failed on the server — restore it so the user isn't misled.
+      setEntries(snapshot);
+      alert("Couldn't delete that campaign — please try again.");
+    }
   };
 
   const scrollToCard = (index: number) => {
@@ -71,20 +79,20 @@ export default function AgentPage() {
   return (
     <div className="space-y-4">
       {/* Top bar */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm p-5 flex items-center justify-between">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm p-5 flex items-center justify-between">
         <div>
-          <h2 className="text-[18px] font-bold text-[#111827]">Agent Workspace</h2>
-          <p className="text-sm text-[#6B7280] mt-0.5">{entries.length} campaign{entries.length !== 1 ? "s" : ""} active</p>
+          <h2 className="text-[18px] font-bold text-[var(--text)]">Agent Workspace</h2>
+          <p className="text-sm text-[var(--text-muted)] mt-0.5">{entries.length} campaign{entries.length !== 1 ? "s" : ""} active</p>
         </div>
         <div className="flex items-center gap-2">
           {entries.length > 0 && (
-            <button className="flex items-center gap-2 bg-[#0F1E3C] text-white font-semibold px-4 py-2.5 rounded-xl hover:bg-[#0d1b35] transition-colors text-sm">
+            <button className="flex items-center gap-2 bg-[var(--chip)] text-white font-semibold px-4 py-2.5 rounded-xl hover:bg-[#0d1b35] transition-colors text-sm">
               <Play size={14} fill="white" /> Run All
             </button>
           )}
           <button
             onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 bg-[#C0392B] text-white font-semibold px-4 py-2.5 rounded-xl hover:bg-[#a93226] transition-colors text-sm"
+            className="flex items-center gap-2 bg-[var(--accent)] text-white font-semibold px-4 py-2.5 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-sm"
           >
             <Plus size={16} /> Add Campaign
           </button>
@@ -93,32 +101,32 @@ export default function AgentPage() {
 
       {/* Global stats bar */}
       {entries.length > 0 && (
-        <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm px-5 py-3 flex items-center gap-6 text-sm">
+        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm px-5 py-3 flex items-center gap-6 text-sm">
           <Stat label="Campaigns" value={String(entries.length)} />
-          <div className="w-px h-4 bg-[#E5E7EB]" />
+          <div className="w-px h-4 bg-[var(--border)]" />
           <Stat label="Total Clips" value="0" />
-          <div className="w-px h-4 bg-[#E5E7EB]" />
+          <div className="w-px h-4 bg-[var(--border)]" />
           <Stat label="Approved" value="0" />
-          <div className="w-px h-4 bg-[#E5E7EB]" />
+          <div className="w-px h-4 bg-[var(--border)]" />
           <Stat label="Est. Earnings" value="~$0" />
           <div className="ml-auto flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#6B7280]" />
-            <span className="text-[#6B7280] text-xs">Idle</span>
+            <span className="w-2 h-2 rounded-full bg-[var(--text-muted)]" />
+            <span className="text-[var(--text-muted)] text-xs">Idle</span>
           </div>
         </div>
       )}
 
       {/* Campaign tabs */}
       {entries.length > 1 && (
-        <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm flex overflow-x-auto">
+        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm flex overflow-x-auto">
           {entries.map((entry, i) => (
             <button
               key={entry.campaign.id}
               onClick={() => scrollToCard(i)}
               className={`px-5 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === i
-                  ? "border-[#C0392B] text-[#C0392B]"
-                  : "border-transparent text-[#6B7280] hover:text-[#111827]"
+                  ? "border-[var(--accent)] text-[var(--accent)]"
+                  : "border-transparent text-[var(--text-muted)] hover:text-[var(--text)]"
               }`}
             >
               {entry.campaign.name}
@@ -129,16 +137,16 @@ export default function AgentPage() {
 
       {/* Workspace cards */}
       {entries.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm flex flex-col items-center justify-center py-24 gap-4">
+        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm flex flex-col items-center justify-center py-24 gap-4">
           <div className="w-16 h-16 bg-[#F8F9FB] rounded-2xl flex items-center justify-center">
-            <Bot size={28} className="text-[#6B7280]" />
+            <Bot size={28} className="text-[var(--text-muted)]" />
           </div>
           <div className="text-center">
-            <h3 className="font-bold text-[18px] text-[#111827] mb-1">No campaigns yet</h3>
-            <p className="text-sm text-[#6B7280] mb-5">Add your first campaign to start generating clips.</p>
+            <h3 className="font-bold text-[18px] text-[var(--text)] mb-1">No campaigns yet</h3>
+            <p className="text-sm text-[var(--text-muted)] mb-5">Add your first campaign to start generating clips.</p>
             <button
               onClick={() => setModalOpen(true)}
-              className="flex items-center gap-2 bg-[#C0392B] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[#a93226] transition-colors mx-auto"
+              className="flex items-center gap-2 bg-[var(--accent)] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[var(--accent-hover)] transition-colors mx-auto"
             >
               <Plus size={16} /> Add Campaign
             </button>
@@ -173,8 +181,8 @@ export default function AgentPage() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-[#6B7280]">{label}:</span>
-      <span className="font-semibold text-[#111827]">{value}</span>
+      <span className="text-[var(--text-muted)]">{label}:</span>
+      <span className="font-semibold text-[var(--text)]">{value}</span>
     </div>
   );
 }

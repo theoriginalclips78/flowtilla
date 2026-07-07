@@ -27,10 +27,10 @@ export default function CampaignPreviewCard({ result, onEdit, onQueue, onDismiss
   const { campaign, briefData, videoCount } = result;
 
   return (
-    <div className="bg-white rounded-xl border-2 border-success/40 shadow-md p-4 mb-4 relative">
+    <div className="bg-[var(--surface)] rounded-xl border-2 border-success/40 shadow-md p-4 mb-4 relative">
       <button
         onClick={onDismiss}
-        className="absolute top-3 right-3 text-[#6B7280] hover:text-[#111827]"
+        className="absolute top-3 right-3 text-[var(--text-muted)] hover:text-[var(--text)]"
       >
         <X size={16} />
       </button>
@@ -38,7 +38,7 @@ export default function CampaignPreviewCard({ result, onEdit, onQueue, onDismiss
       <div className="flex items-start gap-2 mb-3">
         <CheckCircle size={18} className="text-green-600 mt-0.5 flex-shrink-0" />
         <div>
-          <h3 className="font-bold text-[18px] text-[#111827]">{campaign.name}</h3>
+          <h3 className="font-bold text-[18px] text-[var(--text)]">{campaign.name}</h3>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
             {briefData.cpm != null && (
               <span className="text-xs bg-green-500/10 text-green-600 font-semibold px-2 py-0.5 rounded-full">
@@ -67,7 +67,7 @@ export default function CampaignPreviewCard({ result, onEdit, onQueue, onDismiss
 
       {/* Source videos */}
       {videoCount != null && (
-        <p className="text-sm text-[#6B7280] mb-3">
+        <p className="text-sm text-[var(--text-muted)] mb-3">
           🎞 Found <strong>{videoCount}</strong> videos from {campaign.name}
         </p>
       )}
@@ -75,10 +75,10 @@ export default function CampaignPreviewCard({ result, onEdit, onQueue, onDismiss
       {/* Requirements preview */}
       {briefData.requirements && briefData.requirements.length > 0 && (
         <div className="mb-2">
-          <p className="text-[11px] font-semibold text-[#6B7280] uppercase mb-1">Requirements</p>
+          <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase mb-1">Requirements</p>
           <ul className="space-y-0.5">
             {briefData.requirements.slice(0, 3).map((r, i) => (
-              <li key={i} className="text-xs text-[#111827] flex items-start gap-1">
+              <li key={i} className="text-xs text-[var(--text)] flex items-start gap-1">
                 <span className="text-green-600 mt-0.5">✓</span> {r}
               </li>
             ))}
@@ -89,11 +89,11 @@ export default function CampaignPreviewCard({ result, onEdit, onQueue, onDismiss
       {/* Rejection reasons preview */}
       {briefData.rejectionReasons && briefData.rejectionReasons.length > 0 && (
         <div className="mb-3">
-          <p className="text-[11px] font-semibold text-[#6B7280] uppercase mb-1">Avoid</p>
+          <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase mb-1">Avoid</p>
           <ul className="space-y-0.5">
             {briefData.rejectionReasons.slice(0, 3).map((r, i) => (
-              <li key={i} className="text-xs text-[#111827] flex items-start gap-1">
-                <span className="text-[#C0392B] mt-0.5">✕</span> {r}
+              <li key={i} className="text-xs text-[var(--text)] flex items-start gap-1">
+                <span className="text-[var(--accent)] mt-0.5">✕</span> {r}
               </li>
             ))}
           </ul>
@@ -103,13 +103,13 @@ export default function CampaignPreviewCard({ result, onEdit, onQueue, onDismiss
       <div className="flex gap-2">
         <button
           onClick={onEdit}
-          className="flex-1 border border-gray-200 text-[#6B7280] text-sm font-medium py-2 rounded-lg hover:bg-gray-50"
+          className="flex-1 border border-[var(--border)] text-[var(--text-muted)] text-sm font-medium py-2 rounded-lg hover:bg-gray-50"
         >
           Edit Details
         </button>
         <button
           onClick={onQueue}
-          className="flex-1 bg-[#C0392B] text-white text-sm font-semibold py-2 rounded-lg hover:bg-[#C0392B]/90"
+          className="flex-1 bg-[var(--accent)] text-white text-sm font-semibold py-2 rounded-lg hover:bg-[var(--accent)]/90"
         >
           Save & Queue
         </button>

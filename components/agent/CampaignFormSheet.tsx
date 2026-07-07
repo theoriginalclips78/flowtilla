@@ -143,10 +143,10 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
               <Label>Brand Name *</Label>
               <input
                 {...register("name")}
-                className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/30"
+                className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
                 placeholder="e.g. YoungLA"
               />
-              {errors.name && <p className="text-[#C0392B] text-xs mt-1">{errors.name.message}</p>}
+              {errors.name && <p className="text-[var(--accent)] text-xs mt-1">{errors.name.message}</p>}
             </div>
             <div className="grid grid-cols-3 gap-3">
               {(["cpm", "maxPerClip", "minPayout"] as const).map((field) => (
@@ -156,7 +156,7 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                     type="number"
                     step="0.01"
                     {...register(field, { valueAsNumber: true })}
-                    className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/30"
+                    className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
                   />
                 </div>
               ))}
@@ -165,12 +165,12 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
 
           {/* Sources */}
           <div>
-            <h3 className="font-semibold text-sm text-[#111827] mb-2">Content Sources</h3>
+            <h3 className="font-semibold text-sm text-[var(--text)] mb-2">Content Sources</h3>
             {fields.map((field, i) => (
               <div key={field.id} className="flex gap-2 mb-2">
                 <select
                   {...register(`sources.${i}.platform`)}
-                  className="px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+                  className="px-2 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none"
                 >
                   <option value="youtube">YouTube</option>
                   <option value="tiktok">TikTok</option>
@@ -179,18 +179,18 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                 <input
                   {...register(`sources.${i}.url`)}
                   placeholder="https://..."
-                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/30"
+                  className="flex-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
                 />
-                <button type="button" onClick={() => remove(i)} className="text-[#C0392B] hover:text-[#C0392B]/70 p-1">
+                <button type="button" onClick={() => remove(i)} className="text-[var(--accent)] hover:text-[var(--accent)]/70 p-1">
                   <Trash2 size={16} />
                 </button>
               </div>
             ))}
-            {errors.sources && <p className="text-[#C0392B] text-xs mt-1">{errors.sources.message || errors.sources.root?.message}</p>}
+            {errors.sources && <p className="text-[var(--accent)] text-xs mt-1">{errors.sources.message || errors.sources.root?.message}</p>}
             <button
               type="button"
               onClick={() => append({ platform: "youtube", url: "" })}
-              className="text-sm text-[#6B7280] border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 flex items-center gap-1 mt-1"
+              className="text-sm text-[var(--text-muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 hover:bg-gray-50 flex items-center gap-1 mt-1"
             >
               <Plus size={14} /> Add Source URL
             </button>
@@ -198,14 +198,14 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
 
           {/* Clip settings */}
           <div>
-            <h3 className="font-semibold text-sm text-[#111827] mb-3">Clip Settings</h3>
+            <h3 className="font-semibold text-sm text-[var(--text)] mb-3">Clip Settings</h3>
             <div className="mb-3">
               <Label>Clips per run (1-10)</Label>
               <input
                 type="number"
                 min={1} max={10}
                 {...register("clipCount", { valueAsNumber: true })}
-                className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+                className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none"
               />
             </div>
             <div className="mb-3">
@@ -218,8 +218,8 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                     onClick={() => setValue("clipLength", l)}
                     className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                       clipLength === l
-                        ? "bg-[#C0392B] text-white border-[#C0392B]"
-                        : "border-gray-200 text-[#6B7280] hover:border-[#C0392B]/40"
+                        ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                        : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]/40"
                     }`}
                   >
                     {l < 60 ? `${l}s` : `${l / 60}min`}
@@ -236,14 +236,14 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                     type="button"
                     onClick={() => setValue("aspectRatio", r.value)}
                     className={`flex flex-col items-center gap-1.5 p-3 border rounded-lg transition-colors flex-1 ${
-                      aspectRatio === r.value ? "border-[#C0392B] bg-[#C0392B]/5" : "border-gray-200 hover:border-[#C0392B]/30"
+                      aspectRatio === r.value ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-[var(--border)] hover:border-[var(--accent)]/30"
                     }`}
                   >
                     <div
-                      className={`border-2 ${aspectRatio === r.value ? "border-[#C0392B]" : "border-gray-300"} rounded-sm`}
+                      className={`border-2 ${aspectRatio === r.value ? "border-[var(--accent)]" : "border-[var(--border)]"} rounded-sm`}
                       style={{ width: r.w, height: r.h }}
                     />
-                    <span className="text-[11px] text-[#6B7280]">{r.label}</span>
+                    <span className="text-[11px] text-[var(--text-muted)]">{r.label}</span>
                   </button>
                 ))}
               </div>
@@ -253,10 +253,10 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
           {/* AI Instructions */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-semibold text-sm text-[#111827]">AI Instructions</h3>
+              <h3 className="font-semibold text-sm text-[var(--text)]">AI Instructions</h3>
               <button
                 type="button"
-                className="text-xs text-[#6B7280] hover:text-[#111827]"
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--text)]"
                 onClick={() => setValue("aiInstructions", "Find high energy moments where the brand clothing/logo is clearly visible. Prioritize funny reactions, impressive athletic moments, and hype content. Avoid slow, quiet, or off-brand segments.")}
               >
                 Use default
@@ -271,7 +271,7 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
 
           {/* Content Rules */}
           <div>
-            <h3 className="font-semibold text-sm text-[#111827] mb-1">Content Rules</h3>
+            <h3 className="font-semibold text-sm text-[var(--text)] mb-1">Content Rules</h3>
             <Textarea
               {...register("contentRules")}
               rows={3}
@@ -281,13 +281,13 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
 
           {/* Schedule */}
           <div>
-            <h3 className="font-semibold text-sm text-[#111827] mb-2">Schedule</h3>
+            <h3 className="font-semibold text-sm text-[var(--text)] mb-2">Schedule</h3>
             <div className="flex items-center gap-3 mb-3">
               <Switch
                 checked={scheduleEnabled}
                 onCheckedChange={(v) => setValue("scheduleEnabled", v)}
               />
-              <span className="text-sm text-[#6B7280]">Enable auto-run</span>
+              <span className="text-sm text-[var(--text-muted)]">Enable auto-run</span>
             </div>
             {scheduleEnabled && (
               <div className="space-y-2 pl-1">
@@ -295,7 +295,7 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                   <Label>Frequency</Label>
                   <select
                     {...register("scheduleFrequency")}
-                    className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+                    className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none"
                   >
                     <option value="hourly">Every hour</option>
                     <option value="every6h">Every 6 hours</option>
@@ -309,14 +309,14 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                   <input
                     type="time"
                     {...register("scheduleTime")}
-                    className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+                    className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none"
                   />
                 </div>
               </div>
             )}
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full bg-[#C0392B] hover:bg-[#C0392B]/90 text-white">
+          <Button type="submit" disabled={isSubmitting} className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white">
             {isSubmitting ? "Saving..." : "Save Campaign"}
           </Button>
         </form>

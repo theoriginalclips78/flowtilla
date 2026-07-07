@@ -136,7 +136,7 @@ export default function PhonePreview({ videoRef, clip, settings }: Props) {
 
       {/* Playback controls */}
       <div className="flex items-center gap-3 mt-4 w-full max-w-[260px]">
-        <button onClick={toggle} className="p-2 rounded-full bg-[#0F1E3C] text-white hover:bg-[#0F1E3C]/80">
+        <button onClick={toggle} className="p-2 rounded-full bg-[var(--chip)] text-white hover:bg-[var(--chip)]/80">
           {playing ? <Pause size={16} /> : <Play size={16} />}
         </button>
         <div className="flex-1 bg-gray-200 rounded-full h-1.5 cursor-pointer relative"
@@ -148,12 +148,12 @@ export default function PhonePreview({ videoRef, clip, settings }: Props) {
             }
           }}
         >
-          <div className="bg-[#C0392B] h-1.5 rounded-full" style={{ width: `${progress}%` }} />
+          <div className="bg-[var(--accent)] h-1.5 rounded-full" style={{ width: `${progress}%` }} />
         </div>
-        <span className="text-xs text-[#6B7280] tabular-nums">
+        <span className="text-xs text-[var(--text-muted)] tabular-nums">
           {Math.floor(currentTime)}s
         </span>
-        <Volume2 size={14} className="text-[#6B7280]" />
+        <Volume2 size={14} className="text-[var(--text-muted)]" />
       </div>
     </div>
   );

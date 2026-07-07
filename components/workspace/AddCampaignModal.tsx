@@ -366,11 +366,11 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="bg-[var(--surface)] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
-          <h2 className="font-bold text-xl text-[#111827]">Add Campaign</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#6B7280] hover:bg-gray-100 hover:text-[#111827]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] flex-shrink-0">
+          <h2 className="font-bold text-xl text-[var(--text)]">Add Campaign</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-gray-100 hover:text-[var(--text)]">
             <X size={18} />
           </button>
         </div>
@@ -381,48 +381,48 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
             <div className="space-y-4">
               <input value={cname} onChange={(e) => setCname(e.target.value)}
                 placeholder="Campaign name (optional)"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
+                className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]" />
 
               {/* Footage */}
               <div>
-                <label className="block text-xs font-bold text-[#6B7280] uppercase mb-1.5">Footage</label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1.5">Footage</label>
                 <label
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files); }}
-                  className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl px-4 py-5 text-center cursor-pointer hover:border-[#C0392B]/60 hover:bg-[#C0392B]/[0.03] transition-colors">
+                  className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-xl px-4 py-5 text-center cursor-pointer hover:border-[var(--accent)]/60 hover:bg-[var(--accent)]/[0.03] transition-colors">
                   <input type="file" multiple className="hidden" onChange={(e) => handleUpload(e.target.files)}
                     {...({ webkitdirectory: "", directory: "" } as Record<string, string>)} />
-                  <Upload size={20} className="text-[#C0392B] mb-1.5" />
-                  <div className="text-sm font-bold text-[#111827]">
+                  <Upload size={20} className="text-[var(--accent)] mb-1.5" />
+                  <div className="text-sm font-bold text-[var(--text)]">
                     {uploadedCount > 0 ? `✅ ${uploadedCount} clip${uploadedCount !== 1 ? "s" : ""} ready` : "Upload a folder of clips"}
                   </div>
-                  <div className="text-[11px] text-[#94A3B8] mt-0.5">Click or drag a downloaded folder — clips every video inside.</div>
+                  <div className="text-[11px] text-[var(--text-light)] mt-0.5">Click or drag a downloaded folder — clips every video inside.</div>
                 </label>
                 <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={2}
                   placeholder="…or paste video URLs / folder paths / a campaign URL / the full brief text"
-                  className="mt-2 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none" />
+                  className="mt-2 w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none" />
               </div>
 
               {/* Brief */}
               <div>
-                <label className="block text-xs font-bold text-[#6B7280] uppercase mb-1.5">Brief <span className="font-normal normal-case text-[#94A3B8]">(optional — reads the rules)</span></label>
-                <label className="flex items-center justify-between gap-2 border border-gray-200 rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors">
-                  <span className="text-[#6B7280] truncate flex items-center gap-2">
-                    <FileText size={14} className="shrink-0 text-[#94A3B8]" />
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1.5">Brief <span className="font-normal normal-case text-[var(--text-light)]">(optional — reads the rules)</span></label>
+                <label className="flex items-center justify-between gap-2 border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                  <span className="text-[var(--text-muted)] truncate flex items-center gap-2">
+                    <FileText size={14} className="shrink-0 text-[var(--text-light)]" />
                     {briefFile ? briefFile.name : "Attach a brief file (PDF)"}
                   </span>
                   <input type="file" accept=".pdf,.txt,.md,.rtf" className="hidden"
                     onChange={(e) => setBriefFile(e.target.files?.[0] || null)} />
-                  <span className="text-[#C0392B] font-semibold text-xs shrink-0">{briefFile ? "Change" : "Attach"}</span>
+                  <span className="text-[var(--accent)] font-semibold text-xs shrink-0">{briefFile ? "Change" : "Attach"}</span>
                 </label>
               </div>
 
               {/* Instructions */}
               <div>
-                <label className="block text-xs font-bold text-[#6B7280] uppercase mb-1.5">Instructions <span className="font-normal normal-case text-[#94A3B8]">(optional)</span></label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1.5">Instructions <span className="font-normal normal-case text-[var(--text-light)]">(optional)</span></label>
                 <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={2}
                   placeholder="Hook style, what to look for, banner text… e.g. 'bro-voice hook, banner: SEEDANCE 2.0 ON HIGGSFIELD'"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none" />
+                  className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none" />
               </div>
 
               <button onClick={handleUnifiedCreate} disabled={loading}
@@ -446,11 +446,11 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                   {s.done ? (
                     <CheckCircle size={15} className="text-green-500 flex-shrink-0" />
                   ) : s.active ? (
-                    <Loader2 size={15} className="animate-spin text-[#C0392B] flex-shrink-0" />
+                    <Loader2 size={15} className="animate-spin text-[var(--accent)] flex-shrink-0" />
                   ) : (
-                    <div className="w-3.5 h-3.5 rounded-full border border-gray-300 flex-shrink-0" />
+                    <div className="w-3.5 h-3.5 rounded-full border border-[var(--border)] flex-shrink-0" />
                   )}
-                  <span className={s.done ? "text-[#6B7280]" : s.active ? "text-[#111827] font-medium" : "text-[#6B7280]"}>{s.text}</span>
+                  <span className={s.done ? "text-[var(--text-muted)]" : s.active ? "text-[var(--text)] font-medium" : "text-[var(--text-muted)]"}>{s.text}</span>
                 </div>
               ))}
             </div>
@@ -462,10 +462,10 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
 
           {/* Campaign Preview Card */}
           {preview && !loading && (
-            <div className="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50">
+            <div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-gray-50">
               {/* Brand header */}
-              <div className="bg-[#0F1E3C] px-4 py-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#C0392B] flex items-center justify-center text-white font-black text-lg flex-shrink-0">
+              <div className="bg-[var(--chip)] px-4 py-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--accent)] flex items-center justify-center text-white font-black text-lg flex-shrink-0">
                   {(preview.campaign.name || "?")[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -485,15 +485,15 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
               <div className="p-4 space-y-3">
                 {/* Sources breakdown */}
                 <div>
-                  <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1.5">Sources Found</p>
+                  <p className="text-xs font-semibold text-[var(--text-muted)] uppercase mb-1.5">Sources Found</p>
                   <div className="flex flex-wrap gap-2">
                     {(preview.breakdown || []).map((b) => (
-                      <span key={b.platform} className="flex items-center gap-1 text-xs bg-white border border-gray-200 px-2.5 py-1 rounded-full font-medium text-[#111827]">
+                      <span key={b.platform} className="flex items-center gap-1 text-xs bg-[var(--surface)] border border-[var(--border)] px-2.5 py-1 rounded-full font-medium text-[var(--text)]">
                         {PLATFORM_ICONS[b.platform] || "📺"} {b.count} {b.platform}
                       </span>
                     ))}
                     {(preview.breakdown || []).length === 0 && (
-                      <span className="text-xs text-[#6B7280]">{preview.videoCount || 0} videos found</span>
+                      <span className="text-xs text-[var(--text-muted)]">{preview.videoCount || 0} videos found</span>
                     )}
                   </div>
                 </div>
@@ -501,9 +501,9 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                 {/* Requirements */}
                 {preview.briefData?.requirements && preview.briefData.requirements.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1.5">Requirements</p>
+                    <p className="text-xs font-semibold text-[var(--text-muted)] uppercase mb-1.5">Requirements</p>
                     {preview.briefData.requirements.slice(0, 3).map((r, i) => (
-                      <div key={i} className="flex items-start gap-1.5 text-xs text-[#111827] mb-1">
+                      <div key={i} className="flex items-start gap-1.5 text-xs text-[var(--text)] mb-1">
                         <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span><span>{r}</span>
                       </div>
                     ))}
@@ -513,10 +513,10 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                 {/* Rejection reasons */}
                 {preview.briefData?.rejectionReasons && preview.briefData.rejectionReasons.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1.5">Rejection Reasons</p>
+                    <p className="text-xs font-semibold text-[var(--text-muted)] uppercase mb-1.5">Rejection Reasons</p>
                     {preview.briefData.rejectionReasons.slice(0, 2).map((r, i) => (
-                      <div key={i} className="flex items-start gap-1.5 text-xs text-[#6B7280] mb-1">
-                        <span className="text-[#C0392B] mt-0.5 flex-shrink-0">✕</span><span>{r}</span>
+                      <div key={i} className="flex items-start gap-1.5 text-xs text-[var(--text-muted)] mb-1">
+                        <span className="text-[var(--accent)] mt-0.5 flex-shrink-0">✕</span><span>{r}</span>
                       </div>
                     ))}
                   </div>
@@ -524,9 +524,9 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
 
                 {/* AI Instructions preview */}
                 {preview.briefData?.aiInstructions && (
-                  <div className="bg-white border border-gray-100 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1">AI Instructions</p>
-                    <p className="text-xs text-[#6B7280] italic line-clamp-2">{preview.briefData.aiInstructions}</p>
+                  <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-3">
+                    <p className="text-xs font-semibold text-[var(--text-muted)] uppercase mb-1">AI Instructions</p>
+                    <p className="text-xs text-[var(--text-muted)] italic line-clamp-2">{preview.briefData.aiInstructions}</p>
                   </div>
                 )}
 
@@ -535,7 +535,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                   🚀 Create &amp; Start Clipping
                 </button>
                 <button onClick={handleAdd}
-                  className="w-full text-[#6B7280] font-medium py-2 rounded-xl hover:bg-gray-50 transition-colors text-sm">
+                  className="w-full text-[var(--text-muted)] font-medium py-2 rounded-xl hover:bg-gray-50 transition-colors text-sm">
                   Just add it — I&apos;ll run it later
                 </button>
               </div>

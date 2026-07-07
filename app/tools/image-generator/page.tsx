@@ -41,24 +41,24 @@ export default function ImageGeneratorPage() {
     <ToolPageLayout title="Image Generator">
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-1.5">Describe the image</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-1.5">Describe the image</label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             rows={3}
             placeholder="Describe the image you want..."
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none"
+            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none"
           />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-2">Style</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-2">Style</label>
           <div className="flex flex-wrap gap-2">
             {STYLES.map((s) => (
               <button
                 key={s}
                 onClick={() => setStyle(s)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${style === s ? "bg-[#0F1E3C] text-white border-[#0F1E3C]" : "border-gray-200 text-[#6B7280] hover:border-gray-300"}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${style === s ? "bg-[var(--chip)] text-white border-[var(--chip)]" : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border)]"}`}
               >
                 {s}
               </button>
@@ -67,13 +67,13 @@ export default function ImageGeneratorPage() {
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-2">Size</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-2">Size</label>
           <div className="flex gap-2">
             {SIZES.map((s) => (
               <button
                 key={s.value}
                 onClick={() => setSize(s.value)}
-                className={`flex-1 py-2 rounded-xl border text-sm font-semibold transition-colors ${size === s.value ? "bg-[#0F1E3C] text-white border-[#0F1E3C]" : "border-gray-200 text-[#6B7280]"}`}
+                className={`flex-1 py-2 rounded-xl border text-sm font-semibold transition-colors ${size === s.value ? "bg-[var(--chip)] text-white border-[var(--chip)]" : "border-[var(--border)] text-[var(--text-muted)]"}`}
               >
                 {s.label}
               </button>
@@ -84,7 +84,7 @@ export default function ImageGeneratorPage() {
         <button
           onClick={handleGenerate}
           disabled={loading || !prompt.trim()}
-          className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={16} />}
           {loading ? "Generating..." : "Generate Image"}
@@ -99,12 +99,12 @@ export default function ImageGeneratorPage() {
 
         {imageUrl && (
           <div className="space-y-3">
-            <img src={imageUrl} alt="Generated" className="w-full rounded-xl border border-gray-200" />
+            <img src={imageUrl} alt="Generated" className="w-full rounded-xl border border-[var(--border)]" />
             <div className="flex gap-2">
               <a href={imageUrl} download className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white font-bold py-2.5 rounded-xl hover:bg-green-700 transition-colors text-sm">
                 <Download size={14} /> Download
               </a>
-              <button onClick={handleGenerate} className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-[#111827] font-semibold py-2.5 rounded-xl hover:bg-gray-50 text-sm">
+              <button onClick={handleGenerate} className="flex-1 flex items-center justify-center gap-2 border border-[var(--border)] text-[var(--text)] font-semibold py-2.5 rounded-xl hover:bg-gray-50 text-sm">
                 <RefreshCw size={14} /> Generate Another
               </button>
             </div>

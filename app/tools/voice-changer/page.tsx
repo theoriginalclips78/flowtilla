@@ -49,25 +49,25 @@ export default function VoiceChangerPage() {
       <div className="space-y-4">
         <div
           onClick={() => inputRef.current?.click()}
-          className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#C0392B]/40 hover:bg-[#C0392B]/5 transition-colors"
+          className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5 transition-colors"
         >
-          <Upload size={28} className="mx-auto text-[#6B7280] mb-2" />
-          <p className="text-sm font-semibold text-[#111827]">{file ? file.name : "Drop file here or click to upload"}</p>
-          <p className="text-xs text-[#6B7280] mt-1">MP4, MP3, WAV, MOV</p>
+          <Upload size={28} className="mx-auto text-[var(--text-muted)] mb-2" />
+          <p className="text-sm font-semibold text-[var(--text)]">{file ? file.name : "Drop file here or click to upload"}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">MP4, MP3, WAV, MOV</p>
           <input ref={inputRef} type="file" accept="video/*,audio/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-2">Voice Effect</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-2">Voice Effect</label>
           <div className="grid grid-cols-3 gap-2">
             {EFFECTS.map((e) => (
               <button
                 key={e.id}
                 onClick={() => setEffect(e.id)}
-                className={`p-3 rounded-xl border text-center transition-colors ${effect === e.id ? "border-[#C0392B] bg-[#C0392B]/5" : "border-gray-200 hover:border-gray-300"}`}
+                className={`p-3 rounded-xl border text-center transition-colors ${effect === e.id ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-[var(--border)] hover:border-[var(--border)]"}`}
               >
                 <span className="text-xl block mb-1">{e.icon}</span>
-                <span className={`text-xs font-bold ${effect === e.id ? "text-[#C0392B]" : "text-[#111827]"}`}>{e.label}</span>
+                <span className={`text-xs font-bold ${effect === e.id ? "text-[var(--accent)]" : "text-[var(--text)]"}`}>{e.label}</span>
               </button>
             ))}
           </div>
@@ -76,7 +76,7 @@ export default function VoiceChangerPage() {
         <button
           onClick={handleProcess}
           disabled={loading || !file}
-          className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Volume2 size={16} />}
           {loading ? "Applying Effect..." : "Apply Voice Change"}
@@ -84,7 +84,7 @@ export default function VoiceChangerPage() {
 
         {loading && (
           <div className="w-full bg-gray-100 rounded-full h-2">
-            <div className="bg-[#C0392B] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div className="bg-[var(--accent)] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
         )}
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Bot, Film, HardDrive, Wrench, Settings, BookOpen, Building2 } from "lucide-react";
 import MontviewLogo from "@/components/MontviewLogo";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -22,7 +23,7 @@ export default function Sidebar() {
     <aside
       className="fixed left-0 top-0 h-screen w-[72px] flex flex-col items-center py-5 z-50"
       style={{
-        background: "#0F1E3C",
+        background: "var(--chip)",
         borderRight: "1px solid rgba(255,255,255,0.08)",
       }}
     >
@@ -59,7 +60,8 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom */}
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-2">
+        <ThemeToggle />
         <Link
           href="/settings"
           title="Settings"

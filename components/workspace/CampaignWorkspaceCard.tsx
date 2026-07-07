@@ -31,7 +31,7 @@ interface Props {
 
 const PlatformIcon = ({ platform, size = 18 }: { platform: string; size?: number }) => {
   if (platform === "youtube") return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className="text-[#C0392B]">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className="text-[var(--accent)]">
       <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
     </svg>
   );
@@ -235,19 +235,19 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
   const estEarnings = ((approvedCount * 50000 * campaign.cpm) / 1000).toFixed(0);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
       {/* Card Header */}
       <div
         className="flex items-center gap-3 px-5 py-4 cursor-pointer select-none"
         onClick={() => setExpanded((e) => !e)}
       >
-        <div className="w-10 h-10 rounded-full bg-[#0F1E3C] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-[var(--chip)] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
           {campaign.name[0].toUpperCase()}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-[18px] text-[#111827]">{campaign.name}</span>
+            <span className="font-bold text-[18px] text-[var(--text)]">{campaign.name}</span>
             {uniquePlatforms.map((p) => (
               <span key={p} className="inline-flex"><PlatformIcon platform={p} /></span>
             ))}
@@ -258,7 +258,7 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
               Max ${campaign.maxPerClip}
             </span>
             {totalClips > 0 && (
-              <span className="text-xs bg-gray-100 text-[#6B7280] px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-gray-100 text-[var(--text-muted)] px-2 py-0.5 rounded-full">
                 {sources.length} videos · {totalClips} clips{approvedCount > 0 ? ` · ~$${estEarnings} est.` : ""}
               </span>
             )}
@@ -266,10 +266,10 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-          {status === "idle" && <span className="text-xs bg-gray-100 text-[#6B7280] px-2 py-1 rounded-full">Idle</span>}
+          {status === "idle" && <span className="text-xs bg-gray-100 text-[var(--text-muted)] px-2 py-1 rounded-full">Idle</span>}
           {status === "running" && (
-            <span className="text-xs bg-[#C0392B]/10 text-[#C0392B] px-2 py-1 rounded-full flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-[#C0392B] rounded-full animate-pulse" /> Running
+            <span className="text-xs bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-1 rounded-full flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-pulse" /> Running
             </span>
           )}
           {status === "complete" && (
@@ -277,18 +277,18 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
               <CheckCircle size={11} /> Complete
             </span>
           )}
-          {status === "error" && <span className="text-xs bg-[#C0392B]/10 text-[#C0392B] px-2 py-1 rounded-full">Error</span>}
+          {status === "error" && <span className="text-xs bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-1 rounded-full">Error</span>}
 
           <button
             onClick={handleRun}
-            className="flex items-center gap-1.5 bg-[#C0392B] text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-[#C0392B]/90"
+            className="flex items-center gap-1.5 bg-[var(--accent)] text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-[var(--accent)]/90"
           >
             {status === "running" ? <><Pause size={13} /> Pause</> : status === "complete" ? <><Play size={13} fill="white" /> Re-run</> : <><Play size={13} fill="white" /> Run</>}
           </button>
 
           <button
             onClick={handleAutoEditAll}
-            className="flex items-center gap-1.5 bg-[#0F1E3C] text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-[#0F1E3C]/90"
+            className="flex items-center gap-1.5 bg-[var(--chip)] text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-[var(--chip)]/90"
           >
             <Zap size={13} /> Auto Edit All
           </button>
@@ -296,7 +296,7 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
           {totalClips > 0 && (
             <a href={`/api/campaigns/${campaign.id}/zip`} download
               title="Download every clip as one zip"
-              className="flex items-center gap-1.5 bg-white text-[#0F1E3C] border border-gray-200 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-50">
+              className="flex items-center gap-1.5 bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-50">
               <Download size={13} /> Download all
             </a>
           )}
@@ -304,24 +304,24 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="w-8 h-8 flex items-center justify-center text-[#6B7280] border border-gray-200 rounded-lg hover:bg-gray-50"
+              className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)] border border-[var(--border)] rounded-lg hover:bg-gray-50"
             >
               <MoreHorizontal size={16} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg z-10 py-1 w-44">
+              <div className="absolute right-0 top-10 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg z-10 py-1 w-44">
                 <button onClick={() => { setMenuOpen(false); setShowEdit(true); }}
-                  className="w-full text-left px-4 py-2 text-sm text-[#111827] hover:bg-gray-50">
+                  className="w-full text-left px-4 py-2 text-sm text-[var(--text)] hover:bg-gray-50">
                   Edit Brief
                 </button>
                 <a href={`/api/campaigns/${campaign.id}/avatar`} download
                   onClick={() => setMenuOpen(false)}
-                  className="block w-full text-left px-4 py-2 text-sm text-[#111827] hover:bg-gray-50 flex items-center gap-2">
+                  className="block w-full text-left px-4 py-2 text-sm text-[var(--text)] hover:bg-gray-50 flex items-center gap-2">
                   <ImageIcon size={13} /> Download profile pic
                 </a>
                 <button
                   onClick={() => { setMenuOpen(false); onRemove(campaign.id); }}
-                  className="w-full text-left px-4 py-2 text-sm text-[#C0392B] hover:bg-[#C0392B]/5 flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 text-sm text-[var(--accent)] hover:bg-[var(--accent)]/5 flex items-center gap-2"
                 >
                   <Trash2 size={13} /> Remove Campaign
                 </button>
@@ -330,13 +330,13 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
           </div>
         </div>
 
-        {expanded ? <ChevronUp size={18} className="text-[#6B7280]" /> : <ChevronDown size={18} className="text-[#6B7280]" />}
+        {expanded ? <ChevronUp size={18} className="text-[var(--text-muted)]" /> : <ChevronDown size={18} className="text-[var(--text-muted)]" />}
       </div>
 
       {/* Card Body */}
       {expanded && (
-        <div className="border-t border-gray-200 grid grid-cols-[25%_45%_30%]" style={{ height: 500 }}>
-          <div className="border-r border-gray-200 overflow-hidden">
+        <div className="border-t border-[var(--border)] grid grid-cols-[25%_45%_30%]" style={{ height: 500 }}>
+          <div className="border-r border-[var(--border)] overflow-hidden">
             <BriefSummaryPanel
               campaign={campaign}
               sources={sources}
@@ -344,7 +344,7 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
               onRescan={() => toast.info("Re-scanning sources...")}
             />
           </div>
-          <div className="border-r border-gray-200 overflow-hidden flex flex-col">
+          <div className="border-r border-[var(--border)] overflow-hidden flex flex-col">
             <AgentLogPanel
               logs={logs}
               totalClips={totalClips}

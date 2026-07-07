@@ -45,41 +45,41 @@ export default function VoiceoverPage() {
     <ToolPageLayout title="Voiceover Generator">
       <div className="space-y-5">
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-1.5">Script</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-1.5">Script</label>
           <textarea
             value={script}
             onChange={(e) => setScript(e.target.value)}
             rows={5}
             placeholder="Type your script here..."
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none"
+            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none"
           />
-          <p className="text-[11px] text-[#6B7280] mt-1 text-right">{script.length} chars</p>
+          <p className="text-[11px] text-[var(--text-muted)] mt-1 text-right">{script.length} chars</p>
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-2">Voice</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-2">Voice</label>
           <div className="grid grid-cols-3 gap-2">
             {VOICES.map((v) => (
               <button
                 key={v.id}
                 onClick={() => setVoice(v.id)}
-                className={`p-3 rounded-xl border text-left transition-colors ${voice === v.id ? "border-[#C0392B] bg-[#C0392B]/5" : "border-gray-200 hover:border-gray-300"}`}
+                className={`p-3 rounded-xl border text-left transition-colors ${voice === v.id ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-[var(--border)] hover:border-[var(--border)]"}`}
               >
-                <p className={`text-xs font-bold ${voice === v.id ? "text-[#C0392B]" : "text-[#111827]"}`}>{v.label}</p>
-                <p className="text-[10px] text-[#6B7280] mt-0.5">{v.desc}</p>
+                <p className={`text-xs font-bold ${voice === v.id ? "text-[var(--accent)]" : "text-[var(--text)]"}`}>{v.label}</p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{v.desc}</p>
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-2">Speed</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-2">Speed</label>
           <div className="flex gap-2">
             {SPEEDS.map((s) => (
               <button
                 key={s}
                 onClick={() => setSpeed(s)}
-                className={`flex-1 py-2 rounded-xl border text-sm font-semibold transition-colors ${speed === s ? "bg-[#0F1E3C] text-white border-[#0F1E3C]" : "border-gray-200 text-[#6B7280] hover:border-gray-300"}`}
+                className={`flex-1 py-2 rounded-xl border text-sm font-semibold transition-colors ${speed === s ? "bg-[var(--chip)] text-white border-[var(--chip)]" : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border)]"}`}
               >
                 {s}x
               </button>
@@ -90,7 +90,7 @@ export default function VoiceoverPage() {
         <button
           onClick={handleGenerate}
           disabled={loading || !script.trim()}
-          className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Mic size={16} />}
           {loading ? "Generating..." : "Generate Voiceover"}

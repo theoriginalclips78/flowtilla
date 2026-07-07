@@ -92,9 +92,9 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+      <div className="bg-[var(--surface)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
         {/* Header with prev/next */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--border)]">
           <button
             onClick={() => currentIndex > 0 && onNavigate(currentIndex - 1)}
             disabled={currentIndex === 0}
@@ -103,8 +103,8 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
             <ChevronLeft size={20} />
           </button>
           <div className="text-center">
-            <h2 className="font-bold text-[20px] text-[#111827]">Review Clip</h2>
-            <p className="text-[14px] text-[#6B7280]">Preview and adjust the clip timing</p>
+            <h2 className="font-bold text-[20px] text-[var(--text)]">Review Clip</h2>
+            <p className="text-[14px] text-[var(--text-muted)]">Preview and adjust the clip timing</p>
           </div>
           <button
             onClick={() => currentIndex < allClips.length - 1 && onNavigate(currentIndex + 1)}
@@ -119,7 +119,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           {/* Clip info */}
           <div>
             <h3 className="font-bold text-[18px]">{clip.title}</h3>
-            <p className="text-[14px] text-[#6B7280] mt-1">{clip.reason}</p>
+            <p className="text-[14px] text-[var(--text-muted)] mt-1">{clip.reason}</p>
           </div>
 
           {/* Video player */}
@@ -143,12 +143,12 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
             >
               {/* Clip range */}
               <div
-                className="absolute h-full bg-[#C0392B]/30 rounded-full"
+                className="absolute h-full bg-[var(--accent)]/30 rounded-full"
                 style={{ left: `${startRatio * 100}%`, width: `${(endRatio - startRatio) * 100}%` }}
               />
               {/* Current position */}
               <div
-                className="absolute w-3 h-3 bg-[#C0392B] rounded-full top-0 -translate-x-1/2 shadow"
+                className="absolute w-3 h-3 bg-[var(--accent)] rounded-full top-0 -translate-x-1/2 shadow"
                 style={{ left: `${currentRatio * 100}%` }}
               />
               {/* Adjust handles */}
@@ -165,14 +165,14 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
                 </>
               )}
             </div>
-            <div className="flex items-center justify-between mt-1 text-[12px] text-[#6B7280]">
+            <div className="flex items-center justify-between mt-1 text-[12px] text-[var(--text-muted)]">
               <span>0:00</span>
               <span>{formatTime(startTime)}</span>
-              <span className="bg-[#0F1E3C] text-white px-2 py-0.5 rounded-full">{Math.round(clipDuration)}s</span>
+              <span className="bg-[var(--chip)] text-white px-2 py-0.5 rounded-full">{Math.round(clipDuration)}s</span>
               <span>{formatTime(endTime)}</span>
               <span>{formatTime(duration)}</span>
             </div>
-            <p className="text-[11px] text-[#6B7280]/60 mt-1 text-center">
+            <p className="text-[11px] text-[var(--text-muted)]/60 mt-1 text-center">
               Tap anywhere on the timeline to explore the full video
             </p>
           </div>
@@ -181,13 +181,13 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           <div className="flex gap-2">
             <button
               onClick={togglePlay}
-              className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50"
+              className="flex items-center gap-1.5 px-4 py-2 border border-[var(--border)] rounded-lg text-sm hover:bg-gray-50"
             >
               {isPlaying ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Play</>}
             </button>
             <button
               onClick={() => seek(startTime)}
-              className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50"
+              className="flex items-center gap-1.5 px-4 py-2 border border-[var(--border)] rounded-lg text-sm hover:bg-gray-50"
             >
               <RotateCcw size={14} /> Play from start of clip
             </button>
@@ -196,7 +196,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           {/* Adjust boundaries */}
           <button
             onClick={() => setAdjustMode(!adjustMode)}
-            className="w-full flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-2 text-sm hover:bg-gray-50"
+            className="w-full flex items-center justify-center gap-2 border border-[var(--border)] rounded-lg py-2 text-sm hover:bg-gray-50"
           >
             <Pencil size={14} />
             {adjustMode ? "Done Adjusting" : "Adjust Boundaries"}
@@ -206,14 +206,14 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           <div className="flex gap-3 pt-2">
             <button
               onClick={onClose}
-              className="flex-1 border border-gray-200 text-[#6B7280] py-2.5 rounded-xl hover:bg-gray-50 font-medium"
+              className="flex-1 border border-[var(--border)] text-[var(--text-muted)] py-2.5 rounded-xl hover:bg-gray-50 font-medium"
             >
               Cancel
             </button>
             <button
               onClick={approve}
               disabled={isApproving}
-              className="flex-1 bg-[#C0392B] text-white py-2.5 rounded-xl hover:bg-[#C0392B]/90 font-medium disabled:opacity-60"
+              className="flex-1 bg-[var(--accent)] text-white py-2.5 rounded-xl hover:bg-[var(--accent)]/90 font-medium disabled:opacity-60"
             >
               {isApproving ? "Approving..." : "Approve Clip"}
             </button>

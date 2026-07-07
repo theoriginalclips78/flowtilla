@@ -14,9 +14,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Apply saved theme before paint — no flash of the wrong mode */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('montview_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}` }} />
+      </head>
       <body className={`${inter.variable} min-h-screen`} style={{ fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
         <AppChrome>{children}</AppChrome>
-        <Toaster position="top-right" theme="light" richColors />
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

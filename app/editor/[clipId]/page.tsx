@@ -49,7 +49,7 @@ const DEFAULT_SETTINGS: EditorSettings = {
   hookDuration: 2,
   hookPosition: "top",
   progressBar: true,
-  progressColor: "#C0392B",
+  progressColor: "var(--accent)",
   watermarkText: "@username",
   watermarkEnabled: false,
   watermarkOpacity: 40,
@@ -212,7 +212,7 @@ export default function EditorPage() {
   if (!clip) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="animate-spin text-[#C0392B]" size={32} />
+        <Loader2 className="animate-spin text-[var(--accent)]" size={32} />
       </div>
     );
   }
@@ -220,17 +220,17 @@ export default function EditorPage() {
   return (
     <div className="flex h-screen bg-[#F8F9FB] overflow-hidden">
       {/* Left panel — editing controls */}
-      <div className="w-[58%] flex flex-col border-r border-gray-200 overflow-hidden">
+      <div className="w-[58%] flex flex-col border-r border-[var(--border)] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)] bg-[var(--surface)]">
           <div>
-            <h1 className="font-bold text-[16px] text-[#111827] truncate max-w-xs">{clip.title}</h1>
-            <p className="text-xs text-[#6B7280]">{Math.round(clip.endTime - clip.startTime)}s clip</p>
+            <h1 className="font-bold text-[16px] text-[var(--text)] truncate max-w-xs">{clip.title}</h1>
+            <p className="text-xs text-[var(--text-muted)]">{Math.round(clip.endTime - clip.startTime)}s clip</p>
           </div>
           <button
             onClick={handleAutoEdit}
             disabled={autoLoading}
-            className="flex items-center gap-2 bg-[#C0392B] text-white font-bold px-4 py-2 rounded-xl hover:bg-[#C0392B]/90 disabled:opacity-60"
+            className="flex items-center gap-2 bg-[var(--accent)] text-white font-bold px-4 py-2 rounded-xl hover:bg-[var(--accent)]/90 disabled:opacity-60"
           >
             {autoLoading ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
             Auto Edit — Optimize for Views
@@ -249,21 +249,21 @@ export default function EditorPage() {
         </div>
 
         {/* Caption section */}
-        <div className="border-t border-gray-200 bg-white p-4">
+        <div className="border-t border-[var(--border)] bg-[var(--surface)] p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-sm text-[#111827]">Auto-Generated Caption</span>
+            <span className="font-semibold text-sm text-[var(--text)]">Auto-Generated Caption</span>
             <div className="flex gap-2">
               <button
                 onClick={() => generateCaption()}
                 disabled={captionLoading}
-                className="flex items-center gap-1 text-xs text-[#6B7280] hover:text-[#111827] border border-gray-200 px-2 py-1 rounded"
+                className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text)] border border-[var(--border)] px-2 py-1 rounded"
               >
                 {captionLoading ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
                 Regenerate
               </button>
               <button
                 onClick={() => { navigator.clipboard.writeText(caption); toast.success("Copied!"); }}
-                className="flex items-center gap-1 text-xs text-[#6B7280] hover:text-[#111827] border border-gray-200 px-2 py-1 rounded"
+                className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text)] border border-[var(--border)] px-2 py-1 rounded"
               >
                 <Copy size={11} /> Copy
               </button>
@@ -273,7 +273,7 @@ export default function EditorPage() {
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             rows={3}
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20"
+            className="w-full text-sm border border-[var(--border)] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
           />
         </div>
       </div>
@@ -291,7 +291,7 @@ export default function EditorPage() {
           {exportProgress > 0 && (
             <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
               <div
-                className="bg-[#C0392B] h-1.5 rounded-full transition-all duration-500"
+                className="bg-[var(--accent)] h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${exportProgress}%` }}
               />
             </div>
@@ -299,7 +299,7 @@ export default function EditorPage() {
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#C0392B]/90 disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent)]/90 disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {exporting ? (
               <><Loader2 size={16} className="animate-spin" /> Exporting...</>

@@ -15,7 +15,7 @@ const CONTENT_TYPES = ["Short clips", "Long form", "Stories", "Reels"];
 const PLATFORM_COLORS: Record<string, string> = {
   TikTok: "bg-black text-white",
   Instagram: "bg-pink-500 text-white",
-  YouTube: "bg-[#C0392B] text-white",
+  YouTube: "bg-[var(--accent)] text-white",
   Twitch: "bg-purple-600 text-white",
 };
 
@@ -56,36 +56,36 @@ export default function BrainstormerPage() {
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-1.5">Niche / Brand</label>
-            <input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="fitness, gaming, cooking..." className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
+            <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-1.5">Niche / Brand</label>
+            <input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="fitness, gaming, cooking..." className="w-full border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]" />
           </div>
           <div>
-            <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-1.5">Target Audience</label>
-            <input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="men 18-35, Gen Z..." className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
+            <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-1.5">Target Audience</label>
+            <input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="men 18-35, Gen Z..." className="w-full border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]" />
           </div>
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-2">Content Type</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-2">Content Type</label>
           <div className="flex gap-2 flex-wrap">
             {CONTENT_TYPES.map((t) => (
-              <button key={t} onClick={() => setContentType(t)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${contentType === t ? "bg-[#0F1E3C] text-white border-[#0F1E3C]" : "border-gray-200 text-[#6B7280]"}`}>{t}</button>
+              <button key={t} onClick={() => setContentType(t)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${contentType === t ? "bg-[var(--chip)] text-white border-[var(--chip)]" : "border-[var(--border)] text-[var(--text-muted)]"}`}>{t}</button>
             ))}
           </div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-semibold text-[#6B7280] uppercase">Number of Ideas</label>
-            <span className="text-sm font-bold text-[#111827]">{count}</span>
+            <label className="text-xs font-semibold text-[var(--text-muted)] uppercase">Number of Ideas</label>
+            <span className="text-sm font-bold text-[var(--text)]">{count}</span>
           </div>
-          <input type="range" min={5} max={20} value={count} onChange={(e) => setCount(Number(e.target.value))} className="w-full accent-[#C0392B]" />
+          <input type="range" min={5} max={20} value={count} onChange={(e) => setCount(Number(e.target.value))} className="w-full accent-[var(--accent)]" />
         </div>
 
         <button
           onClick={handleGenerate}
           disabled={loading || !niche.trim()}
-          className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <MessageSquare size={16} />}
           {loading ? "Generating Ideas..." : "Generate Ideas"}
@@ -101,26 +101,26 @@ export default function BrainstormerPage() {
         {ideas.length > 0 && (
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
-              <p className="font-semibold text-sm text-[#111827]">{ideas.length} content ideas</p>
+              <p className="font-semibold text-sm text-[var(--text)]">{ideas.length} content ideas</p>
               <div className="flex gap-2">
-                <button onClick={copyAll} className="flex items-center gap-1 text-xs border border-gray-200 px-2.5 py-1.5 rounded-lg text-[#6B7280] hover:bg-gray-50">
+                <button onClick={copyAll} className="flex items-center gap-1 text-xs border border-[var(--border)] px-2.5 py-1.5 rounded-lg text-[var(--text-muted)] hover:bg-gray-50">
                   <Copy size={11} /> Copy All
                 </button>
-                <button onClick={handleGenerate} className="flex items-center gap-1 text-xs border border-gray-200 px-2.5 py-1.5 rounded-lg text-[#6B7280] hover:bg-gray-50">
+                <button onClick={handleGenerate} className="flex items-center gap-1 text-xs border border-[var(--border)] px-2.5 py-1.5 rounded-lg text-[var(--text-muted)] hover:bg-gray-50">
                   <RefreshCw size={11} /> More
                 </button>
               </div>
             </div>
             {ideas.map((idea, i) => (
-              <div key={i} className="border border-gray-100 rounded-xl p-4 space-y-1.5">
+              <div key={i} className="border border-[var(--border)] rounded-xl p-4 space-y-1.5">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="font-bold text-sm text-[#111827]">{i + 1}. {idea.title}</p>
+                  <p className="font-bold text-sm text-[var(--text)]">{i + 1}. {idea.title}</p>
                   {idea.platform && (
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${PLATFORM_COLORS[idea.platform] || "bg-gray-100 text-[#6B7280]"}`}>{idea.platform}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${PLATFORM_COLORS[idea.platform] || "bg-gray-100 text-[var(--text-muted)]"}`}>{idea.platform}</span>
                   )}
                 </div>
-                <p className="text-xs text-[#C0392B] font-medium italic">&quot;{idea.hook}&quot;</p>
-                <p className="text-xs text-[#6B7280]">{idea.why}</p>
+                <p className="text-xs text-[var(--accent)] font-medium italic">&quot;{idea.hook}&quot;</p>
+                <p className="text-xs text-[var(--text-muted)]">{idea.why}</p>
               </div>
             ))}
           </div>

@@ -64,27 +64,27 @@ export default function DashboardPage() {
         {/* Recent Clips */}
         <div className="panel p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-[#0F1E3C]">Recent Clips</h2>
-            <Link href="/clips" className="text-sm text-[#64748B] hover:text-[#0F1E3C] flex items-center gap-1 transition-colors">
+            <h2 className="font-semibold text-[var(--text)]">Recent Clips</h2>
+            <Link href="/clips" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-1 transition-colors">
               View all <ChevronRight size={14} />
             </Link>
           </div>
           {loading ? (
             <div className="flex items-center justify-center py-10">
-              <RefreshCw size={18} className="animate-spin text-[#94A3B8]" />
+              <RefreshCw size={18} className="animate-spin text-[var(--text-light)]" />
             </div>
           ) : recentClips.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
               <div className="w-12 h-12 rounded-full bg-[#EEF1F7] flex items-center justify-center mb-1">
                 <Film size={22} className="text-red-600" />
               </div>
-              <p className="text-sm font-medium text-[#0F1E3C]">No clips yet</p>
-              <p className="text-xs text-[#94A3B8]">Run the agent to start generating clips</p>
+              <p className="text-sm font-medium text-[var(--text)]">No clips yet</p>
+              <p className="text-xs text-[var(--text-light)]">Run the agent to start generating clips</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {recentClips.map(clip => (
-                <Link href="/clips" key={clip.id} className="group relative rounded-xl overflow-hidden bg-[#0F1E3C] aspect-video block">
+                <Link href="/clips" key={clip.id} className="group relative rounded-xl overflow-hidden bg-[var(--chip)] aspect-video block">
                   {clip.thumbnailUrl
                     ? <img src={clip.thumbnailUrl} alt={clip.title} className="w-full h-full object-cover" />
                     : <video src={clip.downloadUrl} className="w-full h-full object-cover" preload="none" />
@@ -107,22 +107,22 @@ export default function DashboardPage() {
         {/* Campaign Overview */}
         <div className="panel p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-[#0F1E3C]">Campaigns</h2>
-            <Link href="/agent" className="text-sm text-[#64748B] hover:text-[#0F1E3C] flex items-center gap-1 transition-colors">
+            <h2 className="font-semibold text-[var(--text)]">Campaigns</h2>
+            <Link href="/agent" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-1 transition-colors">
               Manage <ChevronRight size={14} />
             </Link>
           </div>
           {loading ? (
             <div className="flex items-center justify-center py-10">
-              <RefreshCw size={18} className="animate-spin text-[#94A3B8]" />
+              <RefreshCw size={18} className="animate-spin text-[var(--text-light)]" />
             </div>
           ) : campaigns.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
               <div className="w-12 h-12 rounded-full bg-[#EEF1F7] flex items-center justify-center mb-1">
                 <Play size={22} className="text-red-600 ml-0.5" />
               </div>
-              <p className="text-sm font-medium text-[#0F1E3C]">No campaigns yet</p>
-              <p className="text-xs text-[#94A3B8]">Go to Agent to create your first campaign</p>
+              <p className="text-sm font-medium text-[var(--text)]">No campaigns yet</p>
+              <p className="text-xs text-[var(--text-light)]">Go to Agent to create your first campaign</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -138,11 +138,11 @@ export default function DashboardPage() {
                         {c.name[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#0F1E3C] group-hover:text-[#22304F] transition-colors">{c.name}</p>
-                        <p className="text-[10px] text-[#94A3B8]">{campClips.length} clips · {approved} approved · {pending} pending</p>
+                        <p className="text-sm font-semibold text-[var(--text)] group-hover:text-[#22304F] transition-colors">{c.name}</p>
+                        <p className="text-[10px] text-[var(--text-light)]">{campClips.length} clips · {approved} approved · {pending} pending</p>
                       </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: c.status === "active" ? "#F0FDF4" : "#F1F5F9", color: c.status === "active" ? "#16A34A" : "#64748B" }}>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: c.status === "active" ? "#F0FDF4" : "#F1F5F9", color: c.status === "active" ? "#16A34A" : "var(--text-muted)" }}>
                       {c.status}
                     </span>
                   </Link>
@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div className="panel p-5 animate-fade-up delay-3">
-        <h2 className="font-semibold text-[#0F1E3C] mb-4">Quick Actions</h2>
+        <h2 className="font-semibold text-[var(--text)] mb-4">Quick Actions</h2>
         <div className="flex gap-3">
           <Link href="/agent" className="btn-primary">
             <Plus size={15} /> Add Campaign
@@ -178,9 +178,9 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
       <div className="w-10 h-10 rounded-xl bg-[#EEF1F7] flex items-center justify-center mb-3">
         {icon}
       </div>
-      <p className="text-[#64748B] text-xs uppercase tracking-wider font-medium">{label}</p>
-      <p className="text-[#0F1E3C] text-3xl font-bold mt-1 mb-1">{value}</p>
-      <p className="text-[#94A3B8] text-xs truncate">{sub}</p>
+      <p className="text-[var(--text-muted)] text-xs uppercase tracking-wider font-medium">{label}</p>
+      <p className="text-[var(--text)] text-3xl font-bold mt-1 mb-1">{value}</p>
+      <p className="text-[var(--text-light)] text-xs truncate">{sub}</p>
     </div>
   );
 }

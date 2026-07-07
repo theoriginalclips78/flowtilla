@@ -244,7 +244,7 @@ export default function AutoClipPage() {
             </div>
             <input type="range" min={1} max={10} value={maxClips}
               onChange={(e) => setMaxClips(Number(e.target.value))}
-              className="w-full accent-[#C0392B]" disabled={running} />
+              className="w-full accent-[var(--accent)]" disabled={running} />
           </div>
           <div>
             <div className="flex justify-between mb-1">
@@ -253,7 +253,7 @@ export default function AutoClipPage() {
             </div>
             <input type="range" min={10} max={60} step={5} value={minDuration}
               onChange={(e) => setMinDuration(Number(e.target.value))}
-              className="w-full accent-[#C0392B]" disabled={running} />
+              className="w-full accent-[var(--accent)]" disabled={running} />
           </div>
           <div>
             <div className="flex justify-between mb-1">
@@ -262,7 +262,7 @@ export default function AutoClipPage() {
             </div>
             <input type="range" min={30} max={180} step={10} value={maxDuration}
               onChange={(e) => setMaxDuration(Number(e.target.value))}
-              className="w-full accent-[#C0392B]" disabled={running} />
+              className="w-full accent-[var(--accent)]" disabled={running} />
           </div>
         </div>
 
@@ -284,8 +284,8 @@ export default function AutoClipPage() {
               <div key={s.id} className="flex items-center gap-3">
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
                   s.status === "done" ? "bg-green-500/20" :
-                  s.status === "active" ? "bg-white/15" :
-                  s.status === "error" ? "bg-red-500/20" : "bg-white/5"
+                  s.status === "active" ? "bg-[var(--surface)]/15" :
+                  s.status === "error" ? "bg-red-500/20" : "bg-[var(--surface)]/5"
                 }`}>
                   {stepIcon(s.status, i)}
                 </div>

@@ -14,7 +14,7 @@ interface Moment {
 }
 
 const viralColors: Record<string, string> = {
-  high: "bg-[#C0392B] text-white",
+  high: "bg-[var(--accent)] text-white",
   medium: "bg-amber-500 text-white",
   low: "bg-gray-400 text-white",
 };
@@ -96,29 +96,29 @@ export default function ClipFinderPage() {
     <ToolPageLayout title="AI Clip Finder">
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-1.5">Video URL</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-1.5">Video URL</label>
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste any YouTube or TikTok URL..."
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]"
+            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]"
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-1.5">What to look for <span className="normal-case font-normal">(optional)</span></label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-1.5">What to look for <span className="normal-case font-normal">(optional)</span></label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             rows={2}
             placeholder="funny reactions, key insights, hype moments..."
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none"
+            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none"
           />
         </div>
 
         <button
           onClick={handleFind}
           disabled={loading || !url.trim()}
-          className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Scissors size={16} />}
           {loading ? STEPS[step] || "Working..." : "Find Viral Moments"}
@@ -127,7 +127,7 @@ export default function ClipFinderPage() {
         {loading && step >= 0 && (
           <div className="space-y-2 pt-1">
             {STEPS.map((s, i) => (
-              <div key={i} className={`flex items-center gap-2 text-sm ${i < step ? "text-green-600" : i === step ? "text-[#111827] font-medium" : "text-[#6B7280]/40"}`}>
+              <div key={i} className={`flex items-center gap-2 text-sm ${i < step ? "text-green-600" : i === step ? "text-[var(--text)] font-medium" : "text-[var(--text-muted)]/40"}`}>
                 {i < step ? "✅" : i === step ? <Loader2 size={13} className="animate-spin" /> : "○"} {s}
               </div>
             ))}
@@ -143,21 +143,21 @@ export default function ClipFinderPage() {
 
         {moments.length > 0 && (
           <div className="space-y-3 pt-2">
-            <p className="font-semibold text-sm text-[#111827]">Found {moments.length} viral moments</p>
+            <p className="font-semibold text-sm text-[var(--text)]">Found {moments.length} viral moments</p>
             {moments.map((m, i) => (
-              <div key={i} className="border border-gray-100 rounded-xl p-4 space-y-2">
+              <div key={i} className="border border-[var(--border)] rounded-xl p-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-sm text-[#111827]">{m.title}</p>
+                  <p className="font-semibold text-sm text-[var(--text)]">{m.title}</p>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${viralColors[m.virality_score] || viralColors.low}`}>
                     {m.virality_score === "high" ? "🔥" : m.virality_score === "medium" ? "⚡" : "💤"} {m.virality_score}
                   </span>
                 </div>
-                <p className="text-xs text-[#6B7280]">{fmt(m.start_time)} – {fmt(m.end_time)} · {Math.round(m.end_time - m.start_time)}s</p>
-                <p className="text-xs text-[#6B7280]">{m.reason}</p>
+                <p className="text-xs text-[var(--text-muted)]">{fmt(m.start_time)} – {fmt(m.end_time)} · {Math.round(m.end_time - m.start_time)}s</p>
+                <p className="text-xs text-[var(--text-muted)]">{m.reason}</p>
                 <button
                   onClick={() => handleCut(m, i)}
                   disabled={cutting === `${i}`}
-                  className="flex items-center gap-1.5 bg-[#0F1E3C] text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-[#0F1E3C]/80 disabled:opacity-50"
+                  className="flex items-center gap-1.5 bg-[var(--chip)] text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-[var(--chip)]/80 disabled:opacity-50"
                 >
                   {cutting === `${i}` ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
                   Cut This Clip

@@ -27,13 +27,13 @@ export default function ToolsPage() {
   return (
     <div className="space-y-8">
       <div className="animate-fade-up delay-1">
-        <h1 className="text-2xl font-bold text-[#0F1E3C]">Tools</h1>
-        <p className="text-sm text-[#64748B] mt-1">Free utilities to power your content workflow</p>
+        <h1 className="text-2xl font-bold text-[var(--text)]">Tools</h1>
+        <p className="text-sm text-[var(--text-muted)] mt-1">Free utilities to power your content workflow</p>
       </div>
 
       {/* Quick access */}
       <div className="animate-fade-up delay-2">
-        <h2 className="font-semibold text-[#64748B] text-xs uppercase tracking-wider mb-3">Quick Access</h2>
+        <h2 className="font-semibold text-[var(--text-muted)] text-xs uppercase tracking-wider mb-3">Quick Access</h2>
         <div className="grid grid-cols-3 gap-4">
           {quickAccess.map((t) => (
             <button
@@ -45,8 +45,8 @@ export default function ToolsPage() {
                 <t.icon size={20} className="text-red-800" />
               </div>
               <div>
-                <p className="font-semibold text-[#0F1E3C] text-sm">{t.label}</p>
-                <p className="text-xs text-[#64748B] mt-0.5">{t.desc}</p>
+                <p className="font-semibold text-[var(--text)] text-sm">{t.label}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">{t.desc}</p>
               </div>
             </button>
           ))}
@@ -55,7 +55,7 @@ export default function ToolsPage() {
 
       {/* All tools */}
       <div className="animate-fade-up delay-3">
-        <h2 className="font-semibold text-[#64748B] text-xs uppercase tracking-wider mb-3">All Tools</h2>
+        <h2 className="font-semibold text-[var(--text-muted)] text-xs uppercase tracking-wider mb-3">All Tools</h2>
         <div className="grid grid-cols-4 gap-4">
           {tools.map((t) => (
             <div
@@ -66,8 +66,8 @@ export default function ToolsPage() {
                 <t.icon size={18} className="text-red-800" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-sm text-[#0F1E3C]">{t.label}</p>
-                <p className="text-xs text-[#64748B] mt-1">{t.desc}</p>
+                <p className="font-semibold text-sm text-[var(--text)]">{t.label}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">{t.desc}</p>
               </div>
               <button
                 onClick={() => router.push(t.href)}

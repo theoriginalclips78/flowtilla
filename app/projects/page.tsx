@@ -16,17 +16,17 @@ export default function ProjectsPage() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none"
+            className="px-3 py-2 border border-[var(--border)] rounded-lg text-sm bg-[var(--surface)] focus:outline-none"
           >
             {SORT_OPTIONS.map((o) => <option key={o}>{o}</option>)}
           </select>
-          <button className="flex items-center gap-2 bg-[#C0392B] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#C0392B]/90">
+          <button className="flex items-center gap-2 bg-[var(--accent)] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90">
             <Plus size={16} /> Create New Project
           </button>
         </div>
 
         {projects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-[#6B7280]">
+          <div className="flex flex-col items-center justify-center py-32 text-[var(--text-muted)]">
             <Folder size={56} className="mb-4 opacity-20" />
             <p className="font-semibold text-lg">No projects yet</p>
             <p className="text-sm mt-1">Create a project to organize your clips</p>
@@ -45,21 +45,21 @@ export default function ProjectsPage() {
 
 function ProjectCard({ index }: { index: number }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="bg-[#0F1E3C] aspect-video flex items-center justify-center">
+    <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden hover:shadow-md transition-shadow">
+      <div className="bg-[var(--chip)] aspect-video flex items-center justify-center">
         <span className="text-white/30 text-xs">VIDEO</span>
       </div>
       <div className="p-3">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="font-semibold text-sm text-[#111827]">Project {index + 1}</h3>
-            <span className="text-[11px] bg-gray-100 text-[#6B7280] px-2 py-0.5 rounded mt-1 inline-block">VIDEO</span>
+            <h3 className="font-semibold text-sm text-[var(--text)]">Project {index + 1}</h3>
+            <span className="text-[11px] bg-gray-100 text-[var(--text-muted)] px-2 py-0.5 rounded mt-1 inline-block">VIDEO</span>
           </div>
           <button className="p-1 hover:bg-gray-100 rounded">
-            <MoreHorizontal size={14} className="text-[#6B7280]" />
+            <MoreHorizontal size={14} className="text-[var(--text-muted)]" />
           </button>
         </div>
-        <p className="text-[11px] text-[#6B7280] mt-2">Just now</p>
+        <p className="text-[11px] text-[var(--text-muted)] mt-2">Just now</p>
       </div>
     </div>
   );

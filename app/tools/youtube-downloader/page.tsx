@@ -40,20 +40,20 @@ export default function YouTubeDownloaderPage() {
     <ToolPageLayout title="YouTube Downloader">
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-1.5">YouTube URL</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-1.5">YouTube URL</label>
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !loading && handleDownload()}
             placeholder="Paste YouTube URL here..."
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]"
+            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]"
           />
         </div>
 
         <button
           onClick={handleDownload}
           disabled={loading || !url.trim()}
-          className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
           {loading ? "Downloading..." : "Download"}
@@ -62,9 +62,9 @@ export default function YouTubeDownloaderPage() {
         {loading && (
           <div>
             <div className="w-full bg-gray-100 rounded-full h-2">
-              <div className="bg-[#C0392B] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+              <div className="bg-[var(--accent)] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
             </div>
-            <p className="text-xs text-[#6B7280] mt-1 text-center">{progress}%</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1 text-center">{progress}%</p>
           </div>
         )}
 
@@ -78,8 +78,8 @@ export default function YouTubeDownloaderPage() {
         {result && (
           <div className="bg-green-50 border border-green-100 rounded-xl p-4 space-y-3">
             <div>
-              <p className="font-semibold text-[#111827]">{result.title}</p>
-              <p className="text-xs text-[#6B7280] mt-0.5">Duration: {fmt(result.duration)}</p>
+              <p className="font-semibold text-[var(--text)]">{result.title}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">Duration: {fmt(result.duration)}</p>
             </div>
             <a
               href={result.downloadUrl}

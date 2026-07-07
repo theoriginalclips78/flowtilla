@@ -48,26 +48,26 @@ export default function SpeechEnhancerPage() {
       <div className="space-y-4">
         <div
           onClick={() => inputRef.current?.click()}
-          className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#C0392B]/40 hover:bg-[#C0392B]/5 transition-colors"
+          className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5 transition-colors"
         >
-          <Upload size={28} className="mx-auto text-[#6B7280] mb-2" />
-          <p className="text-sm font-semibold text-[#111827]">{file ? file.name : "Drop audio/video here or click to upload"}</p>
-          <p className="text-xs text-[#6B7280] mt-1">MP4, MP3, WAV, MOV</p>
+          <Upload size={28} className="mx-auto text-[var(--text-muted)] mb-2" />
+          <p className="text-sm font-semibold text-[var(--text)]">{file ? file.name : "Drop audio/video here or click to upload"}</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">MP4, MP3, WAV, MOV</p>
           <input ref={inputRef} type="file" accept="video/*,audio/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-[#6B7280] uppercase block mb-2">Enhancements</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-2">Enhancements</label>
           <div className="space-y-2">
             {OPTIONS.map((o) => (
               <label key={o.id} className="flex items-center gap-3 cursor-pointer">
                 <div
                   onClick={() => toggleOpt(o.id)}
-                  className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${opts.includes(o.id) ? "bg-[#C0392B] border-[#C0392B]" : "border-gray-300"}`}
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${opts.includes(o.id) ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border)]"}`}
                 >
                   {opts.includes(o.id) && <span className="text-white text-xs">✓</span>}
                 </div>
-                <span className="text-sm text-[#111827]">{o.label}</span>
+                <span className="text-sm text-[var(--text)]">{o.label}</span>
               </label>
             ))}
           </div>
@@ -76,7 +76,7 @@ export default function SpeechEnhancerPage() {
         <button
           onClick={handleProcess}
           disabled={loading || !file || opts.length === 0}
-          className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : null}
           {loading ? "Enhancing..." : "Enhance Audio"}
@@ -84,7 +84,7 @@ export default function SpeechEnhancerPage() {
 
         {loading && (
           <div className="w-full bg-gray-100 rounded-full h-2">
-            <div className="bg-[#C0392B] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div className="bg-[var(--accent)] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
         )}
 
@@ -100,11 +100,11 @@ export default function SpeechEnhancerPage() {
             <p className="text-sm font-semibold text-green-700">✅ Enhancement complete</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs text-[#6B7280] mb-1 font-medium">Before</p>
+                <p className="text-xs text-[var(--text-muted)] mb-1 font-medium">Before</p>
                 <audio controls src={result.originalUrl} className="w-full" />
               </div>
               <div>
-                <p className="text-xs text-[#6B7280] mb-1 font-medium">After</p>
+                <p className="text-xs text-[var(--text-muted)] mb-1 font-medium">After</p>
                 <audio controls src={result.enhancedUrl} className="w-full" />
               </div>
             </div>
