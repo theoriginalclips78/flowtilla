@@ -40,7 +40,7 @@ export default function BriefSummaryPanel({ campaign, sources, processedSourceId
     : [];
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 p-3 flex flex-col gap-3 text-sm">
+    <div className="h-full overflow-y-auto bg-[var(--surface-2)] p-3 flex flex-col gap-3 text-sm">
       {/* Brief Summary */}
       <div>
         <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase mb-2">Brief Summary</p>
@@ -94,7 +94,7 @@ export default function BriefSummaryPanel({ campaign, sources, processedSourceId
                   {done ? (
                     <span className="text-green-600 text-[10px] font-medium flex-shrink-0">✅</span>
                   ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--border-strong)] flex-shrink-0" />
                   )}
                 </div>
               );
@@ -104,12 +104,12 @@ export default function BriefSummaryPanel({ campaign, sources, processedSourceId
             )}
           </div>
           <div className="flex gap-2 p-2 border-t border-[var(--border)]">
-            <button className="flex-1 flex items-center justify-center gap-1 text-xs border border-[var(--border)] rounded-lg py-1.5 text-[var(--text-muted)] hover:bg-gray-50">
+            <button className="flex-1 flex items-center justify-center gap-1 text-xs border border-[var(--border)] rounded-lg py-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-2)]">
               <Plus size={11} /> Add Sources
             </button>
             <button
               onClick={onRescan}
-              className="flex-1 flex items-center justify-center gap-1 text-xs border border-[var(--border)] rounded-lg py-1.5 text-[var(--text-muted)] hover:bg-gray-50"
+              className="flex-1 flex items-center justify-center gap-1 text-xs border border-[var(--border)] rounded-lg py-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-2)]"
             >
               <RefreshCw size={11} /> Re-scan
             </button>
@@ -125,7 +125,7 @@ export default function BriefSummaryPanel({ campaign, sources, processedSourceId
             <span className="text-xs font-medium text-[var(--text)]">Auto-run</span>
             <button
               onClick={() => setAutoRun(!autoRun)}
-              className={`w-9 h-5 rounded-full transition-colors relative ${autoRun ? "bg-[var(--accent)]" : "bg-gray-200"}`}
+              className={`w-9 h-5 rounded-full transition-colors relative ${autoRun ? "bg-[var(--accent)]" : "bg-[var(--border)]"}`}
             >
               <div className={`w-3.5 h-3.5 bg-[var(--surface)] rounded-full absolute top-0.5 shadow transition-all ${autoRun ? "left-[19px]" : "left-0.5"}`} />
             </button>

@@ -254,11 +254,11 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
             <span className="text-xs bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full font-semibold">
               ${campaign.cpm} CPM
             </span>
-            <span className="text-xs bg-red-50 text-red-800 px-2 py-0.5 rounded-full font-semibold">
+            <span className="text-xs bg-red-50 text-[var(--accent)] px-2 py-0.5 rounded-full font-semibold">
               Max ${campaign.maxPerClip}
             </span>
             {totalClips > 0 && (
-              <span className="text-xs bg-gray-100 text-[var(--text-muted)] px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-0.5 rounded-full">
                 {sources.length} videos · {totalClips} clips{approvedCount > 0 ? ` · ~$${estEarnings} est.` : ""}
               </span>
             )}
@@ -266,7 +266,7 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-          {status === "idle" && <span className="text-xs bg-gray-100 text-[var(--text-muted)] px-2 py-1 rounded-full">Idle</span>}
+          {status === "idle" && <span className="text-xs bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-1 rounded-full">Idle</span>}
           {status === "running" && (
             <span className="text-xs bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-1 rounded-full flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-pulse" /> Running
@@ -296,7 +296,7 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
           {totalClips > 0 && (
             <a href={`/api/campaigns/${campaign.id}/zip`} download
               title="Download every clip as one zip"
-              className="flex items-center gap-1.5 bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-50">
+              className="flex items-center gap-1.5 bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-[var(--surface-2)]">
               <Download size={13} /> Download all
             </a>
           )}
@@ -304,19 +304,19 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)] border border-[var(--border)] rounded-lg hover:bg-gray-50"
+              className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)] border border-[var(--border)] rounded-lg hover:bg-[var(--surface-2)]"
             >
               <MoreHorizontal size={16} />
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-10 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg z-10 py-1 w-44">
                 <button onClick={() => { setMenuOpen(false); setShowEdit(true); }}
-                  className="w-full text-left px-4 py-2 text-sm text-[var(--text)] hover:bg-gray-50">
+                  className="w-full text-left px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--surface-2)]">
                   Edit Brief
                 </button>
                 <a href={`/api/campaigns/${campaign.id}/avatar`} download
                   onClick={() => setMenuOpen(false)}
-                  className="block w-full text-left px-4 py-2 text-sm text-[var(--text)] hover:bg-gray-50 flex items-center gap-2">
+                  className="block w-full text-left px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--surface-2)] flex items-center gap-2">
                   <ImageIcon size={13} /> Download profile pic
                 </a>
                 <button

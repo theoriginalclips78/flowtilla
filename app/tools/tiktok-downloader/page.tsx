@@ -62,7 +62,7 @@ export default function TikTokDownloaderPage() {
 
         {loading && (
           <div>
-            <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className="w-full bg-[var(--surface-2)] rounded-full h-2">
               <div className="bg-[var(--accent)] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
             </div>
             <p className="text-xs text-[var(--text-muted)] mt-1 text-center">{progress}%</p>
@@ -71,7 +71,7 @@ export default function TikTokDownloaderPage() {
 
         {error && (
           <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl p-4">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+            <AlertCircle size={16} className="text-[var(--accent)] mt-0.5 flex-shrink-0" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}

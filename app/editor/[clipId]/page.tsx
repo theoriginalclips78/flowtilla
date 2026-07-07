@@ -218,7 +218,7 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="flex h-screen bg-[#F8F9FB] overflow-hidden">
+    <div className="flex h-screen bg-[var(--surface-2)] overflow-hidden">
       {/* Left panel — editing controls */}
       <div className="w-[58%] flex flex-col border-r border-[var(--border)] overflow-hidden">
         {/* Header */}
@@ -279,7 +279,7 @@ export default function EditorPage() {
       </div>
 
       {/* Right panel — phone preview */}
-      <div className="w-[42%] flex flex-col items-center justify-center bg-gray-50 p-6 gap-4">
+      <div className="w-[42%] flex flex-col items-center justify-center bg-[var(--surface-2)] p-6 gap-4">
         <PhonePreview
           videoRef={videoRef}
           clip={clip}
@@ -289,7 +289,7 @@ export default function EditorPage() {
         {/* Export */}
         <div className="w-full max-w-[280px]">
           {exportProgress > 0 && (
-            <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+            <div className="w-full bg-[var(--border)] rounded-full h-1.5 mb-2">
               <div
                 className="bg-[var(--accent)] h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${exportProgress}%` }}

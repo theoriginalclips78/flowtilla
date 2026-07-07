@@ -125,7 +125,7 @@ export default function AgentControlPanel() {
               <Bot size={48} className="text-[var(--accent)] relative" />
             </div>
             <span className="text-[var(--text)] font-medium text-center">{currentTask}</span>
-            <div className="w-full bg-gray-100 rounded-full h-1.5">
+            <div className="w-full bg-[var(--surface-2)] rounded-full h-1.5">
               <div
                 className="bg-[var(--accent)] h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}

@@ -60,7 +60,7 @@ export default function PhonePreview({ videoRef, clip, settings }: Props) {
         {/* Phone shell */}
         <div className="absolute inset-0 rounded-[36px] border-[10px] border-gray-800 shadow-2xl bg-black overflow-hidden">
           {/* Notch */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-gray-800 rounded-b-xl z-20" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-[var(--chip)] rounded-b-xl z-20" />
 
           {/* Video */}
           <video
@@ -139,7 +139,7 @@ export default function PhonePreview({ videoRef, clip, settings }: Props) {
         <button onClick={toggle} className="p-2 rounded-full bg-[var(--chip)] text-white hover:bg-[var(--chip)]/80">
           {playing ? <Pause size={16} /> : <Play size={16} />}
         </button>
-        <div className="flex-1 bg-gray-200 rounded-full h-1.5 cursor-pointer relative"
+        <div className="flex-1 bg-[var(--border)] rounded-full h-1.5 cursor-pointer relative"
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const ratio = (e.clientX - rect.left) / rect.width;

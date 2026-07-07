@@ -93,7 +93,7 @@ export default function BrainstormerPage() {
 
         {error && (
           <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl p-4">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+            <AlertCircle size={16} className="text-[var(--accent)] mt-0.5 flex-shrink-0" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
@@ -103,10 +103,10 @@ export default function BrainstormerPage() {
             <div className="flex items-center justify-between">
               <p className="font-semibold text-sm text-[var(--text)]">{ideas.length} content ideas</p>
               <div className="flex gap-2">
-                <button onClick={copyAll} className="flex items-center gap-1 text-xs border border-[var(--border)] px-2.5 py-1.5 rounded-lg text-[var(--text-muted)] hover:bg-gray-50">
+                <button onClick={copyAll} className="flex items-center gap-1 text-xs border border-[var(--border)] px-2.5 py-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--surface-2)]">
                   <Copy size={11} /> Copy All
                 </button>
-                <button onClick={handleGenerate} className="flex items-center gap-1 text-xs border border-[var(--border)] px-2.5 py-1.5 rounded-lg text-[var(--text-muted)] hover:bg-gray-50">
+                <button onClick={handleGenerate} className="flex items-center gap-1 text-xs border border-[var(--border)] px-2.5 py-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--surface-2)]">
                   <RefreshCw size={11} /> More
                 </button>
               </div>
@@ -116,7 +116,7 @@ export default function BrainstormerPage() {
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-bold text-sm text-[var(--text)]">{i + 1}. {idea.title}</p>
                   {idea.platform && (
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${PLATFORM_COLORS[idea.platform] || "bg-gray-100 text-[var(--text-muted)]"}`}>{idea.platform}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${PLATFORM_COLORS[idea.platform] || "bg-[var(--surface-2)] text-[var(--text-muted)]"}`}>{idea.platform}</span>
                   )}
                 </div>
                 <p className="text-xs text-[var(--accent)] font-medium italic">&quot;{idea.hook}&quot;</p>

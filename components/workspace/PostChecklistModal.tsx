@@ -173,7 +173,7 @@ export default function PostChecklistModal({
               href={submissionUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 border border-[var(--border)] text-[var(--text)] font-semibold py-2.5 rounded-xl hover:bg-gray-50 text-sm"
+              className="w-full flex items-center justify-center gap-2 border border-[var(--border)] text-[var(--text)] font-semibold py-2.5 rounded-xl hover:bg-[var(--surface-2)] text-sm"
             >
               <ExternalLink size={14} /> Submit for Payment
             </a>

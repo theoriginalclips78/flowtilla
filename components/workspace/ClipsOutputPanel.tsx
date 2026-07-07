@@ -40,12 +40,12 @@ export default function ClipsOutputPanel({ clips, onApprove, onDiscard, onPrevie
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm text-[var(--text)]">Clips</span>
-            <span className="text-[11px] bg-gray-100 text-[var(--text-muted)] px-2 py-0.5 rounded-full">
+            <span className="text-[11px] bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-0.5 rounded-full">
               {clips.length}
             </span>
           </div>
           {clips.length > 0 && (
-            <button className="flex items-center gap-1 text-xs border border-[var(--border)] px-2 py-1 rounded-lg text-[var(--text-muted)] hover:bg-gray-50">
+            <button className="flex items-center gap-1 text-xs border border-[var(--border)] px-2 py-1 rounded-lg text-[var(--text-muted)] hover:bg-[var(--surface-2)]">
               <Download size={11} /> All
             </button>
           )}
@@ -58,7 +58,7 @@ export default function ClipsOutputPanel({ clips, onApprove, onDiscard, onPrevie
               key={f}
               onClick={() => setFilter(f)}
               className={`px-2.5 py-1 rounded-full text-[11px] font-medium capitalize transition-colors ${
-                filter === f ? "bg-[var(--chip)] text-white" : "bg-gray-100 text-[var(--text-muted)] hover:bg-gray-200"
+                filter === f ? "bg-[var(--chip)] text-white" : "bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--border)]"
               }`}
             >
               {f}
@@ -97,7 +97,7 @@ export default function ClipsOutputPanel({ clips, onApprove, onDiscard, onPrevie
         {filtered.length > page && (
           <button
             onClick={() => setPage((p) => p + 20)}
-            className="w-full border border-[var(--border)] text-[var(--text-muted)] text-sm py-2 rounded-xl hover:bg-gray-50"
+            className="w-full border border-[var(--border)] text-[var(--text-muted)] text-sm py-2 rounded-xl hover:bg-[var(--surface-2)]"
           >
             Load More ({filtered.length - page} remaining)
           </button>

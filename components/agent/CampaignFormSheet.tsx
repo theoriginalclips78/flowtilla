@@ -190,7 +190,7 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
             <button
               type="button"
               onClick={() => append({ platform: "youtube", url: "" })}
-              className="text-sm text-[var(--text-muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 hover:bg-gray-50 flex items-center gap-1 mt-1"
+              className="text-sm text-[var(--text-muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 hover:bg-[var(--surface-2)] flex items-center gap-1 mt-1"
             >
               <Plus size={14} /> Add Source URL
             </button>

@@ -58,7 +58,7 @@ function Toggle({ label, desc, checked, onChange }: { label: string; desc?: stri
       </div>
       <button
         onClick={() => onChange(!checked)}
-        className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${checked ? "bg-[var(--accent)]" : "bg-gray-200"}`}
+        className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${checked ? "bg-[var(--accent)]" : "bg-[var(--border)]"}`}
       >
         <div className={`w-3.5 h-3.5 bg-[var(--surface)] rounded-full absolute top-0.5 transition-all shadow ${checked ? "left-[22px]" : "left-0.5"}`} />
       </button>
@@ -129,12 +129,12 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
         {activeTab === 0 && (
           <div>
             <div className="flex gap-2 mb-4">
-              <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+              <div className="flex gap-1 bg-[var(--surface-2)] rounded-lg p-1">
                 {["One Word", "Lines"].map((m) => (
                   <button key={m} className="px-3 py-1 text-sm rounded-md bg-[var(--surface)] shadow font-medium">{m}</button>
                 ))}
               </div>
-              <button className="text-sm text-[var(--text-muted)] border border-[var(--border)] px-3 py-1 rounded-lg hover:bg-gray-50">
+              <button className="text-sm text-[var(--text-muted)] border border-[var(--border)] px-3 py-1 rounded-lg hover:bg-[var(--surface-2)]">
                 Edit Size & Position
               </button>
             </div>
@@ -204,7 +204,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => setTranscript([...transcript, { start: 0, end: 2, text: "New line" }])}
-                  className="flex items-center gap-1 text-sm text-[var(--text-muted)] border border-[var(--border)] px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                  className="flex items-center gap-1 text-sm text-[var(--text-muted)] border border-[var(--border)] px-3 py-1.5 rounded-lg hover:bg-[var(--surface-2)]"
                 >
                   <Plus size={13} /> Add Caption
                 </button>
@@ -305,7 +305,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
                       <p className="text-xs font-medium text-[var(--text)] capitalize">{track.replace("-", " ")}</p>
                       <div className="flex gap-0.5 mt-1">
                         {Array.from({ length: 12 }).map((_, i) => (
-                          <div key={i} className="w-1 bg-gray-300 rounded-full" style={{ height: 4 + Math.random() * 10 }} />
+                          <div key={i} className="w-1 bg-[var(--border-strong)] rounded-full" style={{ height: 4 + Math.random() * 10 }} />
                         ))}
                       </div>
                     </button>

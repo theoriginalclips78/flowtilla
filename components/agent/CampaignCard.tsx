@@ -22,7 +22,7 @@ interface Props {
 
 const statusConfig = {
   active: { label: "Active", className: "bg-green-500/10 text-green-600" },
-  paused: { label: "Paused", className: "bg-gray-100 text-[var(--text-muted)]" },
+  paused: { label: "Paused", className: "bg-[var(--surface-2)] text-[var(--text-muted)]" },
   running: { label: "Running", className: "bg-[var(--accent)]/10 text-[var(--accent)] animate-pulse" },
 };
 
@@ -67,7 +67,7 @@ export default function CampaignCard({ campaign, isActive, onSelect, onEdit, onD
         <DropdownMenu>
           <DropdownMenuTrigger
             onClick={(e) => e.stopPropagation()}
-            className="p-1 rounded hover:bg-gray-100"
+            className="p-1 rounded hover:bg-[var(--surface-2)]"
           >
             <MoreHorizontal size={16} className="text-[var(--text-muted)]" />
           </DropdownMenuTrigger>

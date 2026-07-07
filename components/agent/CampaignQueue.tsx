@@ -17,8 +17,8 @@ interface Props {
 }
 
 const statusConfig = {
-  queued: { label: "Queued", className: "bg-gray-100 text-[var(--text-muted)]" },
-  running: { label: "Running", className: "bg-red-100 text-red-800 animate-pulse" },
+  queued: { label: "Queued", className: "bg-[var(--surface-2)] text-[var(--text-muted)]" },
+  running: { label: "Running", className: "bg-red-100 text-[var(--accent)] animate-pulse" },
   complete: { label: "Complete", className: "bg-green-500/10 text-green-600" },
 };
 
@@ -40,7 +40,7 @@ export default function CampaignQueue({ queue, onRemove, onRun, onRunAll }: Prop
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-bold text-[16px] text-[var(--text)]">
           Campaign Queue
-          <span className="ml-2 text-xs bg-gray-200 text-[var(--text-muted)] px-2 py-0.5 rounded-full font-normal">
+          <span className="ml-2 text-xs bg-[var(--border)] text-[var(--text-muted)] px-2 py-0.5 rounded-full font-normal">
             {queue.length}
           </span>
         </h3>

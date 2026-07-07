@@ -86,7 +86,7 @@ export default function AgentPage() {
         </div>
         <div className="flex items-center gap-2">
           {entries.length > 0 && (
-            <button className="flex items-center gap-2 bg-[var(--chip)] text-white font-semibold px-4 py-2.5 rounded-xl hover:bg-[#0d1b35] transition-colors text-sm">
+            <button className="flex items-center gap-2 bg-[var(--chip)] text-white font-semibold px-4 py-2.5 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-sm">
               <Play size={14} fill="white" /> Run All
             </button>
           )}
@@ -138,7 +138,7 @@ export default function AgentPage() {
       {/* Workspace cards */}
       {entries.length === 0 ? (
         <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm flex flex-col items-center justify-center py-24 gap-4">
-          <div className="w-16 h-16 bg-[#F8F9FB] rounded-2xl flex items-center justify-center">
+          <div className="w-16 h-16 bg-[var(--surface-2)] rounded-2xl flex items-center justify-center">
             <Bot size={28} className="text-[var(--text-muted)]" />
           </div>
           <div className="text-center">

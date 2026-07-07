@@ -39,7 +39,7 @@ interface SocialAccount { id: string; platform: string; accountName: string; }
 type FilterTab = "all" | "pending" | "approved" | "discarded";
 
 const viral: Record<string, { bg: string; text: string; label: string }> = {
-  high:   { bg: "#EEF1F7", text: "#DC2626", label: "🔥 High" },
+  high:   { bg: "var(--accent-soft)", text: "#DC2626", label: "🔥 High" },
   medium: { bg: "#FFFBEB", text: "#D97706", label: "⚡ Med" },
   low:    { bg: "#F8FAFC", text: "var(--text-muted)", label: "💤 Low" },
 };
@@ -90,7 +90,7 @@ function PostModal({ clip, accounts, onClose, campaignName }: {
             <h3 className="font-bold text-[var(--text)]">Post Clip</h3>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">{campaignName} · {clip.title.slice(0,40)}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-all">
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[var(--surface-2)] transition-all">
             <X size={15} className="text-[var(--text-muted)]" />
           </button>
         </div>
@@ -103,13 +103,13 @@ function PostModal({ clip, accounts, onClose, campaignName }: {
                   <Check size={26} className="text-green-500" />
                 </div>
                 <p className="font-bold text-[var(--text)] text-lg mb-1">Posted successfully!</p>
-                {result.postUrl && <a href={result.postUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-red-800 underline">{result.postUrl}</a>}
+                {result.postUrl && <a href={result.postUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--accent)] underline">{result.postUrl}</a>}
                 <button onClick={onClose} className="btn-primary mt-4 mx-auto justify-center">Done</button>
               </>
             ) : (
               <>
                 <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
-                  <X size={26} className="text-red-500" />
+                  <X size={26} className="text-[var(--accent)]" />
                 </div>
                 <p className="font-bold text-[var(--text)] text-lg mb-1">Post failed</p>
                 <p className="text-sm text-[var(--text-muted)] mb-4">{result.error}</p>
@@ -121,9 +121,9 @@ function PostModal({ clip, accounts, onClose, campaignName }: {
           <div className="p-6 space-y-4">
             {/* Account picker */}
             {accounts.length === 0 ? (
-              <div className="rounded-xl p-4 text-center" style={{ background: "#EEF1F7", border: "1px solid #C9D3E6" }}>
+              <div className="rounded-xl p-4 text-center" style={{ background: "var(--accent-soft)", border: "1px solid var(--border)" }}>
                 <p className="text-sm font-semibold text-[var(--text)] mb-1">No accounts connected</p>
-                <a href="/settings" className="text-sm text-red-800 underline">Go to Settings → Connected Accounts</a>
+                <a href="/settings" className="text-sm text-[var(--accent)] underline">Go to Settings → Connected Accounts</a>
               </div>
             ) : (
               <div>
@@ -137,24 +137,24 @@ function PostModal({ clip, accounts, onClose, campaignName }: {
                           <button key={acct.id} onClick={() => setSelectedId(acct.id)}
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-all text-left"
                             style={selectedId === acct.id
-                              ? { background: "#EEF1F7", borderColor: "#22304F", color: "#1A2540" }
+                              ? { background: "var(--accent-soft)", borderColor: "var(--accent)", color: "var(--text)" }
                               : { background: "var(--surface)", borderColor: "var(--border)", color: "var(--chip)" }}>
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                              style={{ background: selectedId === acct.id ? "#22304F" : "var(--chip)" }}>
+                              style={{ background: selectedId === acct.id ? "var(--accent)" : "var(--chip)" }}>
                               {PLATFORM_ICON[platform] || platform[0].toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold truncate">{acct.accountName}</p>
                               <p className="text-[10px] text-[var(--text-light)] font-normal">{PLATFORM_LABEL[platform] || platform}</p>
                             </div>
-                            {selectedId === acct.id && <Check size={14} className="text-[#22304F] flex-shrink-0" />}
+                            {selectedId === acct.id && <Check size={14} className="text-[var(--accent)] flex-shrink-0" />}
                           </button>
                         ))}
                       </div>
                     </div>
                   ))}
                 </div>
-                <a href="/settings" className="text-[11px] text-[var(--text-light)] hover:text-[#22304F] mt-2 block transition-colors">
+                <a href="/settings" className="text-[11px] text-[var(--text-light)] hover:text-[var(--accent)] mt-2 block transition-colors">
                   + Connect another account
                 </a>
               </div>
@@ -215,17 +215,17 @@ function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus, onN
         <div className="relative flex w-full max-w-5xl mx-4 rounded-2xl overflow-hidden"
           style={{ background: "var(--surface)", border: "1px solid var(--border)", maxHeight: "92vh", boxShadow: "0 25px 60px rgba(15,30,60,0.2)" }}>
 
-          <button onClick={onClose} className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100" style={{ border: "1px solid var(--border)" }}>
+          <button onClick={onClose} className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center hover:bg-[var(--surface-2)]" style={{ border: "1px solid var(--border)" }}>
             <X size={15} className="text-[var(--text-muted)]" />
           </button>
 
           {idx > 0 && (
-            <button onClick={() => onNavigate(visible[idx - 1])} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-[var(--surface)] hover:bg-gray-100 shadow-md" style={{ border: "1px solid var(--border)" }}>
+            <button onClick={() => onNavigate(visible[idx - 1])} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-[var(--surface)] hover:bg-[var(--surface-2)] shadow-md" style={{ border: "1px solid var(--border)" }}>
               <ChevronLeft size={18} className="text-[var(--text-muted)]" />
             </button>
           )}
           {idx < visible.length - 1 && (
-            <button onClick={() => onNavigate(visible[idx + 1])} className="absolute right-12 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-[var(--surface)] hover:bg-gray-100 shadow-md" style={{ border: "1px solid var(--border)" }}>
+            <button onClick={() => onNavigate(visible[idx + 1])} className="absolute right-12 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-[var(--surface)] hover:bg-[var(--surface-2)] shadow-md" style={{ border: "1px solid var(--border)" }}>
               <ChevronRight size={18} className="text-[var(--text-muted)]" />
             </button>
           )}
@@ -240,7 +240,7 @@ function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus, onN
           {/* Info */}
           <div className="flex flex-col flex-1 p-7 overflow-y-auto">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#EEF1F7", color: "#22304F" }}>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
                 {campaigns[clip.campaignId] || "Campaign"}
               </span>
               <span className="text-xs text-[var(--text-light)]">{idx + 1} of {visible.length}</span>
@@ -255,8 +255,8 @@ function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus, onN
             </div>
 
             {clip.reason && (
-              <div className="mb-4 rounded-xl p-4" style={{ background: "#EEF1F7", border: "1px solid #C9D3E6" }}>
-                <p className="text-[11px] font-bold text-[#22304F] mb-1">WHY THIS WORKS</p>
+              <div className="mb-4 rounded-xl p-4" style={{ background: "var(--accent-soft)", border: "1px solid var(--border)" }}>
+                <p className="text-[11px] font-bold text-[var(--accent)] mb-1">WHY THIS WORKS</p>
                 <p className="text-sm text-[#450A0A] leading-relaxed">{clip.reason}</p>
               </div>
             )}
@@ -272,7 +272,7 @@ function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus, onN
               <div className="mb-4">
                 <p className="text-[11px] font-bold text-[var(--text-light)] mb-1.5">CAPTION</p>
                 <div className="relative rounded-xl p-3.5" style={{ background: "#F8FAFC", border: "1px solid var(--border)" }}>
-                  <p className="text-sm text-[#334155] leading-relaxed pr-7">{clip.caption}</p>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed pr-7">{clip.caption}</p>
                   <button onClick={() => { navigator.clipboard.writeText(clip.caption); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
                     className="absolute top-3 right-3" style={{ color: copied ? "#16A34A" : "var(--text-light)" }}>
                     {copied ? <Check size={13} /> : <Copy size={13} />}
@@ -286,13 +286,13 @@ function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus, onN
                 <p className="text-[11px] font-bold text-[var(--text-light)] mb-1.5">BEST FOR</p>
                 <div className="flex gap-1.5 flex-wrap">
                   {clip.platformFit.split(",").map(p => (
-                    <span key={p} className="text-xs px-2.5 py-0.5 rounded-full font-medium" style={{ background: "#EEF1F7", color: "#22304F", border: "1px solid #C9D3E6" }}>{p.trim()}</span>
+                    <span key={p} className="text-xs px-2.5 py-0.5 rounded-full font-medium" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--border)" }}>{p.trim()}</span>
                   ))}
                 </div>
               </div>
             )}
 
-            <p className="text-[10px] text-[#CBD5E1] mb-4">A approve · D discard · Esc close</p>
+            <p className="text-[10px] text-[var(--text-light)] mb-4">A approve · D discard · Esc close</p>
 
             <div className="mt-auto flex flex-col gap-2">
               <button onClick={() => setShowPost(true)}
@@ -312,7 +312,7 @@ function PreviewModal({ clip, clips, campaigns, accounts, onClose, onStatus, onN
               )}
               <div className="flex gap-2">
                 <a href={clip.downloadUrl} download className="btn-secondary flex-1 py-2.5 text-sm justify-center gap-2"><Download size={13} /> Download</a>
-                <button onClick={() => { onStatus(clip.id, "discarded"); onClose(); }} className="btn-secondary py-2.5 px-4 text-sm justify-center gap-1.5 hover:text-red-500">
+                <button onClick={() => { onStatus(clip.id, "discarded"); onClose(); }} className="btn-secondary py-2.5 px-4 text-sm justify-center gap-1.5 hover:text-[var(--accent)]">
                   <Trash2 size={13} /> Discard
                 </button>
               </div>
@@ -356,7 +356,7 @@ function ClipCard({ clip, campaigns, onPreview, onStatus, accounts }: {
             : <video src={clip.downloadUrl} className="w-full h-full object-cover" preload="metadata" />
           }
           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#22304F", boxShadow: "0 4px 14px rgba(155,28,28,0.5)" }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--accent)", boxShadow: "0 4px 14px rgba(155,28,28,0.5)" }}>
               <Play size={16} className="text-white ml-0.5" fill="white" />
             </div>
           </div>
@@ -371,31 +371,31 @@ function ClipCard({ clip, campaigns, onPreview, onStatus, accounts }: {
 
         {/* Info */}
         <div className="p-3">
-          <p className="text-[10px] font-semibold text-[#22304F] mb-0.5 truncate">{campaignName}</p>
+          <p className="text-[10px] font-semibold text-[var(--accent)] mb-0.5 truncate">{campaignName}</p>
           <p className="text-sm font-semibold text-[var(--text)] truncate mb-0.5">{clip.title}</p>
           <p className="text-[11px] text-[var(--text-light)] truncate">{new Date(clip.createdAt).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })}</p>
 
           {/* Ready-to-paste caption with required @mention + hashtags */}
-          <div className="mt-2.5 rounded-lg border p-2" style={{ borderColor: "#C9D3E6", background: "#FFF9F9" }} onClick={e => e.stopPropagation()}>
+          <div className="mt-2.5 rounded-lg border p-2" style={{ borderColor: "var(--border)", background: "#FFF9F9" }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-[#22304F]">Caption to copy</span>
+              <span className="text-[9px] font-bold uppercase tracking-wide text-[var(--accent)]">Caption to copy</span>
               <div className="flex gap-0.5">
                 {(["tiktok","instagram","youtube"] as const).map(p => (
                   <button key={p} onClick={() => setCapPlatform(p)}
                     className="text-[8px] font-bold px-1.5 py-0.5 rounded transition-all"
-                    style={capPlatform === p ? { background: "#22304F", color: "var(--surface)" } : { background: "#C9D3E6", color: "#22304F" }}>
+                    style={capPlatform === p ? { background: "var(--accent)", color: "var(--surface)" } : { background: "var(--border)", color: "var(--accent)" }}>
                     {p === "tiktok" ? "TT" : p === "instagram" ? "IG" : "YT"}
                   </button>
                 ))}
               </div>
             </div>
-            <p className="text-[11px] text-[#334155] leading-relaxed whitespace-pre-line mb-1.5" style={{ maxHeight: 84, overflowY: "auto" }}>{postCaption}</p>
+            <p className="text-[11px] text-[var(--text-muted)] leading-relaxed whitespace-pre-line mb-1.5" style={{ maxHeight: 84, overflowY: "auto" }}>{postCaption}</p>
             {hasTags && (
               <p className="text-[9px] font-semibold text-[#DC2626] mb-1.5">⚠ Must tag {clip.tags?.[capPlatform] || "the brand account"} — keep likes visible, no ad wording</p>
             )}
             <button onClick={() => { navigator.clipboard.writeText(postCaption); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
               className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-bold transition-all"
-              style={{ background: copied ? "#16A34A" : "#22304F", color: "var(--surface)" }}>
+              style={{ background: copied ? "#16A34A" : "var(--accent)", color: "var(--surface)" }}>
               {copied ? <><Check size={10}/> Copied!</> : <><Copy size={10}/> Copy caption</>}
             </button>
           </div>
@@ -410,17 +410,17 @@ function ClipCard({ clip, campaigns, onPreview, onStatus, accounts }: {
             ) : (
               <button onClick={e => { e.stopPropagation(); setShowPost(true); }}
                 className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
-                style={{ background: "#EEF1F7", color: "#22304F", border: "1px solid #C9D3E6" }}>
+                style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--border)" }}>
                 <Send size={11} /> Post
               </button>
             )}
             <a href={clip.downloadUrl} download onClick={e => e.stopPropagation()}
-              className="w-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-all"
+              className="w-8 flex items-center justify-center rounded-lg hover:bg-[var(--surface-2)] transition-all"
               style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}>
               <Download size={12} />
             </a>
             <button onClick={e => { e.stopPropagation(); onStatus(clip.id, clip.status === "discarded" ? "pending" : "discarded"); }}
-              className="w-8 flex items-center justify-center rounded-lg transition-all hover:bg-red-50 hover:border-red-200 hover:text-red-500"
+              className="w-8 flex items-center justify-center rounded-lg transition-all hover:bg-red-50 hover:border-red-200 hover:text-[var(--accent)]"
               style={{ border: "1px solid var(--border)", color: "var(--text-light)" }}>
               <X size={12} />
             </button>
@@ -519,7 +519,7 @@ export default function ClipsPage() {
       </div>
 
       {/* Filter */}
-      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "#F1F5F9" }}>
+      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--surface-2)" }}>
         {(["all","pending","approved","discarded"] as FilterTab[]).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className="px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all"
@@ -536,8 +536,8 @@ export default function ClipsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="panel flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-[#EEF1F7] flex items-center justify-center mb-3">
-            <Play size={24} className="text-red-600" />
+          <div className="w-14 h-14 rounded-2xl bg-[var(--accent-soft)] flex items-center justify-center mb-3">
+            <Play size={24} className="text-[var(--accent)]" />
           </div>
           <p className="font-semibold text-[var(--text)]">{clips.length === 0 ? "No clips yet" : "No clips match this filter"}</p>
           <p className="text-sm text-[var(--text-light)] mt-1">{clips.length === 0 ? "Run the agent on a campaign to start generating clips." : "Try a different filter."}</p>
@@ -549,7 +549,7 @@ export default function ClipsPage() {
               {/* Campaign header */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-px flex-1" style={{ background: "var(--border)" }} />
-                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: "#EEF1F7", color: "#22304F", border: "1px solid #C9D3E6" }}>
+                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--border)" }}>
                   {group.campaignName}
                 </span>
                 <span className="text-xs text-[var(--text-light)]">{group.clips.length} clip{group.clips.length !== 1 ? "s" : ""}</span>

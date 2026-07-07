@@ -98,7 +98,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           <button
             onClick={() => currentIndex > 0 && onNavigate(currentIndex - 1)}
             disabled={currentIndex === 0}
-            className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30"
+            className="p-1.5 rounded-lg hover:bg-[var(--surface-2)] disabled:opacity-30"
           >
             <ChevronLeft size={20} />
           </button>
@@ -109,7 +109,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           <button
             onClick={() => currentIndex < allClips.length - 1 && onNavigate(currentIndex + 1)}
             disabled={currentIndex === allClips.length - 1}
-            className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30"
+            className="p-1.5 rounded-lg hover:bg-[var(--surface-2)] disabled:opacity-30"
           >
             <ChevronRight size={20} />
           </button>
@@ -123,7 +123,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           </div>
 
           {/* Video player */}
-          <div className="bg-gray-100 rounded-xl overflow-hidden">
+          <div className="bg-[var(--surface-2)] rounded-xl overflow-hidden">
             <video
               ref={videoRef}
               src={clip.downloadUrl}
@@ -138,7 +138,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           {/* Timeline */}
           <div>
             <div
-              className="w-full h-3 bg-gray-200 rounded-full relative cursor-pointer"
+              className="w-full h-3 bg-[var(--border)] rounded-full relative cursor-pointer"
               onClick={handleTrackClick}
             >
               {/* Clip range */}
@@ -181,13 +181,13 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           <div className="flex gap-2">
             <button
               onClick={togglePlay}
-              className="flex items-center gap-1.5 px-4 py-2 border border-[var(--border)] rounded-lg text-sm hover:bg-gray-50"
+              className="flex items-center gap-1.5 px-4 py-2 border border-[var(--border)] rounded-lg text-sm hover:bg-[var(--surface-2)]"
             >
               {isPlaying ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Play</>}
             </button>
             <button
               onClick={() => seek(startTime)}
-              className="flex items-center gap-1.5 px-4 py-2 border border-[var(--border)] rounded-lg text-sm hover:bg-gray-50"
+              className="flex items-center gap-1.5 px-4 py-2 border border-[var(--border)] rounded-lg text-sm hover:bg-[var(--surface-2)]"
             >
               <RotateCcw size={14} /> Play from start of clip
             </button>
@@ -196,7 +196,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           {/* Adjust boundaries */}
           <button
             onClick={() => setAdjustMode(!adjustMode)}
-            className="w-full flex items-center justify-center gap-2 border border-[var(--border)] rounded-lg py-2 text-sm hover:bg-gray-50"
+            className="w-full flex items-center justify-center gap-2 border border-[var(--border)] rounded-lg py-2 text-sm hover:bg-[var(--surface-2)]"
           >
             <Pencil size={14} />
             {adjustMode ? "Done Adjusting" : "Adjust Boundaries"}
@@ -206,7 +206,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
           <div className="flex gap-3 pt-2">
             <button
               onClick={onClose}
-              className="flex-1 border border-[var(--border)] text-[var(--text-muted)] py-2.5 rounded-xl hover:bg-gray-50 font-medium"
+              className="flex-1 border border-[var(--border)] text-[var(--text-muted)] py-2.5 rounded-xl hover:bg-[var(--surface-2)] font-medium"
             >
               Cancel
             </button>

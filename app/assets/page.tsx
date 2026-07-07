@@ -15,7 +15,7 @@ export default function AssetsPage() {
       <main className="flex-1 p-6">
         {/* Tab bar + controls */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+          <div className="flex gap-1 bg-[var(--surface-2)] rounded-lg p-1">
             {TABS.map((t) => (
               <button
                 key={t}
@@ -53,7 +53,7 @@ export default function AssetsPage() {
           <div className="grid grid-cols-5 gap-4">
             {assets.map((_, i) => (
               <div key={i} className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-3 hover:shadow-md transition-shadow">
-                <div className="bg-gray-100 aspect-video rounded-lg mb-2" />
+                <div className="bg-[var(--surface-2)] aspect-video rounded-lg mb-2" />
                 <p className="text-sm font-medium text-[var(--text)] truncate">asset-{i}.mp4</p>
                 <p className="text-xs text-[var(--text-muted)]">0 MB · Just now</p>
               </div>

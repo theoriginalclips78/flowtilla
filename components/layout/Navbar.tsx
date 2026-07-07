@@ -35,7 +35,7 @@ export default function Navbar() {
 
       <div className="flex items-center gap-2">
         <button
-          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-gray-100"
+          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-[var(--surface-2)]"
           style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
           title="Notifications"
         >

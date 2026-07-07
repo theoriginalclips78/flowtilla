@@ -95,7 +95,7 @@ export default function BriefInput({ onCampaignReady }: Props) {
       <h3 className="font-bold text-[16px] text-[var(--text)] mb-3">Add New Campaign</h3>
 
       {/* Tab toggle */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-3">
+      <div className="flex gap-1 bg-[var(--surface-2)] rounded-lg p-1 mb-3">
         {(["url", "text"] as const).map((t) => (
           <button
             key={t}

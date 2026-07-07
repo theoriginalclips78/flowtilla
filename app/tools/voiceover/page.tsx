@@ -98,7 +98,7 @@ export default function VoiceoverPage() {
 
         {error && (
           <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl p-4">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+            <AlertCircle size={16} className="text-[var(--accent)] mt-0.5 flex-shrink-0" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}

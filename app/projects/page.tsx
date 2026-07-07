@@ -53,9 +53,9 @@ function ProjectCard({ index }: { index: number }) {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-semibold text-sm text-[var(--text)]">Project {index + 1}</h3>
-            <span className="text-[11px] bg-gray-100 text-[var(--text-muted)] px-2 py-0.5 rounded mt-1 inline-block">VIDEO</span>
+            <span className="text-[11px] bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-0.5 rounded mt-1 inline-block">VIDEO</span>
           </div>
-          <button className="p-1 hover:bg-gray-100 rounded">
+          <button className="p-1 hover:bg-[var(--surface-2)] rounded">
             <MoreHorizontal size={14} className="text-[var(--text-muted)]" />
           </button>
         </div>

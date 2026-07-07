@@ -11,7 +11,7 @@ interface Props {
 const viralityConfig = {
   high: { label: "🔥 High", className: "bg-[var(--accent)]/10 text-[var(--accent)]" },
   medium: { label: "⚡ Medium", className: "bg-amber-500/10 text-amber-600" },
-  low: { label: "💤 Low", className: "bg-gray-100 text-[var(--text-muted)]" },
+  low: { label: "💤 Low", className: "bg-[var(--surface-2)] text-[var(--text-muted)]" },
 };
 
 function formatTime(seconds: number) {
@@ -27,7 +27,7 @@ export default function ClipCard({ clip }: Props) {
   return (
     <div className="w-[280px] flex-shrink-0 bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
       {/* Video player */}
-      <div className="relative bg-gray-100 aspect-video">
+      <div className="relative bg-[var(--surface-2)] aspect-video">
         <video
           src={clip.downloadUrl}
           className="w-full h-full object-cover"
@@ -51,7 +51,7 @@ export default function ClipCard({ clip }: Props) {
           >
             Review & Edit
           </button>
-          <button className="flex-1 border border-[var(--border)] text-[var(--text-muted)] text-[13px] py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex-1 border border-[var(--border)] text-[var(--text-muted)] text-[13px] py-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors">
             Discard
           </button>
         </div>

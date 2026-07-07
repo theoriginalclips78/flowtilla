@@ -76,7 +76,7 @@ export default function Sidebar() {
 
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
-          style={{ background: "#22304F", boxShadow: "0 2px 8px rgba(155,28,28,0.4)" }}
+          style={{ background: "var(--accent)", boxShadow: "0 2px 8px rgba(155,28,28,0.4)" }}
         >
           A
         </div>

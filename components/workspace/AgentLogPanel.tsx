@@ -44,7 +44,7 @@ export default function AgentLogPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-black/10 flex-shrink-0" style={{ background: "rgba(255,255,255,0.6)" }}>
         <div className="flex items-center gap-2">
-          <span className="font-medium text-sm text-gray-900">Agent Log</span>
+          <span className="font-medium text-sm text-[var(--text)]">Agent Log</span>
           {jobCount > 0 && (
             <span className="text-[11px] liquid-glass rounded-lg px-2 py-0.5 text-black/45" style={{ background: "rgba(0,0,0,0.06)" }}>
               {jobCount} jobs

@@ -46,7 +46,7 @@ export default function CampaignPreviewCard({ result, onEdit, onQueue, onDismiss
               </span>
             )}
             {briefData.maxPerClip != null && (
-              <span className="text-xs bg-red-100 text-red-800 font-semibold px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-red-100 text-[var(--accent)] font-semibold px-2 py-0.5 rounded-full">
                 Max ${briefData.maxPerClip}
               </span>
             )}
@@ -103,7 +103,7 @@ export default function CampaignPreviewCard({ result, onEdit, onQueue, onDismiss
       <div className="flex gap-2">
         <button
           onClick={onEdit}
-          className="flex-1 border border-[var(--border)] text-[var(--text-muted)] text-sm font-medium py-2 rounded-lg hover:bg-gray-50"
+          className="flex-1 border border-[var(--border)] text-[var(--text-muted)] text-sm font-medium py-2 rounded-lg hover:bg-[var(--surface-2)]"
         >
           Edit Details
         </button>

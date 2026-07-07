@@ -16,7 +16,7 @@ interface Moment {
 const viralColors: Record<string, string> = {
   high: "bg-[var(--accent)] text-white",
   medium: "bg-amber-500 text-white",
-  low: "bg-gray-400 text-white",
+  low: "bg-[var(--text-light)] text-white",
 };
 
 const STEPS = ["📥 Downloading video...", "🎙️ Transcribing audio...", "🤖 Finding viral moments..."];
@@ -136,7 +136,7 @@ export default function ClipFinderPage() {
 
         {error && (
           <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl p-4">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+            <AlertCircle size={16} className="text-[var(--accent)] mt-0.5 flex-shrink-0" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}

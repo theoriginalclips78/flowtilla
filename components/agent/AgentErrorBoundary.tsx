@@ -25,7 +25,7 @@ export default class AgentErrorBoundary extends Component<Props, State> {
           <p className="text-sm text-[var(--text-muted)]">{this.state.message}</p>
           <button
             onClick={() => this.setState({ hasError: false, message: "" })}
-            className="mt-2 px-4 py-2 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] hover:bg-gray-50"
+            className="mt-2 px-4 py-2 border border-[var(--border)] rounded-lg text-sm text-[var(--text)] hover:bg-[var(--surface-2)]"
           >
             Try again
           </button>

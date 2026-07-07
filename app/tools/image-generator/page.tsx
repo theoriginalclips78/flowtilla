@@ -92,7 +92,7 @@ export default function ImageGeneratorPage() {
 
         {error && (
           <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl p-4">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+            <AlertCircle size={16} className="text-[var(--accent)] mt-0.5 flex-shrink-0" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
@@ -104,7 +104,7 @@ export default function ImageGeneratorPage() {
               <a href={imageUrl} download className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white font-bold py-2.5 rounded-xl hover:bg-green-700 transition-colors text-sm">
                 <Download size={14} /> Download
               </a>
-              <button onClick={handleGenerate} className="flex-1 flex items-center justify-center gap-2 border border-[var(--border)] text-[var(--text)] font-semibold py-2.5 rounded-xl hover:bg-gray-50 text-sm">
+              <button onClick={handleGenerate} className="flex-1 flex items-center justify-center gap-2 border border-[var(--border)] text-[var(--text)] font-semibold py-2.5 rounded-xl hover:bg-[var(--surface-2)] text-sm">
                 <RefreshCw size={14} /> Generate Another
               </button>
             </div>

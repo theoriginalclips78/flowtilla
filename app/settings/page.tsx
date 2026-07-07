@@ -52,7 +52,7 @@ function ConnectedAccounts() {
               </div>
               {acct ? (
                 <button onClick={() => disconnect(acct.id, p.label)}
-                  className="btn-secondary py-1.5 px-3 text-xs gap-1.5 hover:text-red-500 hover:border-red-200">
+                  className="btn-secondary py-1.5 px-3 text-xs gap-1.5 hover:text-[var(--accent)] hover:border-red-200">
                   <Unlink size={12} /> Disconnect
                 </button>
               ) : (
@@ -125,7 +125,7 @@ function AppCredentials() {
           <span className="text-base">🎵</span>
           <p className="font-semibold text-sm text-[var(--text)]">TikTok</p>
           <a href="https://developers.tiktok.com/apps" target="_blank" rel="noopener noreferrer"
-            className="ml-auto text-[11px] text-red-800 hover:underline flex items-center gap-1">
+            className="ml-auto text-[11px] text-[var(--accent)] hover:underline flex items-center gap-1">
             Get keys → developers.tiktok.com
           </a>
         </div>
@@ -134,7 +134,7 @@ function AppCredentials() {
           {field("Client Secret", "tiktokClientSecret", "Paste Client Secret...")}
         </div>
         <p className="text-[11px] text-[var(--text-light)] mt-2">
-          Create an app → Products → Login Kit + Content Posting API. Set redirect URI to <code className="bg-[#F1F5F9] px-1 rounded">http://localhost:3001/api/social/callback/tiktok</code>
+          Create an app → Products → Login Kit + Content Posting API. Set redirect URI to <code className="bg-[var(--surface-2)] px-1 rounded">http://localhost:3001/api/social/callback/tiktok</code>
         </p>
       </div>
 
@@ -144,7 +144,7 @@ function AppCredentials() {
           <span className="text-base">📸</span>
           <p className="font-semibold text-sm text-[var(--text)]">Instagram / Facebook</p>
           <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer"
-            className="ml-auto text-[11px] text-red-800 hover:underline">
+            className="ml-auto text-[11px] text-[var(--accent)] hover:underline">
             Get keys → developers.facebook.com
           </a>
         </div>
@@ -153,7 +153,7 @@ function AppCredentials() {
           {field("App Secret", "metaAppSecret", "Paste App Secret...")}
         </div>
         <p className="text-[11px] text-[var(--text-light)] mt-2">
-          Create a Meta app → Add Instagram product. Set redirect URI to <code className="bg-[#F1F5F9] px-1 rounded">http://localhost:3001/api/social/callback/instagram</code>
+          Create a Meta app → Add Instagram product. Set redirect URI to <code className="bg-[var(--surface-2)] px-1 rounded">http://localhost:3001/api/social/callback/instagram</code>
         </p>
       </div>
 
@@ -163,7 +163,7 @@ function AppCredentials() {
           <span className="text-base">▶️</span>
           <p className="font-semibold text-sm text-[var(--text)]">YouTube Data API</p>
           <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer"
-            className="ml-auto text-[11px] text-red-800 hover:underline">
+            className="ml-auto text-[11px] text-[var(--accent)] hover:underline">
             Get key → console.cloud.google.com
           </a>
         </div>
@@ -179,7 +179,7 @@ function AppCredentials() {
           <span className="text-base">🖼️</span>
           <p className="font-semibold text-sm text-[var(--text)]">Higgsfield (AI thumbnails)</p>
           <a href="https://higgsfield.ai" target="_blank" rel="noopener noreferrer"
-            className="ml-auto text-[11px] text-[#22304F] hover:underline">
+            className="ml-auto text-[11px] text-[var(--accent)] hover:underline">
             Get keys → higgsfield.ai
           </a>
         </div>
@@ -260,7 +260,7 @@ function HandleInput({ label, icon, placeholder, value, onChange }: {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 px-2 py-2.5 text-sm bg-transparent text-[var(--text)] placeholder:text-[#CBD5E1] focus:outline-none"
+          className="flex-1 px-2 py-2.5 text-sm bg-transparent text-[var(--text)] placeholder:text-[var(--text-light)] focus:outline-none"
         />
       </div>
     </div>
@@ -344,7 +344,7 @@ export default function SettingsPage() {
               </div>
               <input type="range" min={15} max={180} step={15} value={settings.defaultLength}
                 onChange={(e) => patch("defaultLength", Number(e.target.value))}
-                className="w-full accent-[#22304F]" />
+                className="w-full accent-[var(--accent)]" />
               <div className="flex justify-between text-[10px] text-[var(--text-light)] mt-1">
                 <span>15s</span><span>30s</span><span>45s</span><span>60s</span><span>90s</span><span>2m</span><span>3m</span>
               </div>
@@ -357,7 +357,7 @@ export default function SettingsPage() {
                   <button key={opt.value} onClick={() => patch("defaultRatio", opt.value)}
                     className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all"
                     style={settings.defaultRatio === opt.value
-                      ? { background: "#EEF1F7", borderColor: "#22304F", color: "#1A2540" }
+                      ? { background: "var(--accent-soft)", borderColor: "var(--accent)", color: "var(--text)" }
                       : { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
                     {opt.label}
                     <span className="block text-[10px] font-normal opacity-70">{opt.desc}</span>
@@ -392,7 +392,7 @@ export default function SettingsPage() {
               </div>
               <input type="range" min={3} max={25} step={1} value={settings.maxClipsPerVideo}
                 onChange={(e) => patch("maxClipsPerVideo", Number(e.target.value))}
-                className="w-full accent-[#22304F]" />
+                className="w-full accent-[var(--accent)]" />
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
@@ -402,7 +402,7 @@ export default function SettingsPage() {
               </div>
               <button onClick={() => patch("autoEdit", !settings.autoEdit)}
                 className="w-11 h-6 rounded-full transition-colors relative flex-shrink-0"
-                style={{ background: settings.autoEdit ? "#22304F" : "var(--border)" }}>
+                style={{ background: settings.autoEdit ? "var(--accent)" : "var(--border)" }}>
                 <div className="w-4 h-4 bg-[var(--surface)] rounded-full absolute top-1 transition-all shadow-sm"
                   style={{ left: settings.autoEdit ? "22px" : "2px" }} />
               </button>
@@ -416,7 +416,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <MaskedInput label="Anthropic API Key" placeholder="sk-ant-..." />
             <MaskedInput label="Groq API Key" placeholder="gsk_..." />
-            <p className="text-xs text-[var(--text-light)]">To update API keys, edit your <code className="bg-[#F1F5F9] px-1.5 py-0.5 rounded text-[var(--text-muted)] font-mono">.env.local</code> file directly.</p>
+            <p className="text-xs text-[var(--text-light)]">To update API keys, edit your <code className="bg-[var(--surface-2)] px-1.5 py-0.5 rounded text-[var(--text-muted)] font-mono">.env.local</code> file directly.</p>
           </div>
         </Section>
       </div>

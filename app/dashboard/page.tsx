@@ -35,19 +35,19 @@ export default function DashboardPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4 animate-fade-up delay-1">
         <StatCard
-          icon={<Film size={20} className="text-red-800" />}
+          icon={<Film size={20} className="text-[var(--accent)]" />}
           label="Clips Today"
           value={loading ? "…" : String(clipsToday)}
           sub={loading ? "" : clips.length > 0 ? `${clips.length} total clips` : "No clips generated yet"}
         />
         <StatCard
-          icon={<Layers size={20} className="text-red-800" />}
+          icon={<Layers size={20} className="text-[var(--accent)]" />}
           label="Active Campaigns"
           value={loading ? "…" : String(activeCampaigns)}
           sub={loading ? "" : activeCampaigns > 0 ? campaigns.filter(c=>c.status==="active").map(c=>c.name).join(", ").slice(0,40) : "Add your first campaign"}
         />
         <StatCard
-          icon={<Clock size={20} className="text-red-800" />}
+          icon={<Clock size={20} className="text-[var(--accent)]" />}
           label="Approved Clips"
           value={loading ? "…" : String(clips.filter(c=>c.status==="approved").length)}
           sub={loading ? "" : `${clips.filter(c=>c.status==="pending").length} pending review`}
@@ -75,8 +75,8 @@ export default function DashboardPage() {
             </div>
           ) : recentClips.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
-              <div className="w-12 h-12 rounded-full bg-[#EEF1F7] flex items-center justify-center mb-1">
-                <Film size={22} className="text-red-600" />
+              <div className="w-12 h-12 rounded-full bg-[var(--accent-soft)] flex items-center justify-center mb-1">
+                <Film size={22} className="text-[var(--accent)]" />
               </div>
               <p className="text-sm font-medium text-[var(--text)]">No clips yet</p>
               <p className="text-xs text-[var(--text-light)]">Run the agent to start generating clips</p>
@@ -118,8 +118,8 @@ export default function DashboardPage() {
             </div>
           ) : campaigns.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
-              <div className="w-12 h-12 rounded-full bg-[#EEF1F7] flex items-center justify-center mb-1">
-                <Play size={22} className="text-red-600 ml-0.5" />
+              <div className="w-12 h-12 rounded-full bg-[var(--accent-soft)] flex items-center justify-center mb-1">
+                <Play size={22} className="text-[var(--accent)] ml-0.5" />
               </div>
               <p className="text-sm font-medium text-[var(--text)]">No campaigns yet</p>
               <p className="text-xs text-[var(--text-light)]">Go to Agent to create your first campaign</p>
@@ -131,18 +131,18 @@ export default function DashboardPage() {
                 const approved = campClips.filter(cl => cl.status === "approved").length;
                 const pending = campClips.filter(cl => cl.status === "pending").length;
                 return (
-                  <Link href="/agent" key={c.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#EEF1F7] transition-colors group">
+                  <Link href="/agent" key={c.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[var(--accent-soft)] transition-colors group">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                        style={{ background: "#22304F" }}>
+                        style={{ background: "var(--accent)" }}>
                         {c.name[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[var(--text)] group-hover:text-[#22304F] transition-colors">{c.name}</p>
+                        <p className="text-sm font-semibold text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">{c.name}</p>
                         <p className="text-[10px] text-[var(--text-light)]">{campClips.length} clips · {approved} approved · {pending} pending</p>
                       </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: c.status === "active" ? "#F0FDF4" : "#F1F5F9", color: c.status === "active" ? "#16A34A" : "var(--text-muted)" }}>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: c.status === "active" ? "#F0FDF4" : "var(--surface-2)", color: c.status === "active" ? "#16A34A" : "var(--text-muted)" }}>
                       {c.status}
                     </span>
                   </Link>
@@ -175,7 +175,7 @@ export default function DashboardPage() {
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
   return (
     <div className="panel p-6">
-      <div className="w-10 h-10 rounded-xl bg-[#EEF1F7] flex items-center justify-center mb-3">
+      <div className="w-10 h-10 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center mb-3">
         {icon}
       </div>
       <p className="text-[var(--text-muted)] text-xs uppercase tracking-wider font-medium">{label}</p>

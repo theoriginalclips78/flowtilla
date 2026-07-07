@@ -370,7 +370,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] flex-shrink-0">
           <h2 className="font-bold text-xl text-[var(--text)]">Add Campaign</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-gray-100 hover:text-[var(--text)]">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]">
             <X size={18} />
           </button>
         </div>
@@ -406,7 +406,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
               {/* Brief */}
               <div>
                 <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1.5">Brief <span className="font-normal normal-case text-[var(--text-light)]">(optional — reads the rules)</span></label>
-                <label className="flex items-center justify-between gap-2 border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                <label className="flex items-center justify-between gap-2 border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:bg-[var(--surface-2)] transition-colors">
                   <span className="text-[var(--text-muted)] truncate flex items-center gap-2">
                     <FileText size={14} className="shrink-0 text-[var(--text-light)]" />
                     {briefFile ? briefFile.name : "Attach a brief file (PDF)"}
@@ -462,7 +462,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
 
           {/* Campaign Preview Card */}
           {preview && !loading && (
-            <div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-gray-50">
+            <div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-[var(--surface-2)]">
               {/* Brand header */}
               <div className="bg-[var(--chip)] px-4 py-3 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[var(--accent)] flex items-center justify-center text-white font-black text-lg flex-shrink-0">
@@ -535,7 +535,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                   🚀 Create &amp; Start Clipping
                 </button>
                 <button onClick={handleAdd}
-                  className="w-full text-[var(--text-muted)] font-medium py-2 rounded-xl hover:bg-gray-50 transition-colors text-sm">
+                  className="w-full text-[var(--text-muted)] font-medium py-2 rounded-xl hover:bg-[var(--surface-2)] transition-colors text-sm">
                   Just add it — I&apos;ll run it later
                 </button>
               </div>

@@ -93,7 +93,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
             <h3 className="font-bold text-[var(--text)] text-lg">Edit Brief</h3>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">{c.name}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100">
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[var(--surface-2)]">
             <X size={15} className="text-[var(--text-muted)]" />
           </button>
         </div>
@@ -139,10 +139,10 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
           <div>
             <label className="text-xs font-bold text-[var(--text-muted)] block mb-2">CLIP LENGTH</label>
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm"
-              style={{ background: "#EEF1F7", border: "1px solid #C9D3E6", color: "#22304F" }}>
+              style={{ background: "var(--accent-soft)", border: "1px solid var(--border)", color: "var(--accent)" }}>
               <span>✨</span>
               <span className="font-semibold">Auto</span>
-              <span className="text-[#1A2540]">— the AI picks the best length for each clip (no limits to set).</span>
+              <span className="text-[var(--text)]">— the AI picks the best length for each clip (no limits to set).</span>
             </div>
           </div>
 
@@ -151,14 +151,14 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
             <label className="text-xs font-bold text-[var(--text-muted)] block mb-2">AUTO SUBTITLES</label>
             <button type="button" onClick={() => setSubtitlesEnabled(v => !v)}
               className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all"
-              style={{ background: subtitlesEnabled ? "#EEF1F7" : "#F1F5F9", border: `1px solid ${subtitlesEnabled ? "#C9D3E6" : "var(--border)"}` }}>
+              style={{ background: subtitlesEnabled ? "var(--accent-soft)" : "var(--surface-2)", border: `1px solid ${subtitlesEnabled ? "var(--border)" : "var(--border)"}` }}>
               <span className="text-left">
-                <span className="font-semibold" style={{ color: subtitlesEnabled ? "#22304F" : "var(--text-muted)" }}>
+                <span className="font-semibold" style={{ color: subtitlesEnabled ? "var(--accent)" : "var(--text-muted)" }}>
                   {subtitlesEnabled ? "On — add animated captions" : "Off — no captions added"}
                 </span>
                 <span className="block text-[11px] text-[var(--text-light)] mt-0.5">Turn OFF if the source footage already has its own subtitles (avoids double captions).</span>
               </span>
-              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: subtitlesEnabled ? "#22304F" : "#CBD5E1" }}>
+              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: subtitlesEnabled ? "var(--accent)" : "var(--text-light)" }}>
                 <span className="absolute top-0.5 w-5 h-5 rounded-full bg-[var(--surface)] transition-all" style={{ left: subtitlesEnabled ? "22px" : "2px" }} />
               </span>
             </button>
@@ -176,7 +176,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
                 <button key={opt.v} type="button" onClick={() => setMinVirality(opt.v)}
                   className="px-2 py-2.5 rounded-xl text-center transition-all"
                   style={minVirality === opt.v
-                    ? { background: "#22304F", color: "var(--surface)", border: "1px solid #22304F" }
+                    ? { background: "var(--accent)", color: "var(--surface)", border: "1px solid var(--accent)" }
                     : { background: "var(--surface)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                   <span className="block text-xs font-bold">{opt.label}</span>
                   <span className="block text-[10px] mt-0.5 opacity-80">{opt.desc}</span>
@@ -188,8 +188,8 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
 
           {/* ── Section: how the clips LOOK ── */}
           <div className="flex items-center gap-3 pt-1">
-            <span className="text-[11px] font-extrabold tracking-wider text-[#22304F]">🎬 LOOK &amp; STYLE</span>
-            <span className="flex-1 h-px" style={{ background: "linear-gradient(to right, #C9D3E6, transparent)" }} />
+            <span className="text-[11px] font-extrabold tracking-wider text-[var(--accent)]">🎬 LOOK &amp; STYLE</span>
+            <span className="flex-1 h-px" style={{ background: "linear-gradient(to right, var(--border), transparent)" }} />
           </div>
 
           {/* Frame layout */}
@@ -205,7 +205,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
                 <button key={opt.v} type="button" onClick={() => setVideoLayout(opt.v)}
                   className="px-2 py-2.5 rounded-xl text-center transition-all"
                   style={videoLayout === opt.v
-                    ? { background: "#22304F", color: "var(--surface)", border: "1px solid #22304F" }
+                    ? { background: "var(--accent)", color: "var(--surface)", border: "1px solid var(--accent)" }
                     : { background: "var(--surface)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                   <span className="block text-xs font-bold">{opt.label}</span>
                   <span className="block text-[10px] mt-0.5 opacity-80">{opt.desc}</span>
@@ -234,7 +234,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
                 <button key={opt.v} type="button" onClick={() => setCaptionMode(opt.v)}
                   className="px-2 py-2.5 rounded-xl text-center transition-all"
                   style={captionMode === opt.v
-                    ? { background: "#22304F", color: "var(--surface)", border: "1px solid #22304F" }
+                    ? { background: "var(--accent)", color: "var(--surface)", border: "1px solid var(--accent)" }
                     : { background: "var(--surface)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                   <span className="block text-xs font-bold">{opt.label}</span>
                   <span className="block text-[10px] mt-0.5 opacity-80">{opt.desc}</span>
@@ -256,7 +256,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
                 <button key={opt.v} type="button" onClick={() => setCaptionPosition(opt.v)}
                   className="px-2 py-2.5 rounded-xl text-center transition-all"
                   style={captionPosition === opt.v
-                    ? { background: "#22304F", color: "var(--surface)", border: "1px solid #22304F" }
+                    ? { background: "var(--accent)", color: "var(--surface)", border: "1px solid var(--accent)" }
                     : { background: "var(--surface)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                   <span className="block text-xs font-bold">{opt.label}</span>
                   <span className="block text-[10px] mt-0.5 opacity-80">{opt.desc}</span>
@@ -299,14 +299,14 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
             <label className="text-xs font-bold text-[var(--text-muted)] block mb-2">TIGHT EDIT (fast pacing)</label>
             <button type="button" onClick={() => setTightEdit(v => !v)}
               className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all"
-              style={{ background: tightEdit ? "#EEF1F7" : "#F1F5F9", border: `1px solid ${tightEdit ? "#C9D3E6" : "var(--border)"}` }}>
+              style={{ background: tightEdit ? "var(--accent-soft)" : "var(--surface-2)", border: `1px solid ${tightEdit ? "var(--border)" : "var(--border)"}` }}>
               <span className="text-left">
-                <span className="font-semibold" style={{ color: tightEdit ? "#22304F" : "var(--text-muted)" }}>
+                <span className="font-semibold" style={{ color: tightEdit ? "var(--accent)" : "var(--text-muted)" }}>
                   {tightEdit ? "On — trim dead air for snappy pacing" : "Off — keep original pacing"}
                 </span>
                 <span className="block text-[11px] text-[var(--text-light)] mt-0.5">Cuts silent pauses to boost retention. Safely skips music-heavy clips.</span>
               </span>
-              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: tightEdit ? "#22304F" : "#CBD5E1" }}>
+              <span className="flex-shrink-0 w-11 h-6 rounded-full relative transition-all" style={{ background: tightEdit ? "var(--accent)" : "var(--text-light)" }}>
                 <span className="absolute top-0.5 w-5 h-5 rounded-full bg-[var(--surface)] transition-all" style={{ left: tightEdit ? "22px" : "2px" }} />
               </span>
             </button>
@@ -356,7 +356,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <label className="text-xs font-bold text-[var(--text-muted)]">EXTRA CONTEXT</label>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "#EEF1F7", color: "#22304F", border: "1px solid #C9D3E6" }}>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--border)" }}>
                 Optional
               </span>
             </div>
@@ -371,7 +371,7 @@ export default function EditBriefModal({ campaign, onSave, onClose }: Props) {
             )}
           </div>
 
-          {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
+          {error && <p className="text-sm text-[var(--accent)] font-medium">{error}</p>}
         </div>
 
         {/* Footer */}
