@@ -23,7 +23,7 @@ interface Props {
 const statusConfig = {
   active: { label: "Active", className: "bg-green-500/10 text-green-600" },
   paused: { label: "Paused", className: "bg-[var(--surface-2)] text-[var(--text-muted)]" },
-  running: { label: "Running", className: "bg-[var(--accent)]/10 text-[var(--accent)] animate-pulse" },
+  running: { label: "Running", className: "bg-[var(--accent-soft)] text-[var(--accent)] animate-pulse" },
 };
 
 const platformIcons: Record<string, React.ReactNode> = {

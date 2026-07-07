@@ -117,7 +117,7 @@ export default function BriefInput({ onCampaignReady }: Props) {
           onChange={(e) => setUrl(e.target.value)}
           disabled={loading}
           placeholder="Paste any campaign URL from ClipFarm, ContentRewards, Whop..."
-          className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 mb-3 disabled:opacity-50"
+          className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] mb-3 disabled:opacity-50"
         />
       ) : (
         <textarea
@@ -126,7 +126,7 @@ export default function BriefInput({ onCampaignReady }: Props) {
           disabled={loading}
           rows={8}
           placeholder="Paste the full campaign brief text here..."
-          className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 mb-3 resize-none disabled:opacity-50"
+          className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] mb-3 resize-none disabled:opacity-50"
         />
       )}
 
@@ -141,7 +141,7 @@ export default function BriefInput({ onCampaignReady }: Props) {
       <button
         onClick={run}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-semibold py-2.5 rounded-lg hover:bg-[var(--accent)]/90 disabled:opacity-60 transition-colors"
+        className="w-full flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-semibold py-2.5 rounded-lg hover:bg-[var(--accent-soft)] disabled:opacity-60 transition-colors"
       >
         {loading ? (
           <><Loader2 size={16} className="animate-spin" /> Processing...</>

@@ -20,7 +20,7 @@ export default function ProjectsPage() {
           >
             {SORT_OPTIONS.map((o) => <option key={o}>{o}</option>)}
           </select>
-          <button className="flex items-center gap-2 bg-[var(--accent)] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[var(--accent)]/90">
+          <button className="flex items-center gap-2 bg-[var(--accent)] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[var(--accent-soft)]">
             <Plus size={16} /> Create New Project
           </button>
         </div>

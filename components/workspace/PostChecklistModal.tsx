@@ -97,7 +97,7 @@ export default function PostChecklistModal({
               <h2 className="font-bold text-white text-lg">Ready to Post</h2>
               <p className="text-white/60 text-xs mt-0.5 truncate">{campaignName} — {clip.title}</p>
             </div>
-            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center text-white/60 hover:text-white rounded-lg hover:bg-[var(--surface)]/10">
+            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center text-white/60 hover:text-white rounded-lg hover:bg-[var(--surface-2)]">
               <X size={16} />
             </button>
           </div>
@@ -128,7 +128,7 @@ export default function PostChecklistModal({
                   <div
                     onClick={() => setChecked((prev) => ({ ...prev, [i]: !prev[i] }))}
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                      checked[i] ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border)] group-hover:border-[var(--accent)]/50"
+                      checked[i] ? "bg-[var(--accent)] border-[var(--accent)]" : "border-[var(--border)] group-hover:border-[var(--accent)]"
                     }`}
                   >
                     {checked[i] && <Check size={11} className="text-white" />}

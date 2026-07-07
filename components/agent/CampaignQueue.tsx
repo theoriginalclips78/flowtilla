@@ -80,7 +80,7 @@ export default function CampaignQueue({ queue, onRemove, onRun, onRunAll }: Prop
             <button
               onClick={() => onRun(campaign.id)}
               disabled={status === "running"}
-              className="w-full flex items-center justify-center gap-1.5 bg-[var(--accent)] text-white text-sm font-medium py-1.5 rounded-lg hover:bg-[var(--accent)]/90 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-1.5 bg-[var(--accent)] text-white text-sm font-medium py-1.5 rounded-lg hover:bg-[var(--accent-soft)] disabled:opacity-60"
             >
               {status === "running" ? (
                 <><Loader2 size={13} className="animate-spin" /> Running...</>
@@ -96,7 +96,7 @@ export default function CampaignQueue({ queue, onRemove, onRun, onRunAll }: Prop
 
       <button
         onClick={onRunAll}
-        className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent)]/90 mt-1 flex items-center justify-center gap-2"
+        className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-soft)] mt-1 flex items-center justify-center gap-2"
       >
         <Play size={16} fill="white" /> Run All Campaigns
       </button>

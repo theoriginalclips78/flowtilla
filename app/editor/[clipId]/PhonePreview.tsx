@@ -58,7 +58,7 @@ export default function PhonePreview({ videoRef, clip, settings }: Props) {
       {/* Phone frame */}
       <div className="relative" style={{ width: 260, height: 520 }}>
         {/* Phone shell */}
-        <div className="absolute inset-0 rounded-[36px] border-[10px] border-gray-800 shadow-2xl bg-black overflow-hidden">
+        <div className="absolute inset-0 rounded-[36px] border-[10px] border-[var(--border-strong)] shadow-2xl bg-black overflow-hidden">
           {/* Notch */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-[var(--chip)] rounded-b-xl z-20" />
 
@@ -136,7 +136,7 @@ export default function PhonePreview({ videoRef, clip, settings }: Props) {
 
       {/* Playback controls */}
       <div className="flex items-center gap-3 mt-4 w-full max-w-[260px]">
-        <button onClick={toggle} className="p-2 rounded-full bg-[var(--chip)] text-white hover:bg-[var(--chip)]/80">
+        <button onClick={toggle} className="p-2 rounded-full bg-[var(--chip)] text-white hover:bg-[var(--chip)]">
           {playing ? <Pause size={16} /> : <Play size={16} />}
         </button>
         <div className="flex-1 bg-[var(--border)] rounded-full h-1.5 cursor-pointer relative"

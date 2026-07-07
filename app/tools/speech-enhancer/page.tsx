@@ -48,7 +48,7 @@ export default function SpeechEnhancerPage() {
       <div className="space-y-4">
         <div
           onClick={() => inputRef.current?.click()}
-          className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5 transition-colors"
+          className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
         >
           <Upload size={28} className="mx-auto text-[var(--text-muted)] mb-2" />
           <p className="text-sm font-semibold text-[var(--text)]">{file ? file.name : "Drop audio/video here or click to upload"}</p>

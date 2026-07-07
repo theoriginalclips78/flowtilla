@@ -268,7 +268,7 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
         <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           {status === "idle" && <span className="text-xs bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-1 rounded-full">Idle</span>}
           {status === "running" && (
-            <span className="text-xs bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-1 rounded-full flex items-center gap-1">
+            <span className="text-xs bg-[var(--accent-soft)] text-[var(--accent)] px-2 py-1 rounded-full flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-pulse" /> Running
             </span>
           )}
@@ -277,18 +277,18 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
               <CheckCircle size={11} /> Complete
             </span>
           )}
-          {status === "error" && <span className="text-xs bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-1 rounded-full">Error</span>}
+          {status === "error" && <span className="text-xs bg-[var(--accent-soft)] text-[var(--accent)] px-2 py-1 rounded-full">Error</span>}
 
           <button
             onClick={handleRun}
-            className="flex items-center gap-1.5 bg-[var(--accent)] text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-[var(--accent)]/90"
+            className="flex items-center gap-1.5 bg-[var(--accent)] text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-[var(--accent-soft)]"
           >
             {status === "running" ? <><Pause size={13} /> Pause</> : status === "complete" ? <><Play size={13} fill="white" /> Re-run</> : <><Play size={13} fill="white" /> Run</>}
           </button>
 
           <button
             onClick={handleAutoEditAll}
-            className="flex items-center gap-1.5 bg-[var(--chip)] text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-[var(--chip)]/90"
+            className="flex items-center gap-1.5 bg-[var(--chip)] text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-[var(--chip)]"
           >
             <Zap size={13} /> Auto Edit All
           </button>
@@ -321,7 +321,7 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
                 </a>
                 <button
                   onClick={() => { setMenuOpen(false); onRemove(campaign.id); }}
-                  className="w-full text-left px-4 py-2 text-sm text-[var(--accent)] hover:bg-[var(--accent)]/5 flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 text-sm text-[var(--accent)] hover:bg-[var(--accent-soft)] flex items-center gap-2"
                 >
                   <Trash2 size={13} /> Remove Campaign
                 </button>

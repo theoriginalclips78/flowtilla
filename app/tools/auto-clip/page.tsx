@@ -284,8 +284,8 @@ export default function AutoClipPage() {
               <div key={s.id} className="flex items-center gap-3">
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
                   s.status === "done" ? "bg-green-500/20" :
-                  s.status === "active" ? "bg-[var(--surface)]/15" :
-                  s.status === "error" ? "bg-red-500/20" : "bg-[var(--surface)]/5"
+                  s.status === "active" ? "bg-[var(--surface-2)]" :
+                  s.status === "error" ? "bg-red-500/20" : "bg-[var(--surface-2)]"
                 }`}>
                   {stepIcon(s.status, i)}
                 </div>

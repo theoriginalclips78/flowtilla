@@ -47,7 +47,7 @@ export default function ImageGeneratorPage() {
             onChange={(e) => setPrompt(e.target.value)}
             rows={3}
             placeholder="Describe the image you want..."
-            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none"
+            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent)] resize-none"
           />
         </div>
 

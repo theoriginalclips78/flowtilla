@@ -57,11 +57,11 @@ export default function BrainstormerPage() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-1.5">Niche / Brand</label>
-            <input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="fitness, gaming, cooking..." className="w-full border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]" />
+            <input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="fitness, gaming, cooking..." className="w-full border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent)]" />
           </div>
           <div>
             <label className="text-xs font-semibold text-[var(--text-muted)] uppercase block mb-1.5">Target Audience</label>
-            <input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="men 18-35, Gen Z..." className="w-full border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]" />
+            <input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="men 18-35, Gen Z..." className="w-full border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent)]" />
           </div>
         </div>
 

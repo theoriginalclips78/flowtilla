@@ -51,7 +51,7 @@ export default function VoiceoverPage() {
             onChange={(e) => setScript(e.target.value)}
             rows={5}
             placeholder="Type your script here..."
-            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none"
+            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent)] resize-none"
           />
           <p className="text-[11px] text-[var(--text-muted)] mt-1 text-right">{script.length} chars</p>
         </div>
@@ -63,7 +63,7 @@ export default function VoiceoverPage() {
               <button
                 key={v.id}
                 onClick={() => setVoice(v.id)}
-                className={`p-3 rounded-xl border text-left transition-colors ${voice === v.id ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-[var(--border)] hover:border-[var(--border)]"}`}
+                className={`p-3 rounded-xl border text-left transition-colors ${voice === v.id ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--border)]"}`}
               >
                 <p className={`text-xs font-bold ${voice === v.id ? "text-[var(--accent)]" : "text-[var(--text)]"}`}>{v.label}</p>
                 <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{v.desc}</p>

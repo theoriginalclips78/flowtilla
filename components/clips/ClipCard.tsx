@@ -9,7 +9,7 @@ interface Props {
 }
 
 const viralityConfig = {
-  high: { label: "🔥 High", className: "bg-[var(--accent)]/10 text-[var(--accent)]" },
+  high: { label: "🔥 High", className: "bg-[var(--accent-soft)] text-[var(--accent)]" },
   medium: { label: "⚡ Medium", className: "bg-amber-500/10 text-amber-600" },
   low: { label: "💤 Low", className: "bg-[var(--surface-2)] text-[var(--text-muted)]" },
 };
@@ -47,7 +47,7 @@ export default function ClipCard({ clip }: Props) {
         <div className="flex gap-2">
           <button
             onClick={() => router.push(`/editor/${clip.id}`)}
-            className="flex-1 bg-[var(--accent)] text-white text-[13px] font-medium py-1.5 rounded-lg hover:bg-[var(--accent)]/90 transition-colors"
+            className="flex-1 bg-[var(--accent)] text-white text-[13px] font-medium py-1.5 rounded-lg hover:bg-[var(--accent-soft)] transition-colors"
           >
             Review & Edit
           </button>

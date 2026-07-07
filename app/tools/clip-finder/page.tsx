@@ -101,7 +101,7 @@ export default function ClipFinderPage() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste any YouTube or TikTok URL..."
-            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]"
+            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent)]"
           />
         </div>
         <div>
@@ -111,7 +111,7 @@ export default function ClipFinderPage() {
             onChange={(e) => setPrompt(e.target.value)}
             rows={2}
             placeholder="funny reactions, key insights, hype moments..."
-            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none"
+            className="w-full border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent)] resize-none"
           />
         </div>
 
@@ -127,7 +127,7 @@ export default function ClipFinderPage() {
         {loading && step >= 0 && (
           <div className="space-y-2 pt-1">
             {STEPS.map((s, i) => (
-              <div key={i} className={`flex items-center gap-2 text-sm ${i < step ? "text-green-600" : i === step ? "text-[var(--text)] font-medium" : "text-[var(--text-muted)]/40"}`}>
+              <div key={i} className={`flex items-center gap-2 text-sm ${i < step ? "text-green-600" : i === step ? "text-[var(--text)] font-medium" : "text-[var(--text-light)]"}`}>
                 {i < step ? "✅" : i === step ? <Loader2 size={13} className="animate-spin" /> : "○"} {s}
               </div>
             ))}
@@ -157,7 +157,7 @@ export default function ClipFinderPage() {
                 <button
                   onClick={() => handleCut(m, i)}
                   disabled={cutting === `${i}`}
-                  className="flex items-center gap-1.5 bg-[var(--chip)] text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-[var(--chip)]/80 disabled:opacity-50"
+                  className="flex items-center gap-1.5 bg-[var(--chip)] text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-[var(--chip)] disabled:opacity-50"
                 >
                   {cutting === `${i}` ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
                   Cut This Clip

@@ -230,7 +230,7 @@ export default function EditorPage() {
           <button
             onClick={handleAutoEdit}
             disabled={autoLoading}
-            className="flex items-center gap-2 bg-[var(--accent)] text-white font-bold px-4 py-2 rounded-xl hover:bg-[var(--accent)]/90 disabled:opacity-60"
+            className="flex items-center gap-2 bg-[var(--accent)] text-white font-bold px-4 py-2 rounded-xl hover:bg-[var(--accent-soft)] disabled:opacity-60"
           >
             {autoLoading ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
             Auto Edit — Optimize for Views
@@ -273,7 +273,7 @@ export default function EditorPage() {
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             rows={3}
-            className="w-full text-sm border border-[var(--border)] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
+            className="w-full text-sm border border-[var(--border)] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
           />
         </div>
       </div>
@@ -299,7 +299,7 @@ export default function EditorPage() {
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent)]/90 disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full bg-[var(--accent)] text-white font-bold py-3 rounded-xl hover:bg-[var(--accent-soft)] disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {exporting ? (
               <><Loader2 size={16} className="animate-spin" /> Exporting...</>

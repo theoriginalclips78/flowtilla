@@ -109,7 +109,7 @@ export default function CampaignPreviewCard({ result, onEdit, onQueue, onDismiss
         </button>
         <button
           onClick={onQueue}
-          className="flex-1 bg-[var(--accent)] text-white text-sm font-semibold py-2 rounded-lg hover:bg-[var(--accent)]/90"
+          className="flex-1 bg-[var(--accent)] text-white text-sm font-semibold py-2 rounded-lg hover:bg-[var(--accent-soft)]"
         >
           Save & Queue
         </button>

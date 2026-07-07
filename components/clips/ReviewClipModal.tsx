@@ -143,7 +143,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
             >
               {/* Clip range */}
               <div
-                className="absolute h-full bg-[var(--accent)]/30 rounded-full"
+                className="absolute h-full bg-[var(--accent-soft)] rounded-full"
                 style={{ left: `${startRatio * 100}%`, width: `${(endRatio - startRatio) * 100}%` }}
               />
               {/* Current position */}
@@ -172,7 +172,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
               <span>{formatTime(endTime)}</span>
               <span>{formatTime(duration)}</span>
             </div>
-            <p className="text-[11px] text-[var(--text-muted)]/60 mt-1 text-center">
+            <p className="text-[11px] text-[var(--text-light)] mt-1 text-center">
               Tap anywhere on the timeline to explore the full video
             </p>
           </div>
@@ -213,7 +213,7 @@ export default function ReviewClipModal({ clip, allClips, currentIndex, onNaviga
             <button
               onClick={approve}
               disabled={isApproving}
-              className="flex-1 bg-[var(--accent)] text-white py-2.5 rounded-xl hover:bg-[var(--accent)]/90 font-medium disabled:opacity-60"
+              className="flex-1 bg-[var(--accent)] text-white py-2.5 rounded-xl hover:bg-[var(--accent-soft)] font-medium disabled:opacity-60"
             >
               {isApproving ? "Approving..." : "Approve Clip"}
             </button>

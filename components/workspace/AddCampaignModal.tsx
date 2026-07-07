@@ -381,7 +381,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
             <div className="space-y-4">
               <input value={cname} onChange={(e) => setCname(e.target.value)}
                 placeholder="Campaign name (optional)"
-                className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]" />
+                className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent)]" />
 
               {/* Footage */}
               <div>
@@ -389,7 +389,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                 <label
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files); }}
-                  className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-xl px-4 py-5 text-center cursor-pointer hover:border-[var(--accent)]/60 hover:bg-[var(--accent)]/[0.03] transition-colors">
+                  className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-xl px-4 py-5 text-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent)]/[0.03] transition-colors">
                   <input type="file" multiple className="hidden" onChange={(e) => handleUpload(e.target.files)}
                     {...({ webkitdirectory: "", directory: "" } as Record<string, string>)} />
                   <Upload size={20} className="text-[var(--accent)] mb-1.5" />
@@ -400,7 +400,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                 </label>
                 <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={2}
                   placeholder="…or paste video URLs / folder paths / a campaign URL / the full brief text"
-                  className="mt-2 w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none" />
+                  className="mt-2 w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent)] resize-none" />
               </div>
 
               {/* Brief */}
@@ -422,7 +422,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
                 <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1.5">Instructions <span className="font-normal normal-case text-[var(--text-light)]">(optional)</span></label>
                 <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={2}
                   placeholder="Hook style, what to look for, banner text… e.g. 'bro-voice hook, banner: SEEDANCE 2.0 ON HIGGSFIELD'"
-                  className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none" />
+                  className="w-full border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent)] resize-none" />
               </div>
 
               <button onClick={handleUnifiedCreate} disabled={loading}

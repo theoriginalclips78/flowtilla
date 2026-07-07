@@ -143,7 +143,7 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
               <Label>Brand Name *</Label>
               <input
                 {...register("name")}
-                className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+                className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                 placeholder="e.g. YoungLA"
               />
               {errors.name && <p className="text-[var(--accent)] text-xs mt-1">{errors.name.message}</p>}
@@ -156,7 +156,7 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                     type="number"
                     step="0.01"
                     {...register(field, { valueAsNumber: true })}
-                    className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+                    className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
                 </div>
               ))}
@@ -179,9 +179,9 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                 <input
                   {...register(`sources.${i}.url`)}
                   placeholder="https://..."
-                  className="flex-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+                  className="flex-1 px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                 />
-                <button type="button" onClick={() => remove(i)} className="text-[var(--accent)] hover:text-[var(--accent)]/70 p-1">
+                <button type="button" onClick={() => remove(i)} className="text-[var(--accent)] hover:text-[var(--accent)] p-1">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -219,7 +219,7 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                     className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                       clipLength === l
                         ? "bg-[var(--accent)] text-white border-[var(--accent)]"
-                        : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]/40"
+                        : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]"
                     }`}
                   >
                     {l < 60 ? `${l}s` : `${l / 60}min`}
@@ -236,7 +236,7 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
                     type="button"
                     onClick={() => setValue("aspectRatio", r.value)}
                     className={`flex flex-col items-center gap-1.5 p-3 border rounded-lg transition-colors flex-1 ${
-                      aspectRatio === r.value ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-[var(--border)] hover:border-[var(--accent)]/30"
+                      aspectRatio === r.value ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--accent)]"
                     }`}
                   >
                     <div
@@ -316,7 +316,7 @@ export default function CampaignFormSheet({ open, onClose, editCampaign }: Props
             )}
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white">
+          <Button type="submit" disabled={isSubmitting} className="w-full bg-[var(--accent)] hover:bg-[var(--accent-soft)] text-white">
             {isSubmitting ? "Saving..." : "Save Campaign"}
           </Button>
         </form>

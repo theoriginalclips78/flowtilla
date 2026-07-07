@@ -121,7 +121,7 @@ export default function AgentControlPanel() {
         {agentStatus === "running" && (
           <>
             <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-[var(--accent)]/20 animate-ping" />
+              <div className="absolute inset-0 rounded-full bg-[var(--accent-soft)] animate-ping" />
               <Bot size={48} className="text-[var(--accent)] relative" />
             </div>
             <span className="text-[var(--text)] font-medium text-center">{currentTask}</span>
@@ -162,7 +162,7 @@ export default function AgentControlPanel() {
         <Button
           onClick={startAgent}
           disabled={agentStatus === "running" || !selectedCampaign}
-          className="bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white font-bold px-6"
+          className="bg-[var(--accent)] hover:bg-[var(--accent-soft)] text-white font-bold px-6"
         >
           {agentStatus === "running" ? (
             <><Loader2 size={16} className="animate-spin mr-2" /> Running...</>
@@ -182,11 +182,11 @@ export default function AgentControlPanel() {
         </div>
         <div ref={logRef} className="flex-1 overflow-y-auto p-4 font-mono text-[13px] space-y-1">
           {logEntries.length === 0 && (
-            <span className="text-[var(--text-muted)]/60">Waiting for agent to start...</span>
+            <span className="text-[var(--text-light)]">Waiting for agent to start...</span>
           )}
           {logEntries.map((entry, i) => (
             <div key={i} className={logColor(entry)}>
-              <span className="text-[var(--text-muted)]/60 mr-2">[{entry.timestamp}]</span>
+              <span className="text-[var(--text-light)] mr-2">[{entry.timestamp}]</span>
               <span className="mr-2">{logIcon(entry)}</span>
               {entry.message}
             </div>

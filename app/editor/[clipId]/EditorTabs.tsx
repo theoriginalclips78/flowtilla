@@ -51,7 +51,7 @@ const MUSIC_TRACKS = [
 
 function Toggle({ label, desc, checked, onChange }: { label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[var(--border)]/50 last:border-0">
+    <div className="flex items-center justify-between py-2.5 border-b border-[var(--border)] last:border-0">
       <div>
         <p className="text-sm font-medium text-[var(--text)]">{label}</p>
         {desc && <p className="text-xs text-[var(--text-muted)] mt-0.5">{desc}</p>}
@@ -172,7 +172,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
             <button
               onClick={generateSubtitles}
               disabled={subtitleLoading}
-              className="w-full flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-semibold py-2.5 rounded-lg mb-4 hover:bg-[var(--accent)]/90 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-semibold py-2.5 rounded-lg mb-4 hover:bg-[var(--accent-soft)] disabled:opacity-60"
             >
               {subtitleLoading ? <Loader2 size={15} className="animate-spin" /> : null}
               Generate Subtitles
@@ -194,7 +194,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
                       updated[i] = { ...seg, text: e.target.value };
                       setTranscript(updated);
                     }}
-                    className="flex-1 text-sm border border-[var(--border)] rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]/30"
+                    className="flex-1 text-sm border border-[var(--border)] rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)]"
                   />
                 </div>
               ))}
@@ -210,7 +210,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
                 </button>
                 <button
                   onClick={() => setTranscript([])}
-                  className="flex items-center gap-1 text-sm text-[var(--accent)] border border-[var(--accent)]/30 px-3 py-1.5 rounded-lg hover:bg-[var(--accent)]/5 ml-auto"
+                  className="flex items-center gap-1 text-sm text-[var(--accent)] border border-[var(--accent)] px-3 py-1.5 rounded-lg hover:bg-[var(--accent-soft)] ml-auto"
                 >
                   <Trash2 size={13} /> Delete All
                 </button>
@@ -229,7 +229,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
                   key={l.id}
                   onClick={() => update({ layout: l.id })}
                   className={`border-2 rounded-xl p-3 flex flex-col items-center gap-1.5 transition-colors ${
-                    settings.layout === l.id ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-[var(--border)] hover:border-[var(--accent)]/30"
+                    settings.layout === l.id ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--accent)]"
                   }`}
                 >
                   <span className="text-2xl">{l.icon}</span>
@@ -247,7 +247,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
                       key={g}
                       onClick={() => update({ gameplayStyle: g })}
                       className={`px-3 py-1.5 rounded-full text-sm capitalize transition-colors ${
-                        settings.gameplayStyle === g ? "bg-[var(--accent)] text-white" : "border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]/40"
+                        settings.gameplayStyle === g ? "bg-[var(--accent)] text-white" : "border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]"
                       }`}
                     >
                       {g.replace("-", " ")}
@@ -272,7 +272,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
                   <p className="text-xs font-medium text-[var(--text-muted)] mb-1.5">Speed</p>
                   <div className="flex gap-2">
                     {["0.75x", "1x", "1.25x", "1.5x"].map((s) => (
-                      <button key={s} className="px-3 py-1.5 text-sm border border-[var(--border)] rounded-lg hover:border-[var(--accent)]/40 data-[active=true]:bg-[var(--accent)] data-[active=true]:text-white">
+                      <button key={s} className="px-3 py-1.5 text-sm border border-[var(--border)] rounded-lg hover:border-[var(--accent)] data-[active=true]:bg-[var(--accent)] data-[active=true]:text-white">
                         {s}
                       </button>
                     ))}
@@ -299,7 +299,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
                       key={track}
                       onClick={() => update({ musicTrack: track })}
                       className={`border rounded-lg p-2 text-left transition-colors ${
-                        settings.musicTrack === track ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-[var(--border)] hover:border-[var(--accent)]/30"
+                        settings.musicTrack === track ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--accent)]"
                       }`}
                     >
                       <p className="text-xs font-medium text-[var(--text)] capitalize">{track.replace("-", " ")}</p>
@@ -339,7 +339,7 @@ export default function EditorTabs({ settings, update, transcript, setTranscript
                     value={settings.hookText}
                     onChange={(e) => update({ hookText: e.target.value })}
                     placeholder="Wait for it... 👀"
-                    className="w-full text-sm border border-[var(--border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]/30"
+                    className="w-full text-sm border border-[var(--border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)]"
                   />
                   <div className="flex gap-2">
                     <div className="flex-1">

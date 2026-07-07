@@ -49,7 +49,7 @@ export default function VoiceChangerPage() {
       <div className="space-y-4">
         <div
           onClick={() => inputRef.current?.click()}
-          className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5 transition-colors"
+          className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
         >
           <Upload size={28} className="mx-auto text-[var(--text-muted)] mb-2" />
           <p className="text-sm font-semibold text-[var(--text)]">{file ? file.name : "Drop file here or click to upload"}</p>
@@ -64,7 +64,7 @@ export default function VoiceChangerPage() {
               <button
                 key={e.id}
                 onClick={() => setEffect(e.id)}
-                className={`p-3 rounded-xl border text-center transition-colors ${effect === e.id ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-[var(--border)] hover:border-[var(--border)]"}`}
+                className={`p-3 rounded-xl border text-center transition-colors ${effect === e.id ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)] hover:border-[var(--border)]"}`}
               >
                 <span className="text-xl block mb-1">{e.icon}</span>
                 <span className={`text-xs font-bold ${effect === e.id ? "text-[var(--accent)]" : "text-[var(--text)]"}`}>{e.label}</span>
