@@ -43,6 +43,11 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
   const [error, setError] = useState("");
   const [loginWall, setLoginWall] = useState(false);
   const [briefFile, setBriefFile] = useState<File | null>(null);
+  // Unified form state
+  const [cname, setCname] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [uploadedFolder, setUploadedFolder] = useState("");
+  const [uploadedCount, setUploadedCount] = useState(0);
 
   // Upload a folder of downloaded footage → save on the server → local-footage campaign.
   // Update the text of the most-recent step (used for upload progress).
@@ -70,47 +75,75 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
         setLastStep(`⬆️ Uploading ${i + 1}/${vids.length}...`);
       }
       completeStep();
+      // Stage the uploaded folder — the single "Create" button assembles everything.
+      setUploadedFolder(folderPath);
+      setUploadedCount(vids.length);
+      addStep(`✅ ${vids.length} clip${vids.length !== 1 ? "s" : ""} ready`);
+      completeStep();
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    }
+    setLoading(false);
+  };
 
-      // If a brief file was attached, parse it and create the campaign WITH the footage.
+  // ONE button that assembles whatever the user provided — uploaded folder, pasted
+  // URLs/paths, an attached brief PDF, pasted brief text, and instructions.
+  const handleUnifiedCreate = async () => {
+    const text = input.trim();
+    const lines = text.split("\n").map(s => s.trim()).filter(Boolean);
+    const looksUrl = lines.length === 1 && /^https?:\/\//i.test(lines[0]);
+    const allLinks = lines.length > 0 && lines.every(l => /^https?:\/\//i.test(l) || /^(~|\/)/.test(l));
+
+    // Footage sources: uploaded folder + any pasted URLs/paths (when the box holds links).
+    const sources: { platform: string; url: string }[] = [];
+    if (uploadedFolder) sources.push({ platform: "local", url: uploadedFolder });
+    if (allLinks) for (const l of lines) sources.push({ platform: /^(~|\/)/.test(l) ? "local" : (l.includes("tiktok") ? "tiktok" : l.includes("instagram") ? "instagram" : "youtube"), url: l });
+
+    if (sources.length === 0 && !briefFile && !text) { setError("Add a folder, a URL/path, or a brief to continue."); return; }
+
+    setLoading(true); setError(""); setPreview(null); setSteps([]);
+    try {
+      // 1) A brief file → extract to text.  2) A pasted brief (a page URL or brief text).
+      let briefText = "", briefUrl = "";
       if (briefFile) {
         addStep("📄 Reading brief file...");
         const bf = new FormData(); bf.append("file", briefFile);
         const ex = await fetch("/api/brief/extract", { method: "POST", body: bf });
         const exd = await ex.json();
         if (!ex.ok) throw new Error(exd.error || "Couldn't read the brief file");
-        completeStep();
+        briefText = exd.text; completeStep();
+      } else if (text && !allLinks) {
+        if (looksUrl) briefUrl = lines[0]; else briefText = text;
+      }
+
+      if (briefText || briefUrl) {
         addStep("🤖 Parsing brief + attaching footage...");
         const rd = await fetch("/api/brief/read", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rawText: exd.text, localFolder: folderPath }),
+          body: JSON.stringify({ ...(briefUrl ? { url: briefUrl } : { rawText: briefText }), extraSources: sources, extraInstructions: instructions }),
         });
-        const rdData = await rd.json();
-        if (!rd.ok) throw new Error(rdData.error || "Couldn't parse the brief");
+        const d = await rd.json();
+        if (rd.status === 422 && d.loginWall) { setLoginWall(true); setLoading(false); setSteps([]); return; }
+        if (!rd.ok) throw new Error(d.error || "Couldn't parse the brief");
         completeStep();
-        addStep(`✅ Ready — brief + ${vids.length} clip${vids.length !== 1 ? "s" : ""}`);
+        setPreview({ campaign: d.campaign, briefData: d.briefData, videoCount: sources.length || 1, breakdown: [] });
+      } else {
+        addStep("📁 Creating campaign...");
+        const res = await fetch("/api/campaigns", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: cname.trim() || `Campaign — ${new Date().toLocaleDateString()}`,
+            cpm: 1, platforms: "tiktok,instagram,youtube",
+            aiInstructions: instructions.trim() || "Clip the footage into short, punchy edits with a strong hook.",
+            videoLayout: "letterbox",
+            sources,
+          }),
+        });
+        const c = await res.json();
+        if (!res.ok) throw new Error(c.error || "Failed to create campaign");
         completeStep();
-        setPreview({ campaign: rdData.campaign, briefData: rdData.briefData, videoCount: vids.length, breakdown: [] });
-        setLoading(false);
-        return;
+        setPreview({ campaign: c, briefData: {} as ReadResult["briefData"], videoCount: sources.length, breakdown: [] });
       }
-
-      addStep("📁 Creating campaign...");
-      const res = await fetch("/api/campaigns", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `Uploaded Footage — ${new Date().toLocaleDateString()}`,
-          cpm: 1, maxPerClip: 0, minPayout: 0, platforms: "tiktok,instagram,youtube",
-          aiInstructions: "Clip the uploaded footage into short, punchy edits with a strong hook.",
-          videoLayout: "letterbox",
-          sources: [{ platform: "local", url: folderPath }],
-        }),
-      });
-      const c = await res.json();
-      if (!res.ok) throw new Error(c.error || "Failed to create campaign");
-      completeStep();
-      addStep(`✅ Ready — ${vids.length} clip${vids.length !== 1 ? "s" : ""} uploaded`);
-      completeStep();
-      setPreview({ campaign: c, briefData: {} as ReadResult["briefData"], videoCount: vids.length, breakdown: [] });
     } catch (e: unknown) {
       setError((e as Error).message);
     }
@@ -342,141 +375,66 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-100 flex-shrink-0">
-          {TABS.map((t) => (
-            <button key={t.id} onClick={() => { setTab(t.id); setError(""); setLoginWall(false); setSteps([]); setPreview(null); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-semibold border-b-2 transition-colors ${tab === t.id ? "border-[#C0392B] text-[#C0392B]" : "border-transparent text-[#6B7280] hover:text-[#111827]"}`}>
-              {t.icon} {t.label}
-            </button>
-          ))}
-        </div>
-
         <div className="overflow-y-auto flex-1 p-6 space-y-4">
-          {/* URL Tab */}
-          {tab === "url" && (
-            <div className="space-y-3">
-              {/* Upload folder — the easy path for "use only our footage" campaigns */}
-              <label
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files); }}
-                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl px-4 py-6 text-center cursor-pointer hover:border-[#C0392B]/60 hover:bg-[#C0392B]/[0.03] transition-colors">
-                <input
-                  type="file" multiple className="hidden"
-                  onChange={(e) => handleUpload(e.target.files)}
-                  {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
-                />
-                <Upload size={22} className="text-[#C0392B] mb-2" />
-                <div className="text-sm font-bold text-[#111827]">Upload a folder of clips</div>
-                <div className="text-[11px] text-[#94A3B8] mt-1">Click to choose a downloaded folder (or drag files in) — it clips every video inside.</div>
-              </label>
+          {/* Unified form — add any combination of footage, brief, and instructions */}
+          {!preview && !loading && (
+            <div className="space-y-4">
+              <input value={cname} onChange={(e) => setCname(e.target.value)}
+                placeholder="Campaign name (optional)"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
 
-              {/* Optional: attach the campaign brief so it parses the rules too */}
-              <label className="flex items-center justify-between gap-2 border border-gray-200 rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors">
-                <span className="text-[#6B7280] truncate flex items-center gap-2">
-                  <FileText size={14} className="shrink-0 text-[#94A3B8]" />
-                  {briefFile ? briefFile.name : "Attach a brief (PDF) — optional, reads the rules"}
-                </span>
-                <input type="file" accept=".pdf,.txt,.md,.rtf" className="hidden"
-                  onChange={(e) => setBriefFile(e.target.files?.[0] || null)} />
-                <span className="text-[#C0392B] font-semibold text-xs shrink-0">{briefFile ? "Change" : "Attach"}</span>
-              </label>
-
-              <div className="flex items-center gap-3 text-[11px] text-[#94A3B8]">
-                <div className="h-px bg-gray-200 flex-1" /> or paste a URL / path <div className="h-px bg-gray-200 flex-1" />
+              {/* Footage */}
+              <div>
+                <label className="block text-xs font-bold text-[#6B7280] uppercase mb-1.5">Footage</label>
+                <label
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files); }}
+                  className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl px-4 py-5 text-center cursor-pointer hover:border-[#C0392B]/60 hover:bg-[#C0392B]/[0.03] transition-colors">
+                  <input type="file" multiple className="hidden" onChange={(e) => handleUpload(e.target.files)}
+                    {...({ webkitdirectory: "", directory: "" } as Record<string, string>)} />
+                  <Upload size={20} className="text-[#C0392B] mb-1.5" />
+                  <div className="text-sm font-bold text-[#111827]">
+                    {uploadedCount > 0 ? `✅ ${uploadedCount} clip${uploadedCount !== 1 ? "s" : ""} ready` : "Upload a folder of clips"}
+                  </div>
+                  <div className="text-[11px] text-[#94A3B8] mt-0.5">Click or drag a downloaded folder — clips every video inside.</div>
+                </label>
+                <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={2}
+                  placeholder="…or paste video URLs / folder paths / a campaign URL / the full brief text"
+                  className="mt-2 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none" />
               </div>
 
-              <input value={input} onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !loading && handleRead()}
-                placeholder="Paste a campaign URL — or a local folder path (/Users/you/Downloads/footage)"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
-              <button onClick={handleRead} disabled={loading || !input.trim()}
-                className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
-                {loading ? <Loader2 size={16} className="animate-spin" /> : null}
-                Read Campaign →
+              {/* Brief */}
+              <div>
+                <label className="block text-xs font-bold text-[#6B7280] uppercase mb-1.5">Brief <span className="font-normal normal-case text-[#94A3B8]">(optional — reads the rules)</span></label>
+                <label className="flex items-center justify-between gap-2 border border-gray-200 rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                  <span className="text-[#6B7280] truncate flex items-center gap-2">
+                    <FileText size={14} className="shrink-0 text-[#94A3B8]" />
+                    {briefFile ? briefFile.name : "Attach a brief file (PDF)"}
+                  </span>
+                  <input type="file" accept=".pdf,.txt,.md,.rtf" className="hidden"
+                    onChange={(e) => setBriefFile(e.target.files?.[0] || null)} />
+                  <span className="text-[#C0392B] font-semibold text-xs shrink-0">{briefFile ? "Change" : "Attach"}</span>
+                </label>
+              </div>
+
+              {/* Instructions */}
+              <div>
+                <label className="block text-xs font-bold text-[#6B7280] uppercase mb-1.5">Instructions <span className="font-normal normal-case text-[#94A3B8]">(optional)</span></label>
+                <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={2}
+                  placeholder="Hook style, what to look for, banner text… e.g. 'bro-voice hook, banner: SEEDANCE 2.0 ON HIGGSFIELD'"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none" />
+              </div>
+
+              <button onClick={handleUnifiedCreate} disabled={loading}
+                className="btn-blue w-full justify-center !py-3 !text-base">
+                Create Campaign →
               </button>
 
               {loginWall && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-amber-800">This page requires login</p>
-                      <p className="text-xs text-amber-700 mt-0.5">Please copy the campaign brief text and paste it directly.</p>
-                      <button onClick={() => { setTab("brief"); setLoginWall(false); setInput(""); }}
-                        className="mt-2 text-xs font-semibold text-amber-700 underline hover:text-amber-900">
-                        Switch to Paste Brief →
-                      </button>
-                    </div>
-                  </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+                  This page needs a login — paste the brief <b>text</b> into the box above instead.
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Brief Tab */}
-          {tab === "brief" && (
-            <div className="space-y-3">
-              <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={7}
-                placeholder="Paste the full campaign brief here. Copy everything from the campaign page — the rules, source links, payout info, all of it. The AI will extract what it needs."
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none" />
-              <button onClick={handleRead} disabled={loading || !input.trim()}
-                className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
-                {loading ? <Loader2 size={16} className="animate-spin" /> : null}
-                Parse Brief →
-              </button>
-            </div>
-          )}
-
-          {/* Quick Add Tab */}
-          {tab === "quick" && (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-1.5">Brand Name *</label>
-                <input value={quickBrand} onChange={(e) => setQuickBrand(e.target.value)}
-                  placeholder="e.g. YoungLA, Bang Energy, Ghost..."
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-1.5">Source URLs or local folder (one per line)</label>
-                <textarea value={quickUrls} onChange={(e) => setQuickUrls(e.target.value)} rows={3}
-                  placeholder={"https://www.youtube.com/@brand/videos\n— or a downloaded folder —\n/Users/ahmedsaciidabdullahi/Downloads/higgsfield"}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none" />
-                <p className="text-[11px] text-[#94A3B8] mt-1">Paste a <b>folder path</b> for &quot;use only our footage&quot; campaigns — it clips every video inside.</p>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-1.5">What makes a good clip?</label>
-                <textarea value={quickInstructions} onChange={(e) => setQuickInstructions(e.target.value)} rows={2}
-                  placeholder="Look for high-energy moments, product reveals, funny reactions, transformation moments..."
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B] resize-none" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-1.5">CPM (optional)</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-sm">$</span>
-                    <input value={quickCpm} onChange={(e) => setQuickCpm(e.target.value)} type="number" step="0.01"
-                      placeholder="1.00"
-                      className="w-full border border-gray-200 rounded-xl pl-7 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C0392B]/20 focus:border-[#C0392B]" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-1.5">Post to</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {["tiktok", "instagram", "youtube"].map((p) => (
-                      <button key={p} onClick={() => setQuickPlatforms((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p])}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize transition-colors ${quickPlatforms.includes(p) ? "bg-[#0F1E3C] text-white" : "border border-gray-200 text-[#6B7280] hover:border-[#0F1E3C]/30"}`}>
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <button onClick={handleQuickAdd} disabled={loading || !quickBrand.trim()}
-                className="w-full bg-[#C0392B] text-white font-bold py-3 rounded-xl hover:bg-[#a93226] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <Zap size={15} />}
-                Add Campaign
-              </button>
             </div>
           )}
 

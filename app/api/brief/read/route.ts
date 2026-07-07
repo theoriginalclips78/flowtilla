@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         maxPerClip: data.maxPerClip ?? 0,
         minPayout: data.minPayout ?? 0,
         paymentModel: data.paymentModel || "cpm",
-        aiInstructions: data.aiInstructions || "",
+        aiInstructions: [data.aiInstructions || "", typeof body.extraInstructions === "string" ? body.extraInstructions.trim() : ""].filter(Boolean).join("\n\n"),
         contentRules: data.contentRules || "",
         rejectionReasons: Array.isArray(data.rejectionReasons) ? data.rejectionReasons.join("\n") : "",
         captionRules: data.captionRules || "",
@@ -45,12 +45,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // If the user also uploaded a folder of footage, attach it as a local source so the
-    // parsed brief + the downloaded clips become ONE campaign.
+    // Attach any extra sources the user added alongside the brief (uploaded folder, pasted
+    // paths/URLs) so the parsed brief + their footage become ONE campaign.
+    const extraSources: { platform?: string; url: string }[] = Array.isArray(body.extraSources) ? body.extraSources : [];
     const localFolder: string = typeof body.localFolder === "string" ? body.localFolder.trim() : "";
-    if (localFolder) {
+    if (localFolder) extraSources.push({ platform: "local", url: localFolder });
+    for (const s of extraSources) {
+      if (!s?.url?.trim()) continue;
       await prisma.campaignSource.create({
-        data: { campaignId: campaign.id, platform: "local", url: localFolder },
+        data: { campaignId: campaign.id, platform: s.platform || "other", url: s.url.trim() },
       });
     }
 

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Film, Layers, Clock, ChevronRight, Plus, Play, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import TallyTracker from "@/components/TallyTracker";
 
 interface Clip { id: string; title: string; thumbnailUrl: string; downloadUrl: string; status: string; campaignId: string; createdAt: string; viralityScore: string; }
 interface Campaign { id: string; name: string; status: string; }
@@ -51,6 +52,11 @@ export default function DashboardPage() {
           value={loading ? "…" : String(clips.filter(c=>c.status==="approved").length)}
           sub={loading ? "" : `${clips.filter(c=>c.status==="pending").length} pending review`}
         />
+      </div>
+
+      {/* Daily post tally */}
+      <div className="animate-fade-up delay-2">
+        <TallyTracker />
       </div>
 
       {/* Two-column grid */}
