@@ -15,9 +15,9 @@ export default function AppChrome({ children }: { children: ReactNode }) {
   return (
     <div className="bg-studio min-h-screen flex">
       <Sidebar />
-      <div className="flex flex-col flex-1 ml-[72px]">
+      <div className="flex flex-col flex-1 ml-[240px]">
         <Navbar />
-        <main className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6">{children}</main>
+        <main className="flex-1 overflow-y-auto px-8 py-6 pb-20 md:pb-8 max-w-[1400px] w-full mx-auto">{children}</main>
       </div>
       <BottomTabBar />
     </div>

@@ -7,9 +7,11 @@ const PAGE_TITLES: Record<string, { title: string; sub: string }> = {
   "/dashboard": { title: "Dashboard",        sub: "Overview & quick actions" },
   "/agent":     { title: "Agent Workspace",  sub: "Run campaigns & review clips" },
   "/clips":     { title: "Clips",            sub: "Review and approve your generated clips" },
-  "/projects":  { title: "Projects",         sub: "Manage your content projects" },
+  "/post":      { title: "Post Queue",       sub: "Ready to post — captions pre-filled" },
+  "/social":    { title: "Social Tracker",   sub: "Log posts & see what wins" },
   "/assets":    { title: "Assets",           sub: "Your media library" },
   "/tools":     { title: "Tools",            sub: "AI utilities" },
+  "/guide":     { title: "Guide",            sub: "How to get the most out of Montview" },
   "/settings":  { title: "Settings",         sub: "Preferences & integrations" },
 };
 
@@ -29,7 +31,7 @@ export default function Navbar() {
       }}
     >
       <div>
-        <h1 className="font-bold text-base leading-tight tracking-tight" style={{ color: "var(--chip)" }}>{title}</h1>
+        <h1 className="font-bold text-base leading-tight tracking-tight" style={{ color: "var(--text)" }}>{title}</h1>
         <p className="text-[11px] mt-0.5 font-medium" style={{ color: "var(--text-muted)" }}>{sub}</p>
       </div>
 
