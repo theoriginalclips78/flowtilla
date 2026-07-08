@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, RotateCcw } from "lucide-react";
+import { Plus, Minus, RotateCcw } from "lucide-react";
 
 // Daily "posts today" tally. Every time you post a clip, tap +1 — it draws tally marks and
 // keeps the count for the day. Auto-resets on a new calendar day; manual reset too.
@@ -77,6 +77,11 @@ export default function TallyTracker() {
         <button onClick={() => save(count + 1)}
           className="btn-blue flex-1 justify-center !py-2.5 text-sm">
           <Plus size={15} /> Posted a clip
+        </button>
+        <button onClick={() => save(Math.max(0, count - 1))} title="Undo one"
+          disabled={count === 0}
+          className="flex items-center justify-center w-11 py-2.5 rounded-full text-[var(--text-muted)] border border-[var(--border-dark)] hover:bg-[var(--cream-dark)] disabled:opacity-40 transition-colors">
+          <Minus size={15} />
         </button>
         <button onClick={() => save(0)} title="Reset for a new day"
           className="flex items-center gap-1.5 px-3 py-2.5 rounded-full text-sm font-medium text-[var(--text-muted)] border border-[var(--border-dark)] hover:bg-[var(--cream-dark)] transition-colors">

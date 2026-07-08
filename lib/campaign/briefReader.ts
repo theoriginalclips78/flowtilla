@@ -25,6 +25,8 @@ export interface BriefData {
   audienceRequirement: string | null;
   postDuration: string | null;
   submissionProcess: string | null;
+  requiresDedicatedAccount: boolean | null;
+  accountNote: string | null;
 }
 
 const SYSTEM_PROMPT = `You are a universal campaign brief parser for content creators. Extract all information from a campaign brief and return ONLY this JSON (no markdown, no explanation):
@@ -53,7 +55,9 @@ const SYSTEM_PROMPT = `You are a universal campaign brief parser for content cre
   "minimumEngagement": "engagement requirement or null",
   "audienceRequirement": "audience size requirement or null",
   "postDuration": "how long to keep post live",
-  "submissionProcess": "how to submit clips for payment"
+  "submissionProcess": "how to submit clips for payment",
+  "requiresDedicatedAccount": true or false — set TRUE if the brief implies you should post from a NEW / dedicated / separate / brand-specific account (phrases like 'dedicated account', 'new page', 'separate account', 'make a page for this', 'no personal page', 'clipping account'). Set FALSE if it explicitly says use your normal/existing page.,
+  "accountNote": "one short sentence on the account requirement (e.g. 'Post from a dedicated account for this brand') or null"
 }
 
 CRITICAL for sourceUrls: Always try to populate this. Include EVERY explicit video URL in the brief (YouTube, youtu.be, etc.). If the brief mentions a creator handle like @davidfilterbuy and says to clip from their content, also generate channel URLs for the mentioned platforms. Never return an empty sourceUrls array if URLs or handles are present. Cap at 40 URLs.

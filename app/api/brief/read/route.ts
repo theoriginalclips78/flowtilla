@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
         postDuration: data.postDuration || "",
         videoLayout: "letterbox",
         minVirality: "medium",
+        accountWarning: data.requiresDedicatedAccount ? (data.accountNote || "This campaign wants a dedicated/new posting account.") : "",
         status: "active",
       },
     });

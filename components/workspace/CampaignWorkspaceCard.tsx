@@ -257,6 +257,12 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
             <span className="text-xs bg-red-50 text-[var(--accent)] px-2 py-0.5 rounded-full font-semibold">
               Max ${campaign.maxPerClip}
             </span>
+            {(campaign as { accountWarning?: string }).accountWarning && (
+              <span title={(campaign as { accountWarning?: string }).accountWarning}
+                className="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-bold">
+                ⚠️ Dedicated account
+              </span>
+            )}
             {totalClips > 0 && (
               <span className="text-xs bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-0.5 rounded-full">
                 {sources.length} videos · {totalClips} clips{approvedCount > 0 ? ` · ~$${estEarnings} est.` : ""}

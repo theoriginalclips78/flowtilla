@@ -37,6 +37,7 @@ model Campaign {
   captionPosition     String           @default("auto")     // auto | top | middle | bottom
   watermarkText       String           @default("")         // @handle overlay; empty = none
   bottomBanner        String           @default("")         // persistent brand CTA banner (last word highlighted); empty = none
+  accountWarning      String           @default("")         // non-empty = this campaign needs a dedicated/new posting account
   aspectRatio         String           @default("9:16")
   scheduleEnabled     Boolean          @default(false)
   scheduleFrequency   String?

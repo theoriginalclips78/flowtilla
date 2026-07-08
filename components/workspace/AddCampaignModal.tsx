@@ -483,6 +483,17 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
               </div>
 
               <div className="p-4 space-y-3">
+                {/* Dedicated-account warning — very visible */}
+                {(preview.campaign as { accountWarning?: string }).accountWarning && (
+                  <div className="flex items-start gap-2 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-2.5">
+                    <AlertTriangle size={18} className="text-amber-600 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-amber-800">⚠️ Make a dedicated account for this</p>
+                      <p className="text-xs text-amber-700 mt-0.5">{(preview.campaign as { accountWarning?: string }).accountWarning}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Sources breakdown */}
                 <div>
                   <p className="text-xs font-semibold text-[var(--text-muted)] uppercase mb-1.5">Sources Found</p>
