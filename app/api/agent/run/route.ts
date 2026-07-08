@@ -510,6 +510,25 @@ async function generateHookVariants(anthropic: Anthropic, hooks: string[], n: nu
   } catch { return fallback; }
 }
 
+// Good post captions for a SHORT asset (the short path skips the moment-finder, so it has
+// no caption). One cheap call → N native, cross-platform captions. Fail-open.
+async function generateShortCaptions(anthropic: Anthropic, title: string, hooks: string[], captionRules: string): Promise<string[]> {
+  const fallback = hooks.map(h => `${h} #fyp #viral #foryou`);
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 900,
+      messages: [{ role: "user", content:
+`Write ${hooks.length} great short-form post captions for the SAME video (posted to TikTok, Instagram Reels AND YouTube Shorts). Video: "${title}". On-screen hooks: ${hooks.map((h, i) => `${i + 1}) ${h}`).join("; ")}. Each caption: real creator voice (NOT an ad), under 125 chars of text, 1-2 emojis, then 4-6 hashtags mixing broad (#fyp #viral #foryou) with 2-3 niche ones. Make people want to comment.${captionRules ? ` Obey these rules: ${captionRules}.` : ""} Return ONLY a JSON array of ${hooks.length} strings.` }],
+    });
+    const raw = (msg.content[0] as { text: string }).text;
+    const m = raw.match(/\[[\s\S]*\]/);
+    const parsed = m ? (JSON.parse(m[0]) as string[]) : null;
+    if (!Array.isArray(parsed)) return fallback;
+    return hooks.map((h, i) => (typeof parsed[i] === "string" && parsed[i].trim()) ? parsed[i] : fallback[i]);
+  } catch { return fallback; }
+}
+
 // AUTOMATED SELF-VALIDATION PASS — replaces a manual "review & approve" gate.
 // After the finder picks moments, a strict second pass vets each one and DROPS the
 // duds (weak/generic hook, mid-conversation filler, no clear payoff, near-duplicate
@@ -929,6 +948,7 @@ async function processOneVideo(
       ? `⚡ Short video (${Math.round(videoDuration)}s) — making ${rsVariations} versions...`
       : `⚡ Short video (${Math.round(videoDuration)}s) — clipping with subtitles...` });
     const hookSet = rsVariations > 1 ? (await generateHookVariants(anthropic, [videoTitle], rsVariations))[0] : [videoTitle];
+    const captionSet = await generateShortCaptions(anthropic, videoTitle, hookSet, String(cRec.captionRules || ""));
     let made = 0;
     for (let v = 0; v < rsVariations; v++) {
       const clipFile = clipsDir + `/clip-${v}.mp4`;
@@ -939,7 +959,7 @@ async function processOneVideo(
         await saveAndStream(clipFile, thumbFile, {
           start_time: 0, end_time: videoDuration, title: hook,
           reason: "Complete short-form video", virality_score: "high",
-          hook, caption: `${videoTitle} #shorts #viral`, platform_fit: src.platform,
+          hook, caption: captionSet[v] || `${videoTitle} #fyp #viral #foryou`, platform_fit: src.platform,
         });
         made++;
       } catch (err) {
@@ -1009,7 +1029,11 @@ NEVER use a STORY-SETUP opener ("Let me tell you about the time...", "So basical
 
 Rules: ${campaign.contentRules || "feel authentic and organic"}. Target platforms: ${campaign.platforms || "tiktok,instagram,youtube"}.
 
-Keep "reason" under 12 words. "caption": ORIGINAL organic line under 100 chars that people actually type — include 1-3 RELEVANT emojis (e.g. 🤯🔥😳🏠) to boost engagement, plus 2-4 fitting hashtags. NOT the title, NOT promotional. The "hook" (on-screen text) may end with 1 well-chosen emoji if it genuinely adds punch (e.g. 🤯🔥😳) — keep it clean and readable, never more than one. Rank STRICTLY by scroll-stopping power, best first — only include genuinely good moments (it's fine to return fewer than 8 if the video only has a few).
+Keep "reason" under 12 words.
+
+"caption" — THIS MATTERS, the SAME caption gets posted on TikTok, Instagram Reels AND YouTube Shorts, so make it genuinely good and native to all three. Write like a real creator, NOT an ad. Pick ONE angle: a relatable confession ("POV: you..."), a bold claim, a curiosity gap, or a real reaction. Under 125 chars of actual text. Then add 1-2 fitting emojis and 4-6 hashtags — mix 2-3 BROAD reach tags (#fyp #viral #foryou #reels) with 2-3 SPECIFIC to the topic/niche. Make people want to comment. Do NOT just repeat the on-screen hook, do NOT be generic ("check this out 🔥"), do NOT sound salesy.${(campaign as { captionRules?: string }).captionRules ? ` You MUST also obey these campaign caption rules: ${(campaign as { captionRules?: string }).captionRules}` : ""}
+
+The "hook" (on-screen text) may end with 1 well-chosen emoji if it genuinely adds punch (🤯🔥😳) — never more than one. Rank STRICTLY by scroll-stopping power, best first — only include genuinely good moments (it's fine to return fewer than 8 if the video only has a few).
 
 Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips.`,
       messages: [{ role: "user", content: `Video: "${videoTitle}" (${videoDuration}s)\n\nWhat to look for: ${campaign.aiInstructions || "high-energy, funny, emotional, impressive, or quotable moments"}\n\nTranscript:\n${transcriptText.slice(0, 8000)}\n\nReturn the best self-contained scroll-stopping moments (8-25s ideal, never >45s). Each: {start_time, end_time, title, reason, virality_score, hook, caption, platform_fit}${(campaign as Record<string,unknown>).extraContext ? `\n\nContext:\n${String((campaign as Record<string,unknown>).extraContext).slice(0,400)}` : ""}` }],
