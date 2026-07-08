@@ -529,6 +529,42 @@ async function generateShortCaptions(anthropic: Anthropic, title: string, hooks:
   } catch { return fallback; }
 }
 
+// Turn an ugly asset filename into a readable hint (strip codec/format/export junk).
+function cleanTitle(name: string): string {
+  let s = name.replace(/\.[a-z0-9]+$/i, "").replace(/[_\-]+/g, " ");
+  s = s.replace(/\b(hero|master|final|draft|copy|export|render|general|paid|social|web|ctv|product|color|colour|clean|v\d+|\d{2,4}p|4k|uhd|hd|1080|720|16[x×]9|9[x×]16|h264|h265|hevc|prores|422|444|hq|proxy|mp4|mov)\b/gi, " ");
+  s = s.replace(/\b\d{1,3}\b/g, " ").replace(/\s+/g, " ").trim();
+  return s || name;
+}
+
+// For a SHORT asset (no moment-finder), write REAL creative hooks + captions from the
+// clip's readable name + the campaign context — never the raw filename. One cheap call.
+async function generateShortMeta(anthropic: Anthropic, clipAbout: string, aiInstructions: string, campaignName: string, captionRules: string, n: number): Promise<{ hook: string; caption: string }[]> {
+  const fallback = Array.from({ length: n }, () => ({ hook: clipAbout, caption: `${clipAbout} #fyp #viral #foryou` }));
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1100,
+      messages: [{ role: "user", content:
+`You are a world-class viral short-form editor for the "${campaignName}" campaign.${aiInstructions ? ` Campaign context: ${aiInstructions}.` : ""} This clip is about: "${clipAbout}".
+
+Write ${n} DIFFERENT pairs of (hook, caption):
+- "hook" = the on-screen text: a SCROLL-STOPPING line, 3-7 words, using a proven viral formula (outcome-first, curiosity gap, bold claim, open loop, or confession). Be CREATIVE and specific to what the clip is about. NEVER output the filename, a codec string, or a dull description — write it like a top creator would.
+- "caption" = a native post caption for TikTok/IG Reels/YouTube Shorts (same one, all platforms): real creator voice, under 125 chars, 1-2 emojis, then 4-6 hashtags mixing broad (#fyp #viral #foryou) with niche ones.${captionRules ? ` MUST obey these rules: ${captionRules}.` : ""}
+
+Return ONLY a JSON array of ${n} objects: [{"hook":"...","caption":"..."}]` }],
+    });
+    const raw = (msg.content[0] as { text: string }).text;
+    const m = raw.match(/\[[\s\S]*\]/);
+    const parsed = m ? (JSON.parse(m[0]) as { hook?: string; caption?: string }[]) : null;
+    if (!Array.isArray(parsed)) return fallback;
+    return Array.from({ length: n }, (_, i) => ({
+      hook: (parsed[i]?.hook || "").trim() || clipAbout,
+      caption: (parsed[i]?.caption || "").trim() || `${clipAbout} #fyp #viral #foryou`,
+    }));
+  } catch { return fallback; }
+}
+
 // AUTOMATED SELF-VALIDATION PASS — replaces a manual "review & approve" gate.
 // After the finder picks moments, a strict second pass vets each one and DROPS the
 // duds (weak/generic hook, mid-conversation filler, no clear payoff, near-duplicate
@@ -947,19 +983,20 @@ async function processOneVideo(
     sse(ctrl, { step: "cut", status: "progress", message: rsVariations > 1
       ? `⚡ Short video (${Math.round(videoDuration)}s) — making ${rsVariations} versions...`
       : `⚡ Short video (${Math.round(videoDuration)}s) — clipping with subtitles...` });
-    const hookSet = rsVariations > 1 ? (await generateHookVariants(anthropic, [videoTitle], rsVariations))[0] : [videoTitle];
-    const captionSet = await generateShortCaptions(anthropic, videoTitle, hookSet, String(cRec.captionRules || ""));
+    // Write REAL creative hooks + captions from the clip's readable name + campaign context
+    // (never the raw filename). Always at least 1; more when variations are on.
+    const meta = await generateShortMeta(anthropic, cleanTitle(videoTitle), String(cRec.aiInstructions || ""), campaign.name, String(cRec.captionRules || ""), rsVariations);
     let made = 0;
     for (let v = 0; v < rsVariations; v++) {
       const clipFile = clipsDir + `/clip-${v}.mp4`;
       const thumbFile = clipsDir + `/thumb-${v}.jpg`;
-      const hook = hookSet[v] || videoTitle;
+      const hook = meta[v]?.hook || cleanTitle(videoTitle);
       try {
         await cutClip(srcPath, clipFile, 0, videoDuration, [], hook, v, [], rsPresetId, rsMotion, rsLayout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner);
         await saveAndStream(clipFile, thumbFile, {
           start_time: 0, end_time: videoDuration, title: hook,
           reason: "Complete short-form video", virality_score: "high",
-          hook, caption: captionSet[v] || `${videoTitle} #fyp #viral #foryou`, platform_fit: src.platform,
+          hook, caption: meta[v]?.caption || `${cleanTitle(videoTitle)} #fyp #viral #foryou`, platform_fit: src.platform,
         });
         made++;
       } catch (err) {
