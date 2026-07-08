@@ -115,6 +115,20 @@ model SocialAccount {
   createdAt    DateTime  @default(now())
 }
 
+// A posted clip the user is tracking — log its views to learn which hooks/styles pop.
+model TrackedPost {
+  id        String   @id @default(cuid())
+  platform  String   @default("tiktok")   // tiktok | instagram | youtube | twitter
+  url       String   @default("")
+  hook      String   @default("")          // the on-screen hook used (so we can rank hooks)
+  style     String   @default("")          // optional title style id
+  views     Int      @default(0)
+  likes     Int      @default(0)
+  postedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model PostLog {
   id        String    @id @default(cuid())
   clipId    String
