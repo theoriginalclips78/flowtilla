@@ -1230,7 +1230,9 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     const useWords = rsSubsOn ? words : [];
     const useTranscript = rsSubsOn ? transcript : [];
     // The top overlay should be the scroll-stopping HOOK, not the dull video title.
-    const overlayText = (m.hook && m.hook.trim()) ? m.hook.trim() : m.title;
+    // If a moment somehow has no hook (e.g. the no-transcript time-based fallback),
+    // never show raw codec/filename junk — clean it first.
+    const overlayText = (m.hook && m.hook.trim()) ? m.hook.trim() : cleanTitle(m.title || videoTitle);
     await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, variant, useWords, rsPresetId, rsMotion, rsLayout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner);
 
     // Tighten pacing — trim dead air for a faster, more retentive edit. Safely

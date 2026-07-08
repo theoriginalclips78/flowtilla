@@ -32,6 +32,7 @@ export default function PostQueuePage() {
   const [platform, setPlatform] = useState("tiktok");
   const [copied, setCopied] = useState<string>("");
   const [captions, setCaptions] = useState<Record<string, string>>({});
+  const [postedCount, setPostedCount] = useState(0);
 
   const load = () => {
     setLoading(true);
@@ -55,16 +56,19 @@ export default function PostQueuePage() {
   };
 
   const markPosted = async (c: Clip) => {
-    setClips(prev => prev.map(x => x.id === c.id ? { ...x, postedAt: new Date().toISOString() } : x));
+    // Remove it from the queue immediately, count it, bump the daily tally.
+    setClips(prev => prev.filter(x => x.id !== c.id));
+    setPostedCount(n => n + 1);
     bumpTally();
-    await fetch(`/api/clips/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ posted: true }) });
-    // also log it in the Social Tracker so views can be tracked later
+    // Log it in the Social Tracker first (so views can be tracked later), then delete
+    // the clip — once you've posted it, it's done and shouldn't linger in the queue.
     fetch("/api/tracker", { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ platform, hook: c.hook || c.title, views: 0 }) }).catch(() => {});
+    fetch(`/api/clips/${c.id}`, { method: "DELETE" }).catch(() => {});
   };
 
   const queue = clips.filter(c => !c.postedAt && c.status !== "discarded");
-  const postedToday = clips.filter(c => c.postedAt && new Date(c.postedAt).toDateString() === new Date().toDateString()).length;
+  const postedToday = postedCount;
 
   return (
     <div className="space-y-6 max-w-[1000px]">
@@ -129,7 +133,7 @@ export default function PostQueuePage() {
                     {copied === c.id ? <><Check size={14} className="text-[var(--accent)]" /> Copied</> : <><Copy size={14} /> Copy caption</>}
                   </button>
                   <a href={c.downloadUrl} download className="btn-secondary !py-1.5 text-sm"><Download size={14} /> Download</a>
-                  <button onClick={() => markPosted(c)} className="btn-blue !py-1.5 text-sm ml-auto"><Check size={14} /> Mark posted</button>
+                  <button onClick={() => markPosted(c)} className="btn-blue !py-1.5 text-sm ml-auto"><Check size={14} /> I posted it</button>
                 </div>
               </div>
             </div>
