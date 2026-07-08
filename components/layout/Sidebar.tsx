@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Bot, Film, HardDrive, Wrench, Settings, BookOpen, Building2, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Bot, Film, HardDrive, Wrench, Settings, BookOpen, Building2, TrendingUp, Send } from "lucide-react";
 import MontviewLogo from "@/components/MontviewLogo";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/agent",     icon: Bot,             label: "Agent" },
   { href: "/clips",     icon: Film,            label: "Clips" },
+  { href: "/post",      icon: Send,            label: "Post Queue" },
   { href: "/social",    icon: TrendingUp,      label: "Social Tracker" },
   { href: "/assets",    icon: HardDrive,       label: "Assets" },
   { href: "/tools",     icon: Wrench,          label: "Tools" },

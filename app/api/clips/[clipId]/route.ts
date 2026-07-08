@@ -21,10 +21,14 @@ export async function PATCH(
   { params }: { params: { clipId: string } }
 ) {
   try {
-    const { status } = await req.json();
+    const body = await req.json();
+    const data: Record<string, unknown> = {};
+    if (typeof body.status === "string") data.status = body.status;
+    if (body.posted === true) data.postedAt = new Date();
+    if (body.posted === false) data.postedAt = null;
     const clip = await prisma.clip.update({
       where: { id: params.clipId },
-      data: { status },
+      data,
     });
     return NextResponse.json(clip);
   } catch (err: unknown) {
