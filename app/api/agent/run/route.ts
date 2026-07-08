@@ -495,7 +495,7 @@ async function generateHookVariants(anthropic: Anthropic, hooks: string[], n: nu
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1200,
       messages: [{ role: "user", content:
-`For each hook below, write ${n} short, punchy alternative on-screen hook lines for the SAME clip — different angles/wording, each under 60 chars, clean text, no emojis. Return ONLY a JSON array of arrays: one inner array of exactly ${n} strings per hook, in order.\n\nHooks:\n${hooks.map((h, i) => `${i + 1}. ${h}`).join("\n")}` }],
+`For each hook below, write ${n} short, punchy alternative on-screen hook lines for the SAME clip — different angles/wording, each under 60 chars, clean text, NO emojis. Put exactly ONE word per line in ALL CAPS for emphasis (the single strongest word), never more than one. Return ONLY a JSON array of arrays: one inner array of exactly ${n} strings per hook, in order.\n\nHooks:\n${hooks.map((h, i) => `${i + 1}. ${h}`).join("\n")}` }],
     });
     const raw = (msg.content[0] as { text: string }).text;
     const m = raw.match(/\[[\s\S]*\]/);
@@ -564,6 +564,7 @@ The "hook" is the on-screen text — the first 1.5 seconds decide whether someon
   • Confession/POV ("I was doing this completely wrong")
   • Named authority ("A chef told me to stop doing this")
 - 3-8 words. Concrete beats clever. If it could describe ANY product, delete it and rewrite.
+- Put exactly ONE word per hook in ALL CAPS — the single strongest/most surprising word — for emphasis (e.g. "I was ONLY hitting 60g protein"). Never more than one, never the whole hook. NO emojis in the hook itself.
 - BANNED (generic AI slop — never use): "hits different", "changed my life/game", "this works", "game changer", "obsessed", "you need this", "the secret", "will blow your mind", "proved this works", "let's talk about", "here's why".
 - Great examples of the bar: "She spends $400/wk on THIS", "Nobody orders it this way", "3 ingredients. That's it.", "He quit sugar for 30 days", "This is why your coffee tastes flat", "The chef who refuses to salt pasta".
 
@@ -1098,7 +1099,7 @@ HOW TO PICK (in priority order):
 
 THE "hook" FIELD IS CRITICAL — it becomes on-screen text in the first seconds. Write a SCROLL-STOPPING line, 3-7 words, using one of these PROVEN viral formulas (these are the only patterns that consistently hold 70%+ of viewers past 3s):
 - OUTCOME-FIRST (state the result/payoff up front): "He benched 405 raw", "This cost him $10k"
-- CURIOSITY GAP: "He eats HOW much?!", "Wait for the reaction 👀"
+- CURIOSITY GAP: "He eats HOW much?!", "Wait for the REACTION"
 - CONTRARIAN / BOLD CLAIM: "Stop doing cardio", "Rest days are a scam"
 - OPEN LOOP: "Nobody talks about this", "This changes everything"
 - CONFESSION: "I was doing this wrong for years"
@@ -1112,7 +1113,7 @@ Keep "reason" under 12 words.
 
 "caption" — THIS MATTERS, the SAME caption gets posted on TikTok, Instagram Reels AND YouTube Shorts, so make it genuinely good and native to all three. Write like a real creator, NOT an ad. Pick ONE angle: a relatable confession ("POV: you..."), a bold claim, a curiosity gap, or a real reaction. Under 125 chars of actual text. Then add 1-2 fitting emojis and 4-6 hashtags — mix 2-3 BROAD reach tags (#fyp #viral #foryou #reels) with 2-3 SPECIFIC to the topic/niche. Make people want to comment. Do NOT just repeat the on-screen hook, do NOT be generic ("check this out 🔥"), do NOT sound salesy.${(campaign as { captionRules?: string }).captionRules ? ` You MUST also obey these campaign caption rules: ${(campaign as { captionRules?: string }).captionRules}` : ""}
 
-The "hook" (on-screen text) may end with 1 well-chosen emoji if it genuinely adds punch (🤯🔥😳) — never more than one. Rank STRICTLY by scroll-stopping power, best first — only include genuinely good moments (it's fine to return fewer than 8 if the video only has a few).
+The "hook" (on-screen text) MUST put exactly ONE word in ALL CAPS — the single strongest/most surprising word — for emphasis (e.g. "He benched 405 RAW", "This cost him $10K"). Never more than one caps word, never the whole hook, and NO emojis in the hook itself. Rank STRICTLY by scroll-stopping power, best first — only include genuinely good moments (it's fine to return fewer than 8 if the video only has a few).
 
 Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips.`,
       messages: [{ role: "user", content: `Video: "${videoTitle}" (${videoDuration}s)\n\nWhat to look for: ${campaign.aiInstructions || "high-energy, funny, emotional, impressive, or quotable moments"}\n\nTranscript:\n${transcriptText.slice(0, 8000)}\n\nReturn the best self-contained scroll-stopping moments (8-25s ideal, never >45s). Each: {start_time, end_time, title, reason, virality_score, hook, caption, platform_fit}${(campaign as Record<string,unknown>).extraContext ? `\n\nContext:\n${String((campaign as Record<string,unknown>).extraContext).slice(0,400)}` : ""}` }],
