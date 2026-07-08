@@ -537,20 +537,37 @@ function cleanTitle(name: string): string {
   return s || name;
 }
 
-// For a SHORT asset (no moment-finder), write REAL creative hooks + captions from the
-// clip's readable name + the campaign context — never the raw filename. One cheap call.
-async function generateShortMeta(anthropic: Anthropic, clipAbout: string, aiInstructions: string, campaignName: string, captionRules: string, n: number): Promise<{ hook: string; caption: string }[]> {
+// For a SHORT asset (no moment-finder), write CAPTIVATING hooks + captions from what's
+// ACTUALLY said in the clip (transcript) + campaign context — never the filename. Uses a
+// strong model and a prompt that bans generic AI clichés. One call.
+async function generateShortMeta(anthropic: Anthropic, clipAbout: string, transcript: string, aiInstructions: string, campaignName: string, captionRules: string, n: number): Promise<{ hook: string; caption: string }[]> {
   const fallback = Array.from({ length: n }, () => ({ hook: clipAbout, caption: `${clipAbout} #fyp #viral #foryou` }));
   try {
+    const spoken = transcript.trim().slice(0, 1500);
     const msg = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-5",
       max_tokens: 1100,
       messages: [{ role: "user", content:
-`You are a world-class viral short-form editor for the "${campaignName}" campaign.${aiInstructions ? ` Campaign context: ${aiInstructions}.` : ""} This clip is about: "${clipAbout}".
+`You write hooks for viral short clips. Campaign: "${campaignName}".${aiInstructions ? ` Context: ${aiInstructions}.` : ""}
+This clip is about: "${clipAbout}".
+${spoken ? `WHAT'S ACTUALLY SAID IN THE CLIP (use the real, specific, surprising details from this — quote or reference the exact moment):\n"""${spoken}"""` : `(No spoken words — it's a visual/product clip. Infer the most intriguing angle.)`}
 
-Write ${n} DIFFERENT pairs of (hook, caption):
-- "hook" = the on-screen text: a SCROLL-STOPPING line, 3-7 words, using a proven viral formula (outcome-first, curiosity gap, bold claim, open loop, or confession). Be CREATIVE and specific to what the clip is about. NEVER output the filename, a codec string, or a dull description — write it like a top creator would.
-- "caption" = a native post caption for TikTok/IG Reels/YouTube Shorts (same one, all platforms): real creator voice, under 125 chars, 1-2 emojis, then 4-6 hashtags mixing broad (#fyp #viral #foryou) with niche ones.${captionRules ? ` MUST obey these rules: ${captionRules}.` : ""}
+Write ${n} DIFFERENT (hook, caption) pairs.
+
+The "hook" is the on-screen text — the first 1.5 seconds decide whether someone keeps watching or scrolls past. Your bar: a stranger scrolling at 2am has to physically stop.
+- Pull the single most surprising, specific, or contrarian detail from what's ACTUALLY said/shown above and lead with it. Real numbers, real names, real stakes.
+- Use ONE proven pattern per hook (mix them across the ${n}):
+  • Curiosity gap — imply a payoff without giving it away ("The one thing she'd never order")
+  • Contrarian/callout — challenge what people assume ("Stop drinking your protein wrong")
+  • Specific number/stat ("$7 dinner. 40g protein.")
+  • Open loop / cliffhanger ("Watch what happens at 0:12")
+  • Confession/POV ("I was doing this completely wrong")
+  • Named authority ("A chef told me to stop doing this")
+- 3-8 words. Concrete beats clever. If it could describe ANY product, delete it and rewrite.
+- BANNED (generic AI slop — never use): "hits different", "changed my life/game", "this works", "game changer", "obsessed", "you need this", "the secret", "will blow your mind", "proved this works", "let's talk about", "here's why".
+- Great examples of the bar: "She spends $400/wk on THIS", "Nobody orders it this way", "3 ingredients. That's it.", "He quit sugar for 30 days", "This is why your coffee tastes flat", "The chef who refuses to salt pasta".
+
+The "caption" = a native cross-platform caption (TikTok/IG/Shorts): real creator voice, under 125 chars, 1-2 emojis, then 4-6 hashtags (broad #fyp #viral #foryou + niche).${captionRules ? ` MUST obey: ${captionRules}.` : ""}
 
 Return ONLY a JSON array of ${n} objects: [{"hook":"...","caption":"..."}]` }],
     });
@@ -983,16 +1000,41 @@ async function processOneVideo(
     sse(ctrl, { step: "cut", status: "progress", message: rsVariations > 1
       ? `⚡ Short video (${Math.round(videoDuration)}s) — making ${rsVariations} versions...`
       : `⚡ Short video (${Math.round(videoDuration)}s) — clipping with subtitles...` });
-    // Write REAL creative hooks + captions from the clip's readable name + campaign context
+
+    // Transcribe the short clip so hooks + captions are based on what's ACTUALLY said —
+    // not the filename. Best-effort: if it fails we fall back to a title-only hook.
+    let shortTx: { start: number; end: number; text: string }[] = [];
+    let shortWords: { word: string; start: number; end: number }[] = [];
+    try {
+      sse(ctrl, { step: "transcribe", status: "started", message: `🎙️ Transcribing clip...` });
+      const audioPath = dir + "/audio.wav";
+      await extractAudio(srcPath, audioPath);
+      const res = await groq.audio.transcriptions.create({
+        file: createReadStream(audioPath) as Parameters<typeof groq.audio.transcriptions.create>[0]["file"],
+        model: "whisper-large-v3", response_format: "verbose_json",
+        timestamp_granularities: ["word", "segment"],
+      } as Parameters<typeof groq.audio.transcriptions.create>[0]);
+      const r = res as { segments?: { start: number; end: number; text: string }[]; words?: { word: string; start: number; end: number }[] };
+      shortTx = (r.segments || []).map(s => ({ start: s.start, end: s.end, text: s.text.trim() }));
+      shortWords = (r.words || []).map(w => ({ word: w.word.trim(), start: w.start, end: w.end })).filter(w => w.word);
+      sse(ctrl, { step: "transcribe", status: "complete", message: `✅ Transcribed (${shortTx.length} segments)` });
+    } catch {
+      sse(ctrl, { step: "transcribe", status: "warn", message: `⚠️ No transcript — hooks from title only` });
+    }
+    const shortSpoken = shortTx.map(s => s.text).join(" ").trim();
+
+    // Write REAL creative hooks + captions from what's actually said + campaign context
     // (never the raw filename). Always at least 1; more when variations are on.
-    const meta = await generateShortMeta(anthropic, cleanTitle(videoTitle), String(cRec.aiInstructions || ""), campaign.name, String(cRec.captionRules || ""), rsVariations);
+    const meta = await generateShortMeta(anthropic, cleanTitle(videoTitle), shortSpoken, String(cRec.aiInstructions || ""), campaign.name, String(cRec.captionRules || ""), rsVariations);
+    const shortSubs = rsSubsOn ? shortTx : [];
+    const shortSubWords = rsSubsOn ? shortWords : [];
     let made = 0;
     for (let v = 0; v < rsVariations; v++) {
       const clipFile = clipsDir + `/clip-${v}.mp4`;
       const thumbFile = clipsDir + `/thumb-${v}.jpg`;
       const hook = meta[v]?.hook || cleanTitle(videoTitle);
       try {
-        await cutClip(srcPath, clipFile, 0, videoDuration, [], hook, v, [], rsPresetId, rsMotion, rsLayout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner);
+        await cutClip(srcPath, clipFile, 0, videoDuration, shortSubs, hook, v, shortSubWords, rsPresetId, rsMotion, rsLayout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner);
         await saveAndStream(clipFile, thumbFile, {
           start_time: 0, end_time: videoDuration, title: hook,
           reason: "Complete short-form video", virality_score: "high",
