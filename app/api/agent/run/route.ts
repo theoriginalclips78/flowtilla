@@ -122,6 +122,46 @@ async function faceAwareOffset(srcPath: string, startSec: number): Promise<{ off
   return { offset: await pickOpeningOffset(srcPath, startSec), face: false };
 }
 
+// ── MAGIC CROP ─────────────────────────────────────────────────────────────
+// Where the subject sits in a clip, so we can crop a 9:16 frame that KEEPS them
+// framed instead of dumb-centering (which chops off off-centre speakers).
+export type FaceInfo = { faceRatio: number; faceYRatio: number; coverage: number; spread: number; srcW: number; srcH: number };
+const REFRAME = path.join(process.cwd(), "scripts", "reframe.py");
+
+async function reframeFace(srcPath: string, startSec: number, duration: number): Promise<FaceInfo | null> {
+  try {
+    const out = await pyCapture([REFRAME, srcPath, String(startSec), String(duration)], 30000);
+    const j = JSON.parse(out.trim().split("\n").pop() || "{}") as Partial<FaceInfo>;
+    if (typeof j.faceRatio === "number" && typeof j.srcW === "number" && j.srcW > 0) {
+      return { faceRatio: j.faceRatio, faceYRatio: j.faceYRatio ?? 0.4, coverage: j.coverage ?? 0,
+               spread: j.spread ?? 0, srcW: j.srcW, srcH: j.srcH ?? 0 };
+    }
+  } catch { /* fall through */ }
+  return null;
+}
+
+// Given the subject position, build a scale+crop that fills a Tw×Th target while
+// keeping the face centred (clamped so we never crop past the frame edges).
+function magicCropFill(f: FaceInfo, Tw: number, Th: number): string {
+  const even = (n: number) => { const r = Math.round(n); return r % 2 ? r + 1 : r; };
+  const scale = Math.max(Tw / f.srcW, Th / f.srcH);
+  const sW = even(f.srcW * scale), sH = even(f.srcH * scale);
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+  const x = even(clamp(Math.round(f.faceRatio * sW - Tw / 2), 0, sW - Tw));
+  // Bias slightly above the face centre so heads sit in the upper third (more natural).
+  const y = even(clamp(Math.round(f.faceYRatio * sH - Th * 0.42), 0, sH - Th));
+  return `scale=${sW}:${sH},crop=${Tw}:${Th}:${x}:${y}`;
+}
+
+// Decide the real layout to render: honour an explicit choice, but for the default
+// "crop" auto-pick — use the face-tracked magic crop when we have a confident, stable
+// subject, else fall back to blur-fill (safe for product b-roll / group / roaming shots).
+function chooseLayout(requested: Layout, face: FaceInfo | null): { layout: Layout; face: FaceInfo | null } {
+  if (requested !== "crop") return { layout: requested, face: null };
+  if (face && face.coverage >= 0.4 && face.spread <= 0.33) return { layout: "crop", face };
+  return { layout: "blur", face: null };
+}
+
 /**
  * Tighten pacing by trimming dead air — viral clips have no slow lead-in or pauses.
  * ADAPTIVE + SAFE: the silence threshold is set relative to the clip's own loudness
@@ -697,7 +737,7 @@ type Layout = "crop" | "blur" | "split" | "letterbox";
 const GAMEPLAY_PATH = process.env.GAMEPLAY_VIDEO || path.join(os.homedir(), "Downloads", "gameplay.mp4");
 function gameplayAvailable(): boolean { return existsSync(GAMEPLAY_PATH); }
 
-function layoutBase(layout: Layout, style: ClipStyle, variant: number, motion: boolean): { base: string; inputs: string[] } {
+function layoutBase(layout: Layout, style: ClipStyle, variant: number, motion: boolean, face: FaceInfo | null = null): { base: string; inputs: string[] } {
   const eq = `eq=${style.grade}`;
 
   // SPLIT: clip on top, looping muted gameplay on the bottom.
@@ -731,7 +771,9 @@ function layoutBase(layout: Layout, style: ClipStyle, variant: number, motion: b
     return { base, inputs: [] };
   }
 
-  // CROP (default): animated push-in/out reframe, or a static reframe.
+  // CROP (default): animated push-in/out reframe, or a static reframe. When we have a
+  // confident subject position (magic crop), the crop is CENTRED ON THE FACE instead of
+  // the dead centre of the frame — so off-centre speakers stay framed like Crayo/Opus.
   if (motion) {
     const head = 1.18;
     const w = Math.round(1080 * head), h = Math.round(1920 * head);
@@ -741,11 +783,12 @@ function layoutBase(layout: Layout, style: ClipStyle, variant: number, motion: b
     if (mode === 0) z = `min(1+${sp}*on,1.14)`;
     else if (mode === 1) z = `max(1.14-${sp}*on,1.0)`;
     else z = `min(1+${(sp * 0.7).toFixed(5)}*on,1.10)`;
-    const base = `[0:v]scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h},zoompan=z='${z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30,${eq}[vbase]`;
+    const fill = face ? magicCropFill(face, w, h) : `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h}`;
+    const base = `[0:v]${fill},zoompan=z='${z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30,${eq}[vbase]`;
     return { base, inputs: [] };
   }
-  const w = Math.round(1080 * style.zoom), h = Math.round(1920 * style.zoom);
-  const base = `[0:v]scale=${w}:${h}:force_original_aspect_ratio=increase,crop=1080:1920,${eq}[vbase]`;
+  const fill = face ? magicCropFill(face, 1080, 1920) : `scale=${Math.round(1080 * style.zoom)}:${Math.round(1920 * style.zoom)}:force_original_aspect_ratio=increase,crop=1080:1920`;
+  const base = `[0:v]${fill},${eq}[vbase]`;
   return { base, inputs: [] };
 }
 
@@ -791,6 +834,7 @@ async function cutClip(
   captionPosition: "auto" | "top" | "middle" | "bottom" = "auto",
   watermarkText: string = "",
   bottomBanner: string = "",
+  face: FaceInfo | null = null,
 ): Promise<void> {
   const style = CLIP_STYLES[variant % CLIP_STYLES.length];
 
@@ -807,7 +851,7 @@ async function cutClip(
   const placement: CaptionPlacement = CAPTION_PLACEMENTS[captionPosition === "auto" ? autoPos : captionPosition];
 
   const safeTitle = escapeDrawtext(title);
-  const { base, inputs } = layoutBase(layout, style, variant, motion);
+  const { base, inputs } = layoutBase(layout, style, variant, motion, face);
   // TITLE. A clean PERSISTENT white title card, rendered via libass so it's bold and
   // AUTO-WRAPS (long titles used to clip at the frame edges). For letterbox it sits in
   // the top black bar; for other layouts near the top of the frame. Non-letterbox also
@@ -987,7 +1031,7 @@ async function processOneVideo(
   const rsPresetId = (cRec.captionPresetId as string) || undefined;
   const rsSubsOn = cRec.subtitlesEnabled !== false;
   const rsMotion = cRec.motionEnabled !== false;
-  let rsLayout = ((cRec.videoLayout as string) || "letterbox") as Layout;
+  let rsLayout = ((cRec.videoLayout as string) || "crop") as Layout;
   if (rsLayout === "split" && !gameplayAvailable()) rsLayout = "blur";
   const rsCaptionMode = ((cRec.captionMode as string) === "word" ? "word" : "lines") as "word" | "lines";
   const rsRawPos = String(cRec.captionPosition || "auto");
@@ -1029,13 +1073,15 @@ async function processOneVideo(
     const meta = await generateShortMeta(anthropic, cleanTitle(videoTitle), shortSpoken, String(cRec.aiInstructions || ""), campaign.name, String(cRec.captionRules || ""), rsVariations);
     const shortSubs = rsSubsOn ? shortTx : [];
     const shortSubWords = rsSubsOn ? shortWords : [];
+    // MAGIC CROP: same footage for every variation, so analyse subject position once.
+    const shortEff = chooseLayout(rsLayout, await reframeFace(srcPath, 0, videoDuration));
     let made = 0;
     for (let v = 0; v < rsVariations; v++) {
       const clipFile = clipsDir + `/clip-${v}.mp4`;
       const thumbFile = clipsDir + `/thumb-${v}.jpg`;
       const hook = meta[v]?.hook || cleanTitle(videoTitle);
       try {
-        await cutClip(srcPath, clipFile, 0, videoDuration, shortSubs, hook, v, shortSubWords, rsPresetId, rsMotion, rsLayout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner);
+        await cutClip(srcPath, clipFile, 0, videoDuration, shortSubs, hook, v, shortSubWords, rsPresetId, rsMotion, shortEff.layout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner, shortEff.face);
         await saveAndStream(clipFile, thumbFile, {
           start_time: 0, end_time: videoDuration, title: hook,
           reason: "Complete short-form video", virality_score: "high",
@@ -1233,7 +1279,12 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     // If a moment somehow has no hook (e.g. the no-transcript time-based fallback),
     // never show raw codec/filename junk — clean it first.
     const overlayText = (m.hook && m.hook.trim()) ? m.hook.trim() : cleanTitle(m.title || videoTitle);
-    await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, variant, useWords, rsPresetId, rsMotion, rsLayout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner);
+    // MAGIC CROP: find where the subject sits, then fill the 9:16 frame keeping them
+    // framed. Auto-falls back to blur-fill for product b-roll / group / roaming shots.
+    const rf = await reframeFace(srcPath, startForCut, dur);
+    const eff = chooseLayout(rsLayout, rf);
+    if (eff.face) sse(ctrl, { step: "cut", status: "progress", message: `🎯 Clip ${i+1}: magic-cropped to subject` });
+    await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, variant, useWords, rsPresetId, rsMotion, eff.layout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner, eff.face);
 
     // Tighten pacing — trim dead air for a faster, more retentive edit. Safely
     // no-ops on music-heavy clips. Only swap in the tightened file if it succeeded.
