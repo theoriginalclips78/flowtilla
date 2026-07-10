@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 import { spawn } from "child_process";
-import { mkdirSync, createReadStream, writeFileSync, readdirSync, readFileSync, renameSync, existsSync, statSync, copyFileSync } from "fs";
+import { mkdirSync, createReadStream, writeFileSync, readdirSync, readFileSync, renameSync, existsSync, statSync, copyFileSync, rmSync, unlinkSync } from "fs";
 import path from "path";
 import os from "os";
 import { createId } from "@paralleldrive/cuid2";
@@ -963,6 +963,46 @@ async function extractThumbnail(videoPath: string, thumbPath: string): Promise<v
   await ffmpegRun(["-ss", String(t), "-i", videoPath, "-vframes", "1", "-q:v", "4", "-vf", "scale=480:-1", thumbPath]);
 }
 
+// ── DISK HYGIENE ─────────────────────────────────────────────────────────────
+// A full disk makes ffmpeg/transcription fail silently. Each render only needs to
+// keep the small clip-*.mp4 + thumbs (which the DB points at); the big source.mp4
+// downloads and any orphaned job folders are dead weight. Prune them so the disk
+// never quietly fills up and breaks future runs.
+//
+// SAFE BY DESIGN: only deletes a job folder when (a) no live DB clip references it
+// AND (b) it hasn't been touched in the last hour — so an in-flight render (this run
+// or a concurrent one) is never disturbed. Also drops source.mp4 from KEPT folders,
+// since the clips are already rendered and the source is never reused.
+async function pruneWorkDir(): Promise<{ dirs: number; sources: number }> {
+  let dirs = 0, sources = 0;
+  try {
+    const clips = await prisma.clip.findMany({ select: { filePath: true } });
+    const keep = new Set<string>();
+    for (const c of clips) {
+      const m = (c.filePath || "").match(/[/\\]work[/\\]([^/\\]+)[/\\]/);
+      if (m) keep.add(m[1]);
+    }
+    const cutoff = Date.now() - 60 * 60 * 1000; // 1h grace for in-flight renders
+    let entries: string[] = [];
+    try { entries = readdirSync(WORK_DIR); } catch { return { dirs, sources }; }
+    for (const name of entries) {
+      const jobDir = path.join(WORK_DIR, name);
+      let st;
+      try { st = statSync(jobDir); } catch { continue; }
+      if (!st.isDirectory()) continue;
+      if (!keep.has(name)) {
+        // Orphan (no live clip): remove entirely, but only once it's gone cold.
+        if (st.mtimeMs < cutoff) { try { rmSync(jobDir, { recursive: true, force: true }); dirs++; } catch { /* noop */ } }
+        continue;
+      }
+      // Kept folder: the source download is no longer needed once clips exist.
+      const srcFile = path.join(jobDir, "source.mp4");
+      try { if (existsSync(srcFile)) { unlinkSync(srcFile); sources++; } } catch { /* noop */ }
+    }
+  } catch { /* non-fatal: disk hygiene must never break a run */ }
+  return { dirs, sources };
+}
+
 async function processOneVideo(
   src: { url: string; platform: string; title: string; id: string },
   campaignId: string, jobId: string,
@@ -1334,6 +1374,10 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     }, null, 2));
   } catch { /* non-fatal */ }
 
+  // Clips are rendered; the big source download is dead weight now — drop it so the
+  // disk doesn't fill up over many runs. Keeps clips/ (the DB points at those).
+  try { if (srcPath && existsSync(srcPath)) unlinkSync(srcPath); } catch { /* non-fatal */ }
+
   sse(ctrl, { step: "source_complete", status: "complete", message: `🎉 ${clipsFromSource} clips from "${videoTitle.slice(0,40)}"`, sourceIndex: vIdx, clipsFromSource });
   return clipsFromSource;
 }
@@ -1375,6 +1419,11 @@ export async function POST(req: NextRequest) {
     const nullCtrl = { enqueue: () => {} } as unknown as ReadableStreamDefaultController;
 
     try {
+      // ---- DISK HYGIENE: clear old render junk so we don't fail on a full disk ----
+      void pruneWorkDir().then(({ dirs, sources }) => {
+        if (dirs || sources) void dbLog({ step: "cleanup", status: "complete", message: `🧹 Freed disk: removed ${dirs} old job folder(s) + ${sources} stale source download(s)` });
+      });
+
       // ---- PRE-FLIGHT: fail fast if this campaign can't be served ----
       void dbLog({ step: "preflight", status: "started", message: "🧭 Checking the brief against what I can actually do..." });
       const pf = await preflight(campaign, anthropic);
