@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { anthropicText } from "@/lib/anthropic/text";
 
 export interface BriefData {
   brandName: string | null;
@@ -157,7 +158,7 @@ export async function readAnyBrief(
     messages: [{ role: "user", content: rawText.slice(0, 16000) }],
   });
 
-  const raw = (msg.content[0] as { type: string; text: string }).text;
+  const raw = anthropicText(msg);
   const data = parseBriefJson(raw);
 
   return { data, loginWall, rawText };

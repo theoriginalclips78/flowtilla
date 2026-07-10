@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { anthropicText } from "@/lib/anthropic/text";
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,7 +25,7 @@ Return ONLY the JSON array, no markdown.`
       }],
     });
 
-    const raw = (msg.content[0] as { type: string; text: string }).text;
+    const raw = anthropicText(msg);
     const ideas = JSON.parse(raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim());
     return NextResponse.json({ ideas });
   } catch (err: unknown) {

@@ -13,6 +13,7 @@ import { prisma } from "@/lib/db/prisma";
 import { CAPTION_PRESETS, presetById, buildWordAss, buildTitleAss, CAPTION_PLACEMENTS, type CaptionPlacement } from "@/lib/editor/captionStyles";
 import { renderOverlay, closeOverlayBrowser } from "@/lib/editor/overlayRender";
 import { WORK_DIR } from "@/lib/workdir";
+import { anthropicText } from "@/lib/anthropic/text";
 
 const CONCURRENCY = 1; // sequential: finish all clips from one video before moving to next
 const FONT = "/System/Library/Fonts/Helvetica.ttc";
@@ -539,7 +540,7 @@ async function generateHookVariants(anthropic: Anthropic, hooks: string[], n: nu
       messages: [{ role: "user", content:
 `For each hook below, write ${n} short, punchy alternative on-screen hook lines for the SAME clip — different angles/wording, each under 60 chars, clean text, NO emojis. Put exactly ONE word per line in ALL CAPS for emphasis (the single strongest word), never more than one. Return ONLY a JSON array of arrays: one inner array of exactly ${n} strings per hook, in order.\n\nHooks:\n${hooks.map((h, i) => `${i + 1}. ${h}`).join("\n")}` }],
     });
-    const raw = (msg.content[0] as { text: string }).text;
+    const raw = anthropicText(msg);
     const m = raw.match(/\[[\s\S]*\]/);
     const parsed = m ? (JSON.parse(m[0]) as string[][]) : null;
     if (!Array.isArray(parsed)) return fallback;
@@ -563,7 +564,7 @@ async function generateShortCaptions(anthropic: Anthropic, title: string, hooks:
       messages: [{ role: "user", content:
 `Write ${hooks.length} great short-form post captions for the SAME video (posted to TikTok, Instagram Reels AND YouTube Shorts). Video: "${title}". On-screen hooks: ${hooks.map((h, i) => `${i + 1}) ${h}`).join("; ")}. Each caption: real creator voice (NOT an ad), under 125 chars of text, 1-2 emojis, then 4-6 hashtags mixing broad (#fyp #viral #foryou) with 2-3 niche ones. Make people want to comment.${captionRules ? ` Obey these rules: ${captionRules}.` : ""} Return ONLY a JSON array of ${hooks.length} strings.` }],
     });
-    const raw = (msg.content[0] as { text: string }).text;
+    const raw = anthropicText(msg);
     const m = raw.match(/\[[\s\S]*\]/);
     const parsed = m ? (JSON.parse(m[0]) as string[]) : null;
     if (!Array.isArray(parsed)) return fallback;
@@ -614,7 +615,7 @@ The "caption" = a native cross-platform caption (TikTok/IG/Shorts): real creator
 
 Return ONLY a JSON array of ${n} objects: [{"hook":"...","caption":"..."}]` }],
     });
-    const raw = (msg.content[0] as { text: string }).text;
+    const raw = anthropicText(msg);
     const m = raw.match(/\[[\s\S]*\]/);
     const parsed = m ? (JSON.parse(m[0]) as { hook?: string; caption?: string }[]) : null;
     if (!Array.isArray(parsed)) return fallback;
@@ -658,7 +659,7 @@ Be strict — it is correct and expected to drop several. But NEVER drop everyth
 Return ONLY a compact JSON object: {"keep":[<indices to keep>]}. No prose.`,
       messages: [{ role: "user", content: `Video: "${videoTitle}"\n\nCandidates:\n${list}` }],
     });
-    const raw = (msg.content[0] as { text: string }).text;
+    const raw = anthropicText(msg);
     const m = raw.match(/\{[\s\S]*\}/);
     if (!m) return keepAll;
     const parsed = JSON.parse(m[0]) as { keep?: unknown };
@@ -1210,7 +1211,7 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
       messages: [{ role: "user", content: `Video: "${videoTitle}" (${videoDuration}s)\n\nWhat to look for: ${campaign.aiInstructions || "high-energy, funny, emotional, impressive, or quotable moments"}\n\nTranscript:\n${transcriptText.slice(0, 8000)}\n\nReturn the best self-contained scroll-stopping moments (8-25s ideal, never >45s). Each: {start_time, end_time, title, reason, virality_score, hook, caption, platform_fit}${(campaign as Record<string,unknown>).extraContext ? `\n\nContext:\n${String((campaign as Record<string,unknown>).extraContext).slice(0,400)}` : ""}` }],
     });
 
-    const raw = (msg.content[0] as { text: string }).text;
+    const raw = anthropicText(msg);
     moments = parseMomentsLoose(raw);
     if (moments.length === 0) throw new Error("no parseable moments");
     sse(ctrl, { step: "analyze", status: "complete", message: `✅ Found ${moments.length} viral moments`, momentCount: moments.length });

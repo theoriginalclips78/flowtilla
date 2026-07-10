@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { autoGenerateHookText } from "@/lib/editor/captions";
+import { anthropicText } from "@/lib/anthropic/text";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,7 +34,7 @@ Return ONLY valid JSON with these fields:
       ],
     });
 
-    const raw = (msg.content[0] as { type: string; text: string }).text;
+    const raw = anthropicText(msg);
     const clean = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const settings = JSON.parse(clean);
 

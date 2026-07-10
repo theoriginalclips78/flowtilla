@@ -6,6 +6,7 @@ import { createId } from "@paralleldrive/cuid2";
 import ffmpegStatic from "ffmpeg-static";
 import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
+import { anthropicText } from "@/lib/anthropic/text";
 
 if (ffmpegStatic) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -134,7 +135,7 @@ JSON format:
           }],
         });
 
-        const raw = (analysisMsg.content[0] as { text: string }).text;
+        const raw = anthropicText(analysisMsg);
         let moments: Moment[] = [];
         try {
           moments = JSON.parse(raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim());

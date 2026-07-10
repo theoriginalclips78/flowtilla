@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { writeFileSync, mkdirSync } from "fs";
 import { createId } from "@paralleldrive/cuid2";
+import { anthropicText } from "@/lib/anthropic/text";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
       max_tokens: 200,
       messages: [{ role: "user", content: `Write a single, vivid one-sentence description of: "${prompt}". Be specific about colors, mood, and composition. No preamble.` }],
     });
-    const enhanced = (msg.content[0] as { type: string; text: string }).text.trim();
+    const enhanced = anthropicText(msg);
 
     // Create SVG placeholder image
     const [w, h] = (size || "1024x1024").split("x").map(Number);

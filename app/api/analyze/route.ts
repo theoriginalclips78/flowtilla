@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFileSync } from "fs";
 import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
+import { anthropicText } from "@/lib/anthropic/text";
 
 export async function POST(req: NextRequest) {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -52,7 +53,7 @@ ${transcriptText}`;
       messages: [{ role: "user", content: userMessage }],
     });
 
-    const raw = (message.content[0] as { type: string; text: string }).text;
+    const raw = anthropicText(message);
     const clips = JSON.parse(raw);
 
     writeFileSync(

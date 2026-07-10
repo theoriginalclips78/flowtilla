@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { anthropicText } from "@/lib/anthropic/text";
 
 const SYSTEM_PROMPT = `You are a viral social media caption writer for short-form content.
 Given a clip title, AI reason, and campaign brief rules, write a caption that:
@@ -29,7 +30,7 @@ export async function generateCaption(
     ],
   });
 
-  return (msg.content[0] as { type: string; text: string }).text.trim();
+  return anthropicText(msg);
 }
 
 export async function autoGenerateHookText(clipTitle: string): Promise<string> {
@@ -42,5 +43,5 @@ export async function autoGenerateHookText(clipTitle: string): Promise<string> {
     messages: [{ role: "user", content: `Video title: ${clipTitle}` }],
   });
 
-  return (msg.content[0] as { type: string; text: string }).text.trim();
+  return anthropicText(msg);
 }
