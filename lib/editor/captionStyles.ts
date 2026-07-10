@@ -144,9 +144,17 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`
       if (segEnd <= segStart) continue;
       const text = line.words.map((w, idx) => {
         const word = esc(w.word);
-        return idx === wi ? `{\\c${preset.highlight}}${word}{\\c${preset.primary}}` : word;
+        // The active word POPS: quick scale-up then settle, coloured with the highlight.
+        // This is the premium "Hormozi/Crayo" caption feel vs a flat colour swap.
+        // \t is relative to this event's start, so the pop fires exactly as the word is spoken.
+        // Reset scale + colour afterwards so the rest of the line stays baseline size.
+        return idx === wi
+          ? `{\\c${preset.highlight}\\t(0,90,\\fscx118\\fscy118)\\t(90,190,\\fscx106\\fscy106)}${word}{\\c${preset.primary}\\fscx100\\fscy100}`
+          : word;
       }).join(" ");
-      events.push(`Dialogue: 0,${toAssTime(segStart)},${toAssTime(segEnd)},Main,,0,0,0,,${text}`);
+      // Fade the line in once (on its first word) for a clean entrance, no per-word flicker.
+      const lead = wi === 0 ? "{\\fad(70,0)}" : "";
+      events.push(`Dialogue: 0,${toAssTime(segStart)},${toAssTime(segEnd)},Main,,0,0,0,,${lead}${text}`);
     }
   }
   if (events.length === 0) return null;

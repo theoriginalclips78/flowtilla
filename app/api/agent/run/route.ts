@@ -215,8 +215,10 @@ async function tightenClip(inPath: string, outPath: string, duration: number): P
       "-i", inPath,
       "-vf", `select='${between}',setpts=N/FRAME_RATE/TB`,
       "-af", `aselect='${between}',asetpts=N/SR/TB`,
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
-      "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outPath,
+      // Match the main encode so the silence-trim re-encode doesn't visibly degrade quality.
+      "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+      "-profile:v", "high", "-pix_fmt", "yuv420p",
+      "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath,
     ]);
     return true;
   } catch {
@@ -900,8 +902,11 @@ async function cutClip(
     return ffmpegRun([
       "-ss", String(startTime), "-i", srcPath, ...inputs, "-t", String(duration),
       "-filter_complex", graph, ...maps,
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
-      "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outPath,
+      // Quality-first encode: crf 18 (near-visually-lossless) + a real preset so the
+      // bitrate is spent well, high profile + yuv420p for universal playback, 160k audio.
+      "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+      "-profile:v", "high", "-pix_fmt", "yuv420p",
+      "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath,
     ]);
   };
 
