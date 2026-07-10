@@ -18,8 +18,9 @@ export async function POST(req: NextRequest) {
     const campaign = await prisma.campaign.create({
       data: {
         ...campaignData,
-        // Default new campaigns to the premium look unless the UI specifies otherwise.
-        videoLayout: campaignData.videoLayout || "letterbox",
+        // Default new campaigns to the face-tracked magic crop (fills the 9:16 frame,
+        // no black bars) — the premium Crayo-style look — unless the UI specifies otherwise.
+        videoLayout: campaignData.videoLayout || "crop",
         // Keep medium+ moments (drops only filler); the engine ranks high clips first.
         minVirality: campaignData.minVirality || "medium",
         sources: {

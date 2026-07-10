@@ -135,7 +135,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
             name: cname.trim() || `Campaign — ${new Date().toLocaleDateString()}`,
             cpm: 1, platforms: "tiktok,instagram,youtube",
             aiInstructions: instructions.trim() || "Clip the footage into short, punchy edits with a strong hook.",
-            videoLayout: "letterbox",
+            videoLayout: "crop",
             sources,
           }),
         });
@@ -189,7 +189,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
             name: `Local Footage — ${new Date().toLocaleDateString()}`,
             cpm: 1, maxPerClip: 0, minPayout: 0, platforms: "tiktok,instagram,youtube",
             aiInstructions: "Clip the provided local footage into short, punchy edits with a strong hook.",
-            videoLayout: "letterbox",
+            videoLayout: "crop",
             sources: [{ platform: "local", url: input.trim() }],
           }),
         });
@@ -285,7 +285,7 @@ export default function AddCampaignModal({ onAdd, onClose }: Props) {
             cpm: parseFloat(quickCpm) || 1,
             platforms: quickPlatforms.join(","),
             aiInstructions: quickInstructions || "Clip the provided footage into short, punchy edits with a strong hook.",
-            videoLayout: "letterbox",
+            videoLayout: "crop",
             sources,
           }),
         });
