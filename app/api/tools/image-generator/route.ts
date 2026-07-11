@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     // Generate a creative prompt enhancement via Claude
     const msg = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 200,
       messages: [{ role: "user", content: `Write a single, vivid one-sentence description of: "${prompt}". Be specific about colors, mood, and composition. No preamble.` }],
     });

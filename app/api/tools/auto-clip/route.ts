@@ -89,12 +89,14 @@ export async function POST(req: NextRequest) {
         let transcript = "";
         let segments: { start: number; end: number; text: string }[] = [];
         try {
-          await ffmpegRun(["-i", srcPath, "-vn", "-ar", "16000", "-ac", "1", "-b:a", "32k", "-t", "600", audioPath]);
+          // Transcribe up to ~40 min (32k mono ≈ 9MB, under Groq's 25MB cap) so we scan
+          // most of a long podcast, not just the first 10 min.
+          await ffmpegRun(["-i", srcPath, "-vn", "-ar", "16000", "-ac", "1", "-b:a", "32k", "-t", "2400", audioPath]);
           const whisperRes = await groq.audio.transcriptions.create({
             file: createReadStream(audioPath) as Parameters<typeof groq.audio.transcriptions.create>[0]["file"],
             model: "whisper-large-v3",
             response_format: "verbose_json",
-          });
+          }, { timeout: 240000 });  // hard timeout so a slow/stalled call can't hang the job forever
           segments = (whisperRes as { segments?: { start: number; end: number; text: string }[] }).segments || [];
           transcript = segments.map((s) => `[${s.start.toFixed(1)}s-${s.end.toFixed(1)}s] ${s.text}`).join("\n");
         } catch {
@@ -105,7 +107,7 @@ export async function POST(req: NextRequest) {
         // 3. AI analysis
         sse(controller, { step: "analyze", message: "AI finding best moments..." });
         const analysisMsg = await anthropic.messages.create({
-          model: "claude-sonnet-4-6",
+          model: "claude-sonnet-5",
           max_tokens: 4000,
           messages: [{
             role: "user",

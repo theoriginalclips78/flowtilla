@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     // Ask Claude to pick all settings
     const msg = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 500,
       system: `You are an expert short-form video editor. Given a clip's title, AI reason, and transcript, pick the best editing settings to maximize viral potential on TikTok/Reels/Shorts.
 Return ONLY valid JSON with these fields:

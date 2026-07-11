@@ -19,7 +19,7 @@ export async function generateCaption(
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const msg = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-sonnet-5",
     max_tokens: 300,
     system: SYSTEM_PROMPT,
     messages: [
@@ -37,7 +37,7 @@ export async function autoGenerateHookText(clipTitle: string): Promise<string> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const msg = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-sonnet-5",
     max_tokens: 100,
     system: "Write a short hook text (3-6 words) to put on the first 2 seconds of a short-form video. Make it create curiosity or excitement. Examples: 'Wait for it... 👀', 'This is insane 🔥', 'Nobody talks about this'. Return ONLY the hook text.",
     messages: [{ role: "user", content: `Video title: ${clipTitle}` }],
