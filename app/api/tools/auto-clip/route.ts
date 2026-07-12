@@ -7,6 +7,7 @@ import ffmpegStatic from "ffmpeg-static";
 import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicText } from "@/lib/anthropic/text";
+import { reframeFace, renderVerticalClip, type Word } from "@/lib/clipEngine/render";
 
 if (ffmpegStatic) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -88,16 +89,21 @@ export async function POST(req: NextRequest) {
         sse(controller, { step: "transcribe", message: "Transcribing audio..." });
         let transcript = "";
         let segments: { start: number; end: number; text: string }[] = [];
+        let words: Word[] = [];
         try {
           // Transcribe up to ~40 min (32k mono ≈ 9MB, under Groq's 25MB cap) so we scan
-          // most of a long podcast, not just the first 10 min.
+          // most of a long podcast, not just the first 10 min. Word timestamps power the
+          // animated captions the shared render engine burns in.
           await ffmpegRun(["-i", srcPath, "-vn", "-ar", "16000", "-ac", "1", "-b:a", "32k", "-t", "2400", audioPath]);
           const whisperRes = await groq.audio.transcriptions.create({
             file: createReadStream(audioPath) as Parameters<typeof groq.audio.transcriptions.create>[0]["file"],
             model: "whisper-large-v3",
             response_format: "verbose_json",
-          }, { timeout: 240000 });  // hard timeout so a slow/stalled call can't hang the job forever
-          segments = (whisperRes as { segments?: { start: number; end: number; text: string }[] }).segments || [];
+            timestamp_granularities: ["word", "segment"],
+          } as Parameters<typeof groq.audio.transcriptions.create>[0], { timeout: 240000 });
+          const r = whisperRes as { segments?: { start: number; end: number; text: string }[]; words?: { word: string; start: number; end: number }[] };
+          segments = r.segments || [];
+          words = (r.words || []).map((w) => ({ word: w.word.trim(), start: w.start, end: w.end })).filter((w) => w.word);
           transcript = segments.map((s) => `[${s.start.toFixed(1)}s-${s.end.toFixed(1)}s] ${s.text}`).join("\n");
         } catch {
           transcript = `Video: ${title}, Duration: ${duration}s`;
@@ -159,22 +165,24 @@ JSON format:
           sse(controller, { step: "cutting", message: `Cutting clip ${i + 1}/${moments.length}: ${m.title}`, index: i });
 
           try {
-            // Cut clip
-            await ffmpegRun([
-              "-ss", String(m.start_time),
-              "-i", srcPath,
-              "-t", String(m.end_time - m.start_time),
-              "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-              "-c:a", "aac", "-b:a", "128k",
-              "-movflags", "+faststart",
-              clipPath,
-            ]);
+            // Render a PREMIUM vertical clip via the shared engine: magic-crop framing
+            // (falls back to blur-fill), animated word captions, and a title card — the
+            // exact same output path the campaign Agent uses. No more raw horizontal cuts.
+            const clipDur = m.end_time - m.start_time;
+            const face = await reframeFace(srcPath, m.start_time, clipDur);
+            await renderVerticalClip({
+              srcPath, outPath: clipPath,
+              startTime: m.start_time, duration: clipDur,
+              title: (m.hook || m.title || "").trim(),
+              words, variant: i, layout: "crop", face,
+            });
 
-            // Thumbnail
+            // Thumbnail — from the RENDERED vertical clip so it matches the output
+            // (framing + captions), not the horizontal source.
             try {
               await ffmpegRun([
-                "-ss", String(m.start_time + 1),
-                "-i", srcPath,
+                "-ss", "1",
+                "-i", clipPath,
                 "-vframes", "1",
                 "-q:v", "3",
                 thumbPath,
