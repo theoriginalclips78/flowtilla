@@ -22,10 +22,17 @@ function sse(ctrl: ReadableStreamDefaultController, data: object) {
   try { ctrl.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`)); } catch { /* closed */ }
 }
 
+// YouTube extraction now REQUIRES a JS runtime; yt-dlp only auto-enables deno. Point it at
+// the server's own node binary (always present) so downloads don't silently fail.
+const YTDLP_JS_RUNTIME = process.env.YTDLP_JS_RUNTIME || `node:${process.execPath}`;
+
 function ytdlp(args: string[]): Promise<string> {
+  // Always give yt-dlp a JS runtime (YouTube requires one now) and our bundled ffmpeg
+  // (needed to merge bestvideo+bestaudio). Both are harmless on metadata-only calls.
+  const base = ["--js-runtimes", YTDLP_JS_RUNTIME, "--ffmpeg-location", FFMPEG_BIN];
   return new Promise((resolve, reject) => {
     const bin = process.env.YTDLP_PATH || `${process.env.HOME}/bin/yt-dlp`;
-    const proc = spawn(bin, args);
+    const proc = spawn(bin, [...base, ...args]);
     let out = "", err = "";
     proc.stdout.on("data", (d) => { out += d.toString(); });
     proc.stderr.on("data", (d) => { err += d.toString(); });

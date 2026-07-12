@@ -19,10 +19,18 @@ function sse(ctrl: ReadableStreamDefaultController, data: object) {
   ctrl.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`));
 }
 
+// YouTube extraction now REQUIRES a JS runtime; yt-dlp only auto-enables deno. We point it
+// at the server's own node binary (always present) so downloads don't silently fail.
+const YTDLP_JS_RUNTIME = process.env.YTDLP_JS_RUNTIME || `node:${process.execPath}`;
+
 function ytdlp(args: string[]): Promise<string> {
+  // Always give yt-dlp a JS runtime (YouTube requires one now) and our bundled ffmpeg
+  // (needed to merge bestvideo+bestaudio). Both are harmless on metadata-only calls.
+  const base = ["--js-runtimes", YTDLP_JS_RUNTIME];
+  if (ffmpegStatic) base.push("--ffmpeg-location", ffmpegStatic);
   return new Promise((resolve, reject) => {
     const bin = process.env.YTDLP_PATH || `${process.env.HOME}/bin/yt-dlp`;
-    const proc = spawn(bin, args);
+    const proc = spawn(bin, [...base, ...args]);
     let out = ""; let err = "";
     proc.stdout.on("data", (d) => { out += d.toString(); });
     proc.stderr.on("data", (d) => { err += d.toString(); });
@@ -77,6 +85,8 @@ export async function POST(req: NextRequest) {
           url, "-o", srcPath,
           "-f", "bestvideo[ext=mp4][height<=720]+bestaudio/best[height<=720]/best",
           "--merge-output-format", "mp4",
+          // --print implies --simulate (skips the actual download); force the download.
+          "--no-simulate",
           "--print", "%(title)s",
           "--print", "%(duration)s",
         ]);
