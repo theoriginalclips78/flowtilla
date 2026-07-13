@@ -35,22 +35,24 @@
 }
 
 .dark {
-  --bg:            #09090B;
-  --surface:       #161618;
-  --surface-2:     #1F1F23;
-  --sidebar:       #111113;
-  --text:          #FAFAFA;
-  --text-muted:    #9CA3AF;
-  --text-light:    #6B7280;
-  --border:        #27272A;
-  --border-strong: #3A3A40;
-  --accent:        #FF7A5C;
-  --accent-hover:  #FB5E3B;
-  --accent-soft:   rgba(255,122,92,0.15);
-  --accent-ring:   rgba(255,122,92,0.24);
-  --shadow:        rgba(0,0,0,0.5);
-  --chip:          #2A2A30;
-  --accent-grad:   linear-gradient(120deg, #FF7A5C 0%, #F76FA1 50%, #FF7A5C 100%);
+  /* Linear-grade dark: deep blue-black canvas, layered surfaces, true hairline borders,
+     Linear's muted off-white / gray text ramp. One restrained accent (coral). */
+  --bg:            #08090A;
+  --surface:       #0F1011;
+  --surface-2:     #17181A;
+  --sidebar:       #0B0C0D;
+  --text:          #F7F8F8;
+  --text-muted:    #8A8F98;
+  --text-light:    #62666D;
+  --border:        rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.12);
+  --accent:        #FB5E3B;
+  --accent-hover:  #FF6E4D;
+  --accent-soft:   rgba(251,94,59,0.13);
+  --accent-ring:   rgba(251,94,59,0.28);
+  --shadow:        rgba(0,0,0,0.6);
+  --chip:          #1C1D20;
+  --accent-grad:   linear-gradient(120deg, #FB5E3B 0%, #F76FA1 50%, #FB5E3B 100%);
 }
 
 * { border-color: var(--border); }
@@ -81,15 +83,15 @@ h2 { font-weight: 700; }
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 1px 2px var(--shadow);
+  border-radius: 12px;
   transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease, background-color 0.25s ease;
 }
+.panel:hover { border-color: var(--border-strong); }
 .panel-raised {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 18px;
-  box-shadow: 0 1px 2px var(--shadow), 0 16px 40px -20px var(--shadow);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px var(--shadow);
 }
 
 /* Wordmark / accent text */

@@ -26,7 +26,7 @@ export default function ToolPageLayout({ title, subtitle, wide, bare, children }
       {subtitle && <p className="text-[15px] text-[var(--text-muted)] mt-1.5 mb-7">{subtitle}</p>}
       {!subtitle && <div className="mb-7" />}
       {bare ? children : (
-        <div className="panel-raised rounded-2xl p-7">{children}</div>
+        <div className="panel-raised p-7">{children}</div>
       )}
     </div>
   );
