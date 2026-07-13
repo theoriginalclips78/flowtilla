@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Scissors, Download, Copy, Check, ChevronDown, ChevronUp, Loader2, Zap, Play } from "lucide-react";
+import { Scissors, Download, Copy, Check, ChevronDown, ChevronUp, Loader2, Zap, Play, Sparkles } from "lucide-react";
 import ToolPageLayout from "@/components/tools/ToolPageLayout";
 
 interface Clip {
@@ -39,7 +39,7 @@ function ClipCard({ clip }: { clip: Clip }) {
   return (
     <div className="liquid-glass rounded-xl overflow-hidden border border-white/10" style={{ background: "rgba(255,255,255,0.07)" }}>
       {/* Thumbnail */}
-      <div className="relative bg-black/40 aspect-video cursor-pointer" onClick={() => setPlaying(!playing)}>
+      <div className="relative bg-black/40 aspect-[9/16] cursor-pointer" onClick={() => setPlaying(!playing)}>
         {playing ? (
           <video src={clip.downloadUrl} autoPlay controls className="w-full h-full object-cover" />
         ) : (
@@ -127,7 +127,7 @@ interface Step {
 // Curated caption looks surfaced in the picker. "auto" = rotate styles across clips for
 // variety (the Crayo approach); the rest force one look. ids match CAPTION_PRESETS.
 const CAPTION_STYLES: { id: string; label: string }[] = [
-  { id: "auto",        label: "Auto / Mixed ✨" },
+  { id: "auto",        label: "Auto · Mixed" },
   { id: "bold-white",  label: "Bold White" },
   { id: "yellow-box",  label: "Yellow Highlight" },
   { id: "blue-pop",    label: "Blue Pop" },
@@ -255,16 +255,16 @@ export default function AutoClipPage() {
   };
 
   return (
-    <ToolPageLayout title="Auto Clip with AI">
-      <div className="space-y-5">
+    <ToolPageLayout title="Auto Clip with AI" subtitle="Paste a video, pick your look, and get scroll-stopping clips for every platform." wide>
+      <div className="space-y-7">
         {/* URL input */}
         <div>
-          <label className="text-xs font-medium text-white/60 block mb-1.5">Video URL</label>
+          <label className="text-[13px] font-medium text-[var(--text)] block mb-2">Video URL</label>
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://youtube.com/watch?v=..."
-            className="glass-input"
+            className="glass-input !py-3 !text-[15px]"
             disabled={running}
             onKeyDown={(e) => e.key === "Enter" && !running && handleRun()}
           />
@@ -272,17 +272,21 @@ export default function AutoClipPage() {
 
         {/* Caption style — Auto/Mixed rotates looks across clips, like Crayo */}
         <div>
-          <label className="text-xs font-medium text-white/60 block mb-1.5">Caption style</label>
+          <label className="text-[13px] font-medium text-[var(--text)] block mb-1">Caption style</label>
+          <p className="text-[12px] text-[var(--text-muted)] mb-3">Auto rotates a fresh look across every clip — or lock one in.</p>
           <div className="flex flex-wrap gap-2">
             {CAPTION_STYLES.map(s => {
               const active = captionStyle === s.id;
               return (
                 <button key={s.id} type="button" disabled={running}
                   onClick={() => setCaptionStyle(s.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-                    active ? "text-white border-transparent" : "text-white/60 border-white/10 hover:text-white hover:border-white/25"
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all duration-200 border cursor-pointer disabled:cursor-not-allowed ${
+                    active
+                      ? "border-transparent text-white shadow-sm"
+                      : "border-[var(--border-strong)] text-[var(--text-muted)] bg-[var(--surface)] hover:text-[var(--text)] hover:border-[var(--accent)]"
                   }`}
-                  style={active ? { background: "var(--accent)" } : { background: "rgba(255,255,255,0.05)" }}>
+                  style={active ? { background: "var(--accent)", boxShadow: "0 4px 14px -6px var(--accent-ring)" } : undefined}>
+                  {s.id === "auto" && <Sparkles size={13} />}
                   {s.label}
                 </button>
               );
@@ -292,67 +296,62 @@ export default function AutoClipPage() {
 
         {/* Platforms — one clip auto-exports to every selected shape (multi-select) */}
         <div>
-          <label className="text-xs font-medium text-white/60 block mb-1.5">Post for</label>
-          <div className="grid grid-cols-3 gap-2">
+          <label className="text-[13px] font-medium text-[var(--text)] block mb-1">Post for</label>
+          <p className="text-[12px] text-[var(--text-muted)] mb-3">Each clip is exported for every platform you pick.</p>
+          <div className="grid grid-cols-3 gap-3">
             {PLATFORMS.map(p => {
               const active = platforms.includes(p.id);
               return (
                 <button key={p.id} type="button" disabled={running}
                   onClick={() => togglePlatform(p.id)}
-                  className={`px-3 py-2 rounded-lg text-left transition-all border ${
-                    active ? "border-[var(--accent)]" : "border-white/10 hover:border-white/25"
-                  }`}
-                  style={{ background: active ? "var(--accent-soft)" : "rgba(255,255,255,0.05)" }}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white">{p.sub}</span>
-                    {active && <Check size={12} className="text-[var(--accent)]" />}
+                  className={`px-4 py-3 rounded-xl text-left transition-all duration-200 border cursor-pointer disabled:cursor-not-allowed ${
+                    active
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                      : "border-[var(--border-strong)] bg-[var(--surface)] hover:border-[var(--accent)]"
+                  }`}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[15px] font-semibold text-[var(--text)]">{p.sub}</span>
+                    <span className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${active ? "bg-[var(--accent)]" : "border border-[var(--border-strong)]"}`}>
+                      {active && <Check size={11} className="text-white" strokeWidth={3} />}
+                    </span>
                   </div>
-                  <span className="text-[10px] text-white/50">{p.label}</span>
+                  <span className="text-[12px] text-[var(--text-muted)]">{p.label}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Options */}
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <div className="flex justify-between mb-1">
-              <label className="text-xs text-white/50">Max Clips</label>
-              <span className="text-xs text-white font-medium">{maxClips}</span>
-            </div>
-            <input type="range" min={1} max={10} value={maxClips}
-              onChange={(e) => setMaxClips(Number(e.target.value))}
-              className="w-full accent-[var(--accent)]" disabled={running} />
-          </div>
-          <div>
-            <div className="flex justify-between mb-1">
-              <label className="text-xs text-white/50">Min Duration</label>
-              <span className="text-xs text-white font-medium">{minDuration}s</span>
-            </div>
-            <input type="range" min={10} max={60} step={5} value={minDuration}
-              onChange={(e) => setMinDuration(Number(e.target.value))}
-              className="w-full accent-[var(--accent)]" disabled={running} />
-          </div>
-          <div>
-            <div className="flex justify-between mb-1">
-              <label className="text-xs text-white/50">Max Duration</label>
-              <span className="text-xs text-white font-medium">{maxDuration}s</span>
-            </div>
-            <input type="range" min={30} max={180} step={10} value={maxDuration}
-              onChange={(e) => setMaxDuration(Number(e.target.value))}
-              className="w-full accent-[var(--accent)]" disabled={running} />
+        {/* Advanced options */}
+        <div className="pt-6 border-t border-[var(--border)]">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-light)] mb-3">Advanced</p>
+          <div className="grid grid-cols-3 gap-5">
+            {([
+              { label: "Max clips", val: maxClips, set: setMaxClips, min: 1, max: 10, step: 1, unit: "" },
+              { label: "Min length", val: minDuration, set: setMinDuration, min: 10, max: 60, step: 5, unit: "s" },
+              { label: "Max length", val: maxDuration, set: setMaxDuration, min: 30, max: 180, step: 10, unit: "s" },
+            ] as const).map(o => (
+              <div key={o.label}>
+                <div className="flex justify-between mb-1.5">
+                  <label className="text-[13px] text-[var(--text-muted)]">{o.label}</label>
+                  <span className="text-[13px] text-[var(--text)] font-semibold tabular-nums">{o.val}{o.unit}</span>
+                </div>
+                <input type="range" min={o.min} max={o.max} step={o.step} value={o.val}
+                  onChange={(e) => o.set(Number(e.target.value))}
+                  className="w-full accent-[var(--accent)] cursor-pointer" disabled={running} />
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Run / Stop button */}
         {running ? (
-          <button onClick={handleStop} className="btn-secondary w-full justify-center py-3">
-            <span className="w-2 h-2 bg-red-400 rounded-sm" /> Stop
+          <button onClick={handleStop} className="btn-secondary w-full justify-center py-3.5 text-[15px] cursor-pointer">
+            <span className="w-2 h-2 bg-[var(--danger)] rounded-sm" /> Stop
           </button>
         ) : (
-          <button onClick={handleRun} disabled={!url.trim()} className="btn-primary w-full justify-center py-3 disabled:opacity-40 disabled:cursor-not-allowed">
-            <Zap size={16} /> Auto Clip
+          <button onClick={handleRun} disabled={!url.trim()} className="btn-blue w-full justify-center py-3.5 text-[15px] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+            <Zap size={17} /> Generate clips
           </button>
         )}
 
@@ -398,11 +397,11 @@ export default function AutoClipPage() {
 
       {/* Clips grid */}
       {clips.length > 0 && (
-        <div className="mt-6">
-          <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-3">
-            {clips.length} Clip{clips.length !== 1 ? "s" : ""} Generated
+        <div className="mt-8">
+          <p className="text-[13px] font-semibold text-[var(--text)] mb-4">
+            {clips.length} clip{clips.length !== 1 ? "s" : ""} ready
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-4">
             {clips.map(clip => <ClipCard key={clip.id} clip={clip} />)}
           </div>
         </div>
