@@ -7,7 +7,7 @@ import ffmpegStatic from "ffmpeg-static";
 import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicText } from "@/lib/anthropic/text";
-import { reframeFace, reframeTrack, renderVerticalClip, type Word } from "@/lib/clipEngine/render";
+import { reframeFace, reframeTrack, renderVerticalClip, ASPECTS, type Word, type AspectKey } from "@/lib/clipEngine/render";
 
 if (ffmpegStatic) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -65,7 +65,13 @@ interface Moment {
 }
 
 export async function POST(req: NextRequest) {
-  const { url, maxClips = 5, minDuration = 20, maxDuration = 90 } = await req.json();
+  const body = await req.json();
+  const { url, maxClips = 5, minDuration = 20, maxDuration = 90 } = body;
+  // Which platform shapes to export per clip. Default 9:16 (TikTok/Reels/Shorts); pass e.g.
+  // ["9:16","1:1","16:9"] to auto-produce a post for every platform from one source.
+  const aspects: AspectKey[] = (Array.isArray(body.aspects) && body.aspects.length
+    ? body.aspects.filter((a: string): a is AspectKey => a in ASPECTS)
+    : ["9:16"]);
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -175,21 +181,26 @@ JSON format:
           sse(controller, { step: "cutting", message: `Cutting clip ${i + 1}/${moments.length}: ${m.title}`, index: i });
 
           try {
-            // Render a PREMIUM vertical clip via the shared engine: magic-crop framing
-            // (falls back to blur-fill), animated word captions, and a title card — the
-            // exact same output path the campaign Agent uses. No more raw horizontal cuts.
+            // Render PREMIUM clips via the shared engine: magic-crop / per-shot tracking,
+            // animated word captions, title card — one export per requested platform aspect.
             const clipDur = m.end_time - m.start_time;
-            // Per-shot tracking (follows the speaker across cuts); static face is the fallback.
+            // Analyse the subject ONCE (tracking + static face), reuse across every aspect.
             const [track, face] = await Promise.all([
               reframeTrack(srcPath, m.start_time, clipDur),
               reframeFace(srcPath, m.start_time, clipDur),
             ]);
-            await renderVerticalClip({
-              srcPath, outPath: clipPath,
-              startTime: m.start_time, duration: clipDur,
-              title: (m.hook || m.title || "").trim(),
-              words, variant: i, layout: "crop", face, track,
-            });
+            const variants: { aspect: AspectKey; downloadUrl: string }[] = [];
+            for (const aspect of aspects) {
+              const suffix = aspect.replace(":", "x");
+              const outPath = aspect === aspects[0] ? clipPath : `${dir}/clip_${clipId}_${suffix}.mp4`;
+              await renderVerticalClip({
+                srcPath, outPath,
+                startTime: m.start_time, duration: clipDur,
+                title: (m.hook || m.title || "").trim(),
+                words, variant: i, layout: "crop", face, track, aspect,
+              });
+              variants.push({ aspect, downloadUrl: `/api/tools/serve/${jobId}/${outPath.split("/").pop()}` });
+            }
 
             // Thumbnail — from the RENDERED vertical clip so it matches the output
             // (framing + captions), not the horizontal source.
@@ -220,6 +231,7 @@ JSON format:
                 downloadUrl: `/api/tools/serve/${jobId}/clip_${clipId}.mp4`,
                 thumbnailUrl: existsSync(thumbPath) ? `/api/tools/serve/${jobId}/thumb_${clipId}.jpg` : null,
                 sourceTitle: title,
+                variants,   // one entry per platform aspect (9:16 / 1:1 / 16:9 …)
               },
             });
           } catch (e) {
