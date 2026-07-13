@@ -23,21 +23,21 @@ export default function Navbar() {
 
   return (
     <header
-      className="h-[64px] flex items-center justify-between px-6 flex-shrink-0"
+      className="h-[56px] flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-40"
       style={{
-        background: "var(--surface)",
+        background: "color-mix(in srgb, var(--bg) 82%, transparent)",
         borderBottom: "1px solid var(--border)",
-        boxShadow: "0 1px 3px rgba(15,30,60,0.06)",
+        backdropFilter: "saturate(180%) blur(12px)",
       }}
     >
       <div>
-        <h1 className="font-bold text-base leading-tight tracking-tight" style={{ color: "var(--text)" }}>{title}</h1>
-        <p className="text-[11px] mt-0.5 font-medium" style={{ color: "var(--text-muted)" }}>{sub}</p>
+        <h1 className="font-semibold text-[15px] leading-tight tracking-tight" style={{ color: "var(--text)" }}>{title}</h1>
+        <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</p>
       </div>
 
       <div className="flex items-center gap-2">
         <button
-          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-[var(--surface-2)]"
+          className="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:bg-[var(--surface-2)]"
           style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
           title="Notifications"
         >

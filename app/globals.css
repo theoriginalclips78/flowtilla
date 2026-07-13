@@ -74,10 +74,7 @@ h2 { font-weight: 700; }
 
 /* Background wash — subtle indigo aurora */
 .bg-studio {
-  background:
-    radial-gradient(900px 520px at 100% -10%, var(--accent-soft), transparent 60%),
-    radial-gradient(760px 460px at -6% 106%, var(--accent-soft), transparent 58%),
-    var(--bg);
+  background: var(--bg);
 }
 
 /* Surfaces */
