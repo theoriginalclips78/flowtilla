@@ -14,6 +14,7 @@ import { CAPTION_PRESETS, presetById, buildWordAss, buildTitleAss, CAPTION_PLACE
 import { renderOverlay, closeOverlayBrowser } from "@/lib/editor/overlayRender";
 import { WORK_DIR } from "@/lib/workdir";
 import { anthropicText } from "@/lib/anthropic/text";
+import { reframeTrack, trackedCropFilter, type TrackData } from "@/lib/clipEngine/render";
 
 const CONCURRENCY = 1; // sequential: finish all clips from one video before moving to next
 const FONT = "/System/Library/Fonts/Helvetica.ttc";
@@ -747,8 +748,13 @@ type Layout = "crop" | "blur" | "split" | "letterbox";
 const GAMEPLAY_PATH = process.env.GAMEPLAY_VIDEO || path.join(os.homedir(), "Downloads", "gameplay.mp4");
 function gameplayAvailable(): boolean { return existsSync(GAMEPLAY_PATH); }
 
-function layoutBase(layout: Layout, style: ClipStyle, variant: number, motion: boolean, face: FaceInfo | null = null): { base: string; inputs: string[] } {
+function layoutBase(layout: Layout, style: ClipStyle, variant: number, motion: boolean, face: FaceInfo | null = null, track: TrackData | null = null): { base: string; inputs: string[] } {
   const eq = `eq=${style.grade}`;
+  // Shot-aware tracked crop (follows the speaker across cuts) beats a static face crop
+  // whenever we have it; both fall back to a plain fill. Computed per target size.
+  const cropFill = (w: number, h: number) =>
+    (track ? trackedCropFilter(track, w, h) : null)
+    || (face ? magicCropFill(face, w, h) : `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h}`);
 
   // SPLIT: clip on top, looping muted gameplay on the bottom.
   if (layout === "split" && gameplayAvailable()) {
@@ -793,11 +799,11 @@ function layoutBase(layout: Layout, style: ClipStyle, variant: number, motion: b
     if (mode === 0) z = `min(1+${sp}*on,1.14)`;
     else if (mode === 1) z = `max(1.14-${sp}*on,1.0)`;
     else z = `min(1+${(sp * 0.7).toFixed(5)}*on,1.10)`;
-    const fill = face ? magicCropFill(face, w, h) : `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h}`;
+    const fill = cropFill(w, h);
     const base = `[0:v]${fill},zoompan=z='${z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30,${eq}[vbase]`;
     return { base, inputs: [] };
   }
-  const fill = face ? magicCropFill(face, 1080, 1920) : `scale=${Math.round(1080 * style.zoom)}:${Math.round(1920 * style.zoom)}:force_original_aspect_ratio=increase,crop=1080:1920`;
+  const fill = (track || face) ? cropFill(1080, 1920) : `scale=${Math.round(1080 * style.zoom)}:${Math.round(1920 * style.zoom)}:force_original_aspect_ratio=increase,crop=1080:1920`;
   const base = `[0:v]${fill},${eq}[vbase]`;
   return { base, inputs: [] };
 }
@@ -845,6 +851,7 @@ async function cutClip(
   watermarkText: string = "",
   bottomBanner: string = "",
   face: FaceInfo | null = null,
+  track: TrackData | null = null,
 ): Promise<void> {
   const style = CLIP_STYLES[variant % CLIP_STYLES.length];
 
@@ -861,7 +868,7 @@ async function cutClip(
   const placement: CaptionPlacement = CAPTION_PLACEMENTS[captionPosition === "auto" ? autoPos : captionPosition];
 
   const safeTitle = escapeDrawtext(title);
-  const { base, inputs } = layoutBase(layout, style, variant, motion, face);
+  const { base, inputs } = layoutBase(layout, style, variant, motion, face, track);
   // TITLE. A clean PERSISTENT white title card, rendered via libass so it's bold and
   // AUTO-WRAPS (long titles used to clip at the frame edges). For letterbox it sits in
   // the top black bar; for other layouts near the top of the frame. Non-letterbox also
@@ -905,17 +912,20 @@ async function cutClip(
   const extra = watermarkDraw ? [watermarkDraw] : [];
 
   // Render with a given list of post filters; toggles audio off for the source-has-no-audio retry.
-  const render = (post: string[], withAudio = true) => {
+  const render = async (post: string[], withAudio = true) => {
     const { graph, maps } = assembleGraph(base, post, withAudio, overlayArg);
-    return ffmpegRun([
-      "-ss", String(startTime), "-i", srcPath, ...inputs, "-t", String(duration),
-      "-filter_complex", graph, ...maps,
-      // Quality-first encode: crf 18 (near-visually-lossless) + a real preset so the
-      // bitrate is spent well, high profile + yuv420p for universal playback, 160k audio.
-      "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-      "-profile:v", "high", "-pix_fmt", "yuv420p",
-      "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath,
-    ]);
+    const io = ["-ss", String(startTime), "-i", srcPath, ...inputs, "-t", String(duration), "-filter_complex", graph, ...maps];
+    const tail = ["-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath];
+    // GPU encode (VideoToolbox): ~2x faster, ~7x less CPU/power — critical for agency-scale
+    // throughput. Auto-falls back to libx264 (crf 18) if the hardware path errors.
+    if (process.env.FORCE_X264) {
+      return ffmpegRun([...io, "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-profile:v", "high", ...tail]);
+    }
+    try {
+      return await ffmpegRun([...io, "-c:v", "h264_videotoolbox", "-b:v", "6000k", "-profile:v", "high", ...tail]);
+    } catch {
+      return await ffmpegRun([...io, "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-profile:v", "high", ...tail]);
+    }
   };
 
   // Attempt 0: BEST — layout + animated word-pop ASS captions + hook + watermark.
@@ -1127,14 +1137,19 @@ async function processOneVideo(
     const shortSubs = rsSubsOn ? shortTx : [];
     const shortSubWords = rsSubsOn ? shortWords : [];
     // MAGIC CROP: same footage for every variation, so analyse subject position once.
-    const shortEff = chooseLayout(rsLayout, await reframeFace(srcPath, 0, videoDuration));
+    // Prefer shot-aware tracking (follows the speaker across cuts); good multi-shot tracking
+    // wins even when the single-face spread is high (that's the case tracking exists to fix).
+    const shortFace = await reframeFace(srcPath, 0, videoDuration);
+    const shortTrackRaw = rsLayout === "crop" ? await reframeTrack(srcPath, 0, videoDuration) : null;
+    const shortTrack = shortTrackRaw && shortTrackRaw.segments.length >= 2 && shortTrackRaw.coverage >= 0.5 ? shortTrackRaw : null;
+    const shortEff = shortTrack ? { layout: "crop" as Layout, face: shortFace } : chooseLayout(rsLayout, shortFace);
     let made = 0;
     for (let v = 0; v < rsVariations; v++) {
       const clipFile = clipsDir + `/clip-${v}.mp4`;
       const thumbFile = clipsDir + `/thumb-${v}.jpg`;
       const hook = meta[v]?.hook || cleanTitle(videoTitle);
       try {
-        await cutClip(srcPath, clipFile, 0, videoDuration, shortSubs, hook, v, shortSubWords, rsPresetId, rsMotion, shortEff.layout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner, shortEff.face);
+        await cutClip(srcPath, clipFile, 0, videoDuration, shortSubs, hook, v, shortSubWords, rsPresetId, rsMotion, shortEff.layout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner, shortEff.face, shortTrack);
         await saveAndStream(clipFile, thumbFile, {
           start_time: 0, end_time: videoDuration, title: hook,
           reason: "Complete short-form video", virality_score: "high",
@@ -1335,9 +1350,14 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     // MAGIC CROP: find where the subject sits, then fill the 9:16 frame keeping them
     // framed. Auto-falls back to blur-fill for product b-roll / group / roaming shots.
     const rf = await reframeFace(srcPath, startForCut, dur);
-    const eff = chooseLayout(rsLayout, rf);
-    if (eff.face) sse(ctrl, { step: "cut", status: "progress", message: `🎯 Clip ${i+1}: magic-cropped to subject` });
-    await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, variant, useWords, rsPresetId, rsMotion, eff.layout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner, eff.face);
+    const trackRaw = rsLayout === "crop" ? await reframeTrack(srcPath, startForCut, dur) : null;
+    const track = trackRaw && trackRaw.segments.length >= 2 && trackRaw.coverage >= 0.5 ? trackRaw : null;
+    // Good multi-shot tracking → tracked crop (follows the speaker) even when the single-face
+    // spread was high; otherwise fall back to the static magic-crop / blur decision.
+    const eff = track ? { layout: "crop" as Layout, face: rf } : chooseLayout(rsLayout, rf);
+    if (track) sse(ctrl, { step: "cut", status: "progress", message: `🎯 Clip ${i+1}: tracked across ${track.segments.length} shots` });
+    else if (eff.face) sse(ctrl, { step: "cut", status: "progress", message: `🎯 Clip ${i+1}: magic-cropped to subject` });
+    await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, variant, useWords, rsPresetId, rsMotion, eff.layout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner, eff.face, track);
 
     // Tighten pacing — trim dead air for a faster, more retentive edit. Safely
     // no-ops on music-heavy clips. Only swap in the tightened file if it succeeded.

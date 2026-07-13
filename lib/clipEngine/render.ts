@@ -104,7 +104,7 @@ export async function reframeTrack(srcPath: string, startSec: number, duration: 
 // Build a scale + TIME-VARYING crop that snaps the crop window to each shot's subject.
 // The x/y crop offsets are ffmpeg expressions (piecewise over shot end-times); commas
 // inside if() are protected by the single quotes, so this is safe in a filtergraph.
-function trackedCropFilter(track: TrackData, Tw: number, Th: number): string | null {
+export function trackedCropFilter(track: TrackData, Tw: number, Th: number): string | null {
   const segs = track.segments.filter((s) => s.end > s.start);
   if (segs.length < 1 || !track.srcW || !track.srcH) return null;
   const even = (n: number) => { const r = Math.round(n); return r % 2 ? r + 1 : r; };
