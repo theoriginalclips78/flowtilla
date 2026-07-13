@@ -91,10 +91,18 @@ export function buildWordAss(
   preset: CaptionPreset,
   wordsPerLineOverride?: number,   // "One Word" mode passes 1; default uses the preset
   placement?: CaptionPlacement,    // caption vertical position; defaults to preset bottom
+  canvas: { w: number; h: number } = { w: 1080, h: 1920 },  // target frame size (multi-aspect)
 ): string | null {
   const wordsPerLine = Math.max(1, wordsPerLineOverride ?? preset.wordsPerLine);
   const align = placement?.alignment ?? 2;
-  const marginV = placement?.marginV ?? preset.marginV;
+  // Sizes are authored for a 1920-tall 9:16 frame; scale them to the real canvas height so
+  // captions look right in 1:1 / 16:9 / 4:5 too.
+  const sc = canvas.h / 1920;
+  const px = (n: number) => Math.max(1, Math.round(n * sc));
+  const fontSize = px(preset.fontSize);
+  const outlineW = px(preset.outlineW);
+  const shadow = px(preset.shadow);
+  const marginV = px(placement?.marginV ?? preset.marginV);
   const raw = allWords
     .filter(w => w.end > offset && w.start < offset + duration && w.word)
     .map(w => ({
@@ -122,14 +130,14 @@ export function buildWordAss(
 
   const header = `[Script Info]
 ScriptType: v4.00+
-PlayResX: 1080
-PlayResY: 1920
+PlayResX: ${canvas.w}
+PlayResY: ${canvas.h}
 WrapStyle: 2
 ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Main,${preset.font},${preset.fontSize},${preset.primary},${preset.primary},${preset.outline},${preset.back},${preset.bold},${preset.italic},0,0,100,100,0,0,${preset.borderStyle},${preset.outlineW},${preset.shadow},${align},60,60,${marginV},1
+Style: Main,${preset.font},${fontSize},${preset.primary},${preset.primary},${preset.outline},${preset.back},${preset.bold},${preset.italic},0,0,100,100,0,0,${preset.borderStyle},${outlineW},${shadow},${align},${px(60)},${px(60)},${marginV},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`;
@@ -191,10 +199,13 @@ export const TITLE_STYLES: TitleStyle[] = [
  * edges, bold and per-line centred. `variant` rotates the look across clips for variety;
  * `topMargin` places it (higher for letterbox's black bar).
  */
-export function buildTitleAss(title: string, duration: number, variant = 0, opts?: { topMargin?: number }): string | null {
+export function buildTitleAss(title: string, duration: number, variant = 0, opts?: { topMargin?: number; canvas?: { w: number; h: number } }): string | null {
   const text = (title || "").trim().replace(/\s+/g, " ");
   if (!text) return null;
-  const topMargin = opts?.topMargin ?? 240;
+  const canvas = opts?.canvas ?? { w: 1080, h: 1920 };
+  const sc = canvas.h / 1920;
+  const px = (n: number) => Math.max(1, Math.round(n * sc));
+  const topMargin = px(opts?.topMargin ?? 240);
   const st = TITLE_STYLES[((variant % TITLE_STYLES.length) + TITLE_STYLES.length) % TITLE_STYLES.length];
   // strip ASS-control chars; emoji are dropped (libass renders them as tofu boxes)
   let safe = text.replace(/[{}\\]/g, "")
@@ -204,14 +215,14 @@ export function buildTitleAss(title: string, duration: number, variant = 0, opts
   if (st.upper) safe = safe.toUpperCase();
   const header = `[Script Info]
 ScriptType: v4.00+
-PlayResX: 1080
-PlayResY: 1920
+PlayResX: ${canvas.w}
+PlayResY: ${canvas.h}
 WrapStyle: 0
 ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Title,${st.font},${st.fontSize},${st.primary},${st.primary},${st.outline},${st.back},-1,0,0,0,100,100,0,0,${st.borderStyle},${st.outlineW},${st.shadow},8,90,90,${topMargin},1`;
+Style: Title,${st.font},${px(st.fontSize)},${st.primary},${st.primary},${st.outline},${st.back},-1,0,0,0,100,100,0,0,${st.borderStyle},${px(st.outlineW)},${px(st.shadow)},8,${px(90)},${px(90)},${topMargin},1`;
   const events = `[Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Dialogue: 0,0:00:00.00,${toAssTime(duration)},Title,,0,0,0,,${safe}`;

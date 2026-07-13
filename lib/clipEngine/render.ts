@@ -132,13 +132,21 @@ export function engineFfmpeg(args: string[]): Promise<void> {
   });
 }
 
-const TW = 1080, TH = 1920;
+// Aspect targets for every major platform. 9:16 covers TikTok/Reels/Shorts (default);
+// 1:1 + 4:5 for feed; 16:9 for YouTube. All produced from one source by the same engine.
+export type AspectKey = "9:16" | "1:1" | "4:5" | "16:9";
+export const ASPECTS: Record<AspectKey, { w: number; h: number }> = {
+  "9:16": { w: 1080, h: 1920 },
+  "1:1":  { w: 1080, h: 1080 },
+  "4:5":  { w: 1080, h: 1350 },
+  "16:9": { w: 1920, h: 1080 },
+};
 
-// Blur-fill: fills the 9:16 frame with a blurred, zoomed copy of the footage behind the
+// Blur-fill: fills the frame with a blurred, zoomed copy of the footage behind the
 // aspect-correct centered footage. Safe default when there's no confident single face.
-function blurFillFilter(): string {
-  return `[0:v]scale=${TW}:${TH}:force_original_aspect_ratio=increase,crop=${TW}:${TH},boxblur=22:2[bg];` +
-         `[0:v]scale=${TW}:${TH}:force_original_aspect_ratio=decrease[fg];` +
+function blurFillFilter(Tw: number, Th: number): string {
+  return `[0:v]scale=${Tw}:${Th}:force_original_aspect_ratio=increase,crop=${Tw}:${Th},boxblur=22:2[bg];` +
+         `[0:v]scale=${Tw}:${Th}:force_original_aspect_ratio=decrease[fg];` +
          `[bg][fg]overlay=(W-w)/2:(H-h)/2[v0]`;
 }
 
@@ -155,6 +163,7 @@ export type RenderClipOpts = {
   face?: FaceInfo | null;        // static magic-crop fallback (reframeFace result)
   track?: TrackData | null;      // per-shot tracking (reframeTrack) — preferred when multi-shot
   captions?: boolean;            // burn word captions (default true when words present)
+  aspect?: AspectKey;            // output shape (default 9:16 for TikTok/Reels/Shorts)
 };
 
 /**
@@ -167,6 +176,8 @@ export async function renderVerticalClip(opts: RenderClipOpts): Promise<void> {
   const variant = opts.variant ?? 0;
   const preset = opts.captionPresetId ? presetById(opts.captionPresetId) : CAPTION_PRESETS[variant % CAPTION_PRESETS.length];
   const withCaptions = (opts.captions ?? true) && !!opts.words?.length;
+  const { w: TW, h: TH } = ASPECTS[opts.aspect ?? "9:16"];  // multi-aspect target
+  const canvas = { w: TW, h: TH };
 
   // 1) framing, best → safest:
   //    a) SHOT-AWARE TRACKING when we have ≥2 shots with confident faces (follows the
@@ -182,13 +193,13 @@ export async function renderVerticalClip(opts: RenderClipOpts): Promise<void> {
   } else {
     const chosen = chooseLayout(opts.layout ?? "crop", opts.face ?? null);
     if (chosen.layout === "crop" && chosen.face) parts.push(`[0:v]${magicCropFill(chosen.face, TW, TH)}[v0]`);
-    else parts.push(blurFillFilter());
+    else parts.push(blurFillFilter(TW, TH));
   }
   let last = "v0";
 
   // 2) captions: burn the animated word-pop track (reuses the shared caption library).
   if (withCaptions) {
-    const ass = buildWordAss(opts.words as Word[], startTime, duration, preset, undefined, CAPTION_PLACEMENTS.bottom);
+    const ass = buildWordAss(opts.words as Word[], startTime, duration, preset, undefined, CAPTION_PLACEMENTS.bottom, canvas);
     if (ass) {
       const p = outPath.replace(/\.mp4$/, ".cap.ass");
       writeFileSync(p, ass, "utf8");
@@ -197,7 +208,7 @@ export async function renderVerticalClip(opts: RenderClipOpts): Promise<void> {
   }
 
   // 3) title card (persistent hook at the top).
-  const titleAss = buildTitleAss(title, duration, variant, { topMargin: 150 });
+  const titleAss = buildTitleAss(title, duration, variant, { topMargin: 150, canvas });
   if (titleAss) {
     const p = outPath.replace(/\.mp4$/, ".title.ass");
     writeFileSync(p, titleAss, "utf8");
