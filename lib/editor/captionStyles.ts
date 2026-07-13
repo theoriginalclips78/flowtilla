@@ -79,9 +79,12 @@ function esc(s: string): string {
 // from the bottom for bottom alignment, from the top for top, and is centred for middle.
 export type CaptionPlacement = { alignment: number; marginV: number };
 export const CAPTION_PLACEMENTS: Record<"top" | "middle" | "bottom", CaptionPlacement> = {
-  top:    { alignment: 8, marginV: 230 },
+  top:    { alignment: 8, marginV: 300 },
+  // "bottom" sits in the safe lower-third (~20% up from the frame edge) so TikTok/Reels/
+  // Shorts UI (username, caption, action buttons) never covers the words. This is the
+  // standard viral-caption position; scaled per-aspect by buildWordAss.
+  bottom: { alignment: 2, marginV: 380 },
   middle: { alignment: 5, marginV: 0 },
-  bottom: { alignment: 2, marginV: 230 },
 };
 
 export function buildWordAss(
