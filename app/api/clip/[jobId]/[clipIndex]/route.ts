@@ -11,7 +11,10 @@ export async function GET(
   { params }: { params: { jobId: string; clipIndex: string } }
 ) {
   const { jobId, clipIndex } = params;
-  const filePath = path.join(WORK_DIR, jobId, "clips", `clip-${clipIndex}.mp4`);
+  // ?aspect=1x1 / 16x9 / 4x5 serves the multi-aspect variant file; default = the 9:16 primary.
+  const aspect = (req.nextUrl.searchParams.get("aspect") || "").replace(/[^0-9x]/g, "");
+  const name = aspect && aspect !== "9x16" ? `clip-${clipIndex}-${aspect}.mp4` : `clip-${clipIndex}.mp4`;
+  const filePath = path.join(WORK_DIR, jobId, "clips", name);
 
   let stat: ReturnType<typeof statSync>;
   try {

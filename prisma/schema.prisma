@@ -34,6 +34,7 @@ model Campaign {
   tightEdit           Boolean          @default(true)       // trim dead air for tighter pacing
   motionEnabled       Boolean          @default(true)       // Ken Burns push-in motion (crop layout)
   videoLayout         String           @default("letterbox") // letterbox | blur | crop | split (gameplay)
+  aspects             String           @default("9:16")     // comma-separated output shapes: 9:16,1:1,16:9,4:5
   captionPosition     String           @default("auto")     // auto | top | middle | bottom
   watermarkText       String           @default("")         // @handle overlay; empty = none
   bottomBanner        String           @default("")         // persistent brand CTA banner (last word highlighted); empty = none
@@ -100,6 +101,7 @@ model Clip {
   hook          String   @default("")
   caption       String   @default("")
   platformFit   String   @default("")
+  variants      String   @default("")   // JSON [{aspect,url}] of extra-aspect exports (1:1, 16:9)
   status        String   @default("pending")
   postedAt      DateTime?
   createdAt     DateTime @default(now())

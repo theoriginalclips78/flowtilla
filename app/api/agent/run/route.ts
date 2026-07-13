@@ -14,7 +14,7 @@ import { CAPTION_PRESETS, presetById, buildWordAss, buildTitleAss, CAPTION_PLACE
 import { renderOverlay, closeOverlayBrowser } from "@/lib/editor/overlayRender";
 import { WORK_DIR } from "@/lib/workdir";
 import { anthropicText } from "@/lib/anthropic/text";
-import { reframeTrack, trackedCropFilter, type TrackData } from "@/lib/clipEngine/render";
+import { reframeTrack, trackedCropFilter, renderVerticalClip, ASPECTS, type TrackData, type AspectKey } from "@/lib/clipEngine/render";
 
 const CONCURRENCY = 1; // sequential: finish all clips from one video before moving to next
 const FONT = "/System/Library/Fonts/Helvetica.ttc";
@@ -1393,6 +1393,28 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
     }
 
     const saved = await saveAndStream(clipFile, thumbFile, { ...m, start_time: startForCut, end_time: safeEnd });
+
+    // MULTI-ASPECT: also export the campaign's extra shapes (1:1, 16:9, 4:5) from the SAME
+    // analysis (reuse track/face/words) — one moment becomes a post for every platform.
+    // 9:16 is the primary rendered above; extras are opt-in per campaign (default none).
+    const extraAspects = String((campaign as Record<string, unknown>).aspects || "9:16")
+      .split(",").map(s => s.trim()).filter((a): a is AspectKey => a in ASPECTS && a !== "9:16");
+    if (saved && extraAspects.length) {
+      const idx = path.basename(clipFile, ".mp4").replace("clip-", "");
+      const variants: { aspect: string; url: string }[] = [];
+      for (const aspect of extraAspects) {
+        const vfile = path.join(clipsDir, `clip-${i}-${aspect.replace(":", "x")}.mp4`);
+        try {
+          await renderVerticalClip({ srcPath, outPath: vfile, startTime: startForCut, duration: dur,
+            title: overlayText, words: useWords, face: rf, track, aspect, captionPresetId: rsPresetId || undefined });
+          variants.push({ aspect, url: `/api/clip/${subId}/${idx}?aspect=${aspect.replace(":", "x")}` });
+        } catch { /* skip a failed variant */ }
+      }
+      if (variants.length) {
+        await prisma.clip.update({ where: { id: saved.id }, data: { variants: JSON.stringify(variants) } }).catch(() => {});
+        sse(ctrl, { step: "cut", status: "progress", message: `📐 Clip ${i+1}: +${variants.length} platform aspect(s)` });
+      }
+    }
     // Spec-style per-clip record for the run summary.
     const hookWord = (m.hook || m.title || "clip").split(/\s+/).filter(Boolean)
       .sort((a, b) => b.length - a.length)[0]?.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 16) || "clip";
