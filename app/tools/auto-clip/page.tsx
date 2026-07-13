@@ -17,6 +17,7 @@ interface Clip {
   downloadUrl: string;
   thumbnailUrl?: string | null;
   sourceTitle: string;
+  variants?: { aspect: string; downloadUrl: string }[];
 }
 
 const viralBadge: Record<string, { label: string; bg: string }> = {
@@ -94,11 +95,22 @@ function ClipCard({ clip }: { clip: Clip }) {
         </div>
       )}
 
-      {/* Download */}
+      {/* Download — one button per platform aspect when multi-aspect was produced */}
       <div className="px-3 pb-3">
-        <a href={clip.downloadUrl} download={`${clip.title}.mp4`} className="btn-primary w-full justify-center py-1.5 text-[12px]">
-          <Download size={12} /> Download Clip
-        </a>
+        {clip.variants && clip.variants.length > 1 ? (
+          <div className="grid grid-cols-3 gap-1.5">
+            {clip.variants.map(v => (
+              <a key={v.aspect} href={v.downloadUrl} download={`${clip.title}-${v.aspect.replace(":", "x")}.mp4`}
+                className="btn-secondary justify-center py-1.5 text-[11px]" title={`Download ${v.aspect}`}>
+                <Download size={11} /> {v.aspect}
+              </a>
+            ))}
+          </div>
+        ) : (
+          <a href={clip.downloadUrl} download={`${clip.title}.mp4`} className="btn-primary w-full justify-center py-1.5 text-[12px]">
+            <Download size={12} /> Download Clip
+          </a>
+        )}
       </div>
     </div>
   );
@@ -112,11 +124,34 @@ interface Step {
   status: StepStatus;
 }
 
+// Curated caption looks surfaced in the picker. "auto" = rotate styles across clips for
+// variety (the Crayo approach); the rest force one look. ids match CAPTION_PRESETS.
+const CAPTION_STYLES: { id: string; label: string }[] = [
+  { id: "auto",        label: "Auto / Mixed ✨" },
+  { id: "bold-white",  label: "Bold White" },
+  { id: "yellow-box",  label: "Yellow Highlight" },
+  { id: "blue-pop",    label: "Blue Pop" },
+  { id: "green-pop",   label: "Green Pop" },
+  { id: "comic-white", label: "Comic Outline" },
+  { id: "black-box",   label: "Black Box" },
+];
+
+// Platform aspect targets. 9:16 is on by default (TikTok/Reels/Shorts).
+const PLATFORMS: { id: string; label: string; sub: string }[] = [
+  { id: "9:16", label: "TikTok · Reels · Shorts", sub: "9:16" },
+  { id: "1:1",  label: "Instagram Feed",          sub: "1:1" },
+  { id: "16:9", label: "YouTube",                 sub: "16:9" },
+];
+
 export default function AutoClipPage() {
   const [url, setUrl] = useState("");
   const [maxClips, setMaxClips] = useState(5);
   const [minDuration, setMinDuration] = useState(20);
   const [maxDuration, setMaxDuration] = useState(90);
+  const [captionStyle, setCaptionStyle] = useState("auto");
+  const [platforms, setPlatforms] = useState<string[]>(["9:16"]);
+  const togglePlatform = (id: string) =>
+    setPlatforms(prev => prev.includes(id) ? (prev.length > 1 ? prev.filter(p => p !== id) : prev) : [...prev, id]);
   const [running, setRunning] = useState(false);
   const [clips, setClips] = useState<Clip[]>([]);
   const [steps, setSteps] = useState<Step[]>([]);
@@ -155,7 +190,7 @@ export default function AutoClipPage() {
       const res = await fetch("/api/tools/auto-clip", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim(), maxClips, minDuration, maxDuration }),
+        body: JSON.stringify({ url: url.trim(), maxClips, minDuration, maxDuration, captionStyle, aspects: platforms }),
         signal: abortRef.current.signal,
       });
 
@@ -233,6 +268,50 @@ export default function AutoClipPage() {
             disabled={running}
             onKeyDown={(e) => e.key === "Enter" && !running && handleRun()}
           />
+        </div>
+
+        {/* Caption style — Auto/Mixed rotates looks across clips, like Crayo */}
+        <div>
+          <label className="text-xs font-medium text-white/60 block mb-1.5">Caption style</label>
+          <div className="flex flex-wrap gap-2">
+            {CAPTION_STYLES.map(s => {
+              const active = captionStyle === s.id;
+              return (
+                <button key={s.id} type="button" disabled={running}
+                  onClick={() => setCaptionStyle(s.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                    active ? "text-white border-transparent" : "text-white/60 border-white/10 hover:text-white hover:border-white/25"
+                  }`}
+                  style={active ? { background: "var(--accent)" } : { background: "rgba(255,255,255,0.05)" }}>
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Platforms — one clip auto-exports to every selected shape (multi-select) */}
+        <div>
+          <label className="text-xs font-medium text-white/60 block mb-1.5">Post for</label>
+          <div className="grid grid-cols-3 gap-2">
+            {PLATFORMS.map(p => {
+              const active = platforms.includes(p.id);
+              return (
+                <button key={p.id} type="button" disabled={running}
+                  onClick={() => togglePlatform(p.id)}
+                  className={`px-3 py-2 rounded-lg text-left transition-all border ${
+                    active ? "border-[var(--accent)]" : "border-white/10 hover:border-white/25"
+                  }`}
+                  style={{ background: active ? "var(--accent-soft)" : "rgba(255,255,255,0.05)" }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-white">{p.sub}</span>
+                    {active && <Check size={12} className="text-[var(--accent)]" />}
+                  </div>
+                  <span className="text-[10px] text-white/50">{p.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Options */}

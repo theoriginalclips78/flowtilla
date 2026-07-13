@@ -67,6 +67,9 @@ interface Moment {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { url, maxClips = 5, minDuration = 20, maxDuration = 90 } = body;
+  // Caption style: a specific preset id, or "auto"/undefined to ROTATE styles across clips
+  // (variety, the way Crayo does it) — passed through per clip below.
+  const captionStyle: string | undefined = body.captionStyle && body.captionStyle !== "auto" ? body.captionStyle : undefined;
   // Which platform shapes to export per clip. Default 9:16 (TikTok/Reels/Shorts); pass e.g.
   // ["9:16","1:1","16:9"] to auto-produce a post for every platform from one source.
   const aspects: AspectKey[] = (Array.isArray(body.aspects) && body.aspects.length
@@ -198,6 +201,7 @@ JSON format:
                 startTime: m.start_time, duration: clipDur,
                 title: (m.hook || m.title || "").trim(),
                 words, variant: i, layout: "crop", face, track, aspect,
+                captionPresetId: captionStyle,   // undefined → rotate styles for variety
               });
               variants.push({ aspect, downloadUrl: `/api/tools/serve/${jobId}/${outPath.split("/").pop()}` });
             }
