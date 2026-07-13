@@ -33,32 +33,32 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Montview brand header */}
-      <div className="flex items-center gap-4 animate-fade-up">
-        <MontviewLogo size={40} />
+      {/* Brand header — monochrome, restrained (no gradient) */}
+      <div className="flex items-center gap-3 animate-fade-up">
+        <MontviewLogo size={34} />
         <div>
-          <h1 className="text-[32px] leading-none font-extrabold tracking-tight grad-text">Montview</h1>
-          <p className="text-sm text-[var(--text-muted)] mt-1.5">Precision Clips. Premium Results.</p>
+          <h1 className="text-[19px] font-semibold tracking-tight text-[var(--text)] leading-none">Montview</h1>
+          <p className="text-[13px] text-[var(--text-muted)] mt-1">Precision clips, premium results.</p>
         </div>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4 animate-fade-up delay-1">
         <StatCard
-          icon={<Film size={20} className="text-[var(--accent)]" />}
-          label="Clips Today"
+          icon={<Film size={16} />}
+          label="Clips today"
           value={loading ? "…" : String(clipsToday)}
           sub={loading ? "" : clips.length > 0 ? `${clips.length} total clips` : "No clips generated yet"}
         />
         <StatCard
-          icon={<Layers size={20} className="text-[var(--accent)]" />}
-          label="Active Campaigns"
+          icon={<Layers size={16} />}
+          label="Active campaigns"
           value={loading ? "…" : String(activeCampaigns)}
           sub={loading ? "" : activeCampaigns > 0 ? campaigns.filter(c=>c.status==="active").map(c=>c.name).join(", ").slice(0,40) : "Add your first campaign"}
         />
         <StatCard
-          icon={<Clock size={20} className="text-[var(--accent)]" />}
-          label="Approved Clips"
+          icon={<Clock size={16} />}
+          label="Approved clips"
           value={loading ? "…" : String(clips.filter(c=>c.status==="approved").length)}
           sub={loading ? "" : `${clips.filter(c=>c.status==="pending").length} pending review`}
         />
@@ -94,7 +94,7 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {recentClips.map(clip => (
-                <Link href="/clips" key={clip.id} className="group relative rounded-xl overflow-hidden bg-[var(--chip)] aspect-video block">
+                <Link href="/clips" key={clip.id} className="group relative rounded-lg overflow-hidden bg-[var(--chip)] aspect-[9/16] block">
                   {clip.thumbnailUrl
                     ? <img src={clip.thumbnailUrl} alt={clip.title} className="w-full h-full object-cover" />
                     : <video src={clip.downloadUrl} className="w-full h-full object-cover" preload="none" />
@@ -141,18 +141,18 @@ export default function DashboardPage() {
                 const approved = campClips.filter(cl => cl.status === "approved").length;
                 const pending = campClips.filter(cl => cl.status === "pending").length;
                 return (
-                  <Link href="/agent" key={c.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[var(--accent-soft)] transition-colors group">
+                  <Link href="/agent" key={c.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors group">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                        style={{ background: "var(--accent)" }}>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] text-xs font-semibold bg-[var(--surface-2)] border border-[var(--border)]">
                         {c.name[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">{c.name}</p>
-                        <p className="text-[10px] text-[var(--text-light)]">{campClips.length} clips · {approved} approved · {pending} pending</p>
+                        <p className="text-sm font-medium text-[var(--text)]">{c.name}</p>
+                        <p className="text-[11px] text-[var(--text-light)] mt-0.5 tabular-nums">{campClips.length} clips · {approved} approved · {pending} pending</p>
                       </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: c.status === "active" ? "#F0FDF4" : "var(--surface-2)", color: c.status === "active" ? "#16A34A" : "var(--text-muted)" }}>
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[var(--text-muted)]">
+                      {c.status === "active" && <span className="w-1.5 h-1.5 rounded-full bg-[#3FB950]" />}
                       {c.status}
                     </span>
                   </Link>
@@ -184,13 +184,13 @@ export default function DashboardPage() {
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
   return (
-    <div className="panel p-6">
-      <div className="w-10 h-10 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center mb-3">
+    <div className="panel p-5">
+      <div className="flex items-center gap-2 text-[var(--text-muted)] mb-4">
         {icon}
+        <p className="text-[13px] font-medium">{label}</p>
       </div>
-      <p className="text-[var(--text-muted)] text-xs uppercase tracking-wider font-medium">{label}</p>
-      <p className="text-[var(--text)] text-3xl font-bold mt-1 mb-1">{value}</p>
-      <p className="text-[var(--text-light)] text-xs truncate">{sub}</p>
+      <p className="text-[var(--text)] text-[32px] leading-none font-semibold tracking-tight tabular-nums">{value}</p>
+      <p className="text-[var(--text-light)] text-[12px] mt-2 truncate">{sub}</p>
     </div>
   );
 }

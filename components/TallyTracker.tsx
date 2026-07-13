@@ -61,8 +61,8 @@ export default function TallyTracker() {
           <p className="text-xs text-[var(--text-muted)] mt-0.5">{dateLabel}</p>
         </div>
         <div className="text-right">
-          <div className="text-[34px] font-extrabold leading-none grad-text">{ready ? count : "—"}</div>
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-light)] mt-0.5">clips</div>
+          <div className="text-[34px] font-semibold leading-none tracking-tight tabular-nums text-[var(--text)]">{ready ? count : "—"}</div>
+          <div className="text-[11px] font-medium text-[var(--text-light)] mt-1">clips</div>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export default function TallyTracker() {
 
       <div className="mt-4 flex items-center gap-2">
         <button onClick={() => save(count + 1)}
-          className="btn-blue flex-1 justify-center !py-2.5 text-sm">
+          className="btn-primary justify-center !py-2.5 text-sm">
           <Plus size={15} /> Posted a clip
         </button>
         <button onClick={() => save(Math.max(0, count - 1))} title="Undo one"
