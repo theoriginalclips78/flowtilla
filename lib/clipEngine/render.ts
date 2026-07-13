@@ -164,6 +164,7 @@ export type RenderClipOpts = {
   track?: TrackData | null;      // per-shot tracking (reframeTrack) — preferred when multi-shot
   captions?: boolean;            // burn word captions (default true when words present)
   aspect?: AspectKey;            // output shape (default 9:16 for TikTok/Reels/Shorts)
+  motion?: boolean;              // subtle opening punch + drift (default true)
 };
 
 /**
@@ -196,6 +197,16 @@ export async function renderVerticalClip(opts: RenderClipOpts): Promise<void> {
     else parts.push(blurFillFilter(TW, TH));
   }
   let last = "v0";
+
+  // 1b) LIFE: a quick opening punch-in (settles over ~0.4s) then a barely-there slow drift,
+  // so clips never feel static (like Crayo/Opus). Subtle on purpose — energy, not motion-sick.
+  if (opts.motion ?? true) {
+    parts.push(
+      `[${last}]zoompan=z='if(lte(on,12),1.07-0.07*on/12,min(1.0+0.00018*on,1.05))':d=1:` +
+      `x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${TW}x${TH}:fps=30[vm]`,
+    );
+    last = "vm";
+  }
 
   // 2) captions: burn the animated word-pop track (reuses the shared caption library).
   if (withCaptions) {
