@@ -371,19 +371,19 @@ function ClipCard({ clip, campaigns, onPreview, onStatus, accounts }: {
 
         {/* Info */}
         <div className="p-3">
-          <p className="text-[10px] font-semibold text-[var(--accent)] mb-0.5 truncate">{campaignName}</p>
+          <p className="text-[10px] font-medium text-[var(--text-muted)] mb-0.5 truncate">{campaignName}</p>
           <p className="text-sm font-semibold text-[var(--text)] truncate mb-0.5">{clip.title}</p>
           <p className="text-[11px] text-[var(--text-light)] truncate">{new Date(clip.createdAt).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })}</p>
 
           {/* Ready-to-paste caption with required @mention + hashtags */}
-          <div className="mt-2.5 rounded-lg border p-2" style={{ borderColor: "var(--border)", background: "#FFF9F9" }} onClick={e => e.stopPropagation()}>
+          <div className="mt-2.5 rounded-lg border p-2" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-[var(--accent)]">Caption to copy</span>
+              <span className="text-[9px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Caption to copy</span>
               <div className="flex gap-0.5">
                 {(["tiktok","instagram","youtube"] as const).map(p => (
                   <button key={p} onClick={() => setCapPlatform(p)}
                     className="text-[8px] font-bold px-1.5 py-0.5 rounded transition-all"
-                    style={capPlatform === p ? { background: "var(--accent)", color: "var(--surface)" } : { background: "var(--border)", color: "var(--accent)" }}>
+                    style={capPlatform === p ? { background: "var(--text)", color: "var(--bg)" } : { background: "var(--surface)", color: "var(--text-muted)" }}>
                     {p === "tiktok" ? "TT" : p === "instagram" ? "IG" : "YT"}
                   </button>
                 ))}
@@ -394,8 +394,8 @@ function ClipCard({ clip, campaigns, onPreview, onStatus, accounts }: {
               <p className="text-[9px] font-semibold text-[#DC2626] mb-1.5">⚠ Must tag {clip.tags?.[capPlatform] || "the brand account"} — keep likes visible, no ad wording</p>
             )}
             <button onClick={() => { navigator.clipboard.writeText(postCaption); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-              className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-bold transition-all"
-              style={{ background: copied ? "#16A34A" : "var(--accent)", color: "var(--surface)" }}>
+              className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-semibold transition-all border"
+              style={copied ? { background: "#16A34A", color: "#fff", borderColor: "transparent" } : { background: "var(--surface)", color: "var(--text)", borderColor: "var(--border-strong)" }}>
               {copied ? <><Check size={10}/> Copied!</> : <><Copy size={10}/> Copy caption</>}
             </button>
           </div>
@@ -420,7 +420,7 @@ function ClipCard({ clip, campaigns, onPreview, onStatus, accounts }: {
               <Download size={12} />
             </a>
             <button onClick={e => { e.stopPropagation(); onStatus(clip.id, clip.status === "discarded" ? "pending" : "discarded"); }}
-              className="w-8 flex items-center justify-center rounded-lg transition-all hover:bg-red-50 hover:border-red-200 hover:text-[var(--accent)]"
+              className="w-8 flex items-center justify-center rounded-lg transition-all hover:bg-[var(--surface-2)] hover:text-[var(--danger)]"
               style={{ border: "1px solid var(--border)", color: "var(--text-light)" }}>
               <X size={12} />
             </button>
@@ -549,7 +549,7 @@ export default function ClipsPage() {
               {/* Campaign header */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-px flex-1" style={{ background: "var(--border)" }} />
-                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--border)" }}>
+                <span className="text-xs font-medium px-3 py-1 rounded-full text-[var(--text-muted)]" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
                   {group.campaignName}
                 </span>
                 <span className="text-xs text-[var(--text-light)]">{group.clips.length} clip{group.clips.length !== 1 ? "s" : ""}</span>

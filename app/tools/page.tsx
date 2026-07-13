@@ -39,10 +39,10 @@ export default function ToolsPage() {
             <button
               key={t.label}
               onClick={() => router.push(t.href)}
-              className="panel p-5 flex items-center gap-4 text-left hover:border-red-300 hover:shadow-md transition-all hover:-translate-y-0.5"
+              className="panel p-5 flex items-center gap-4 text-left hover:border-[var(--border-strong)] hover:shadow-md transition-all hover:-translate-y-0.5"
             >
-              <div className="w-11 h-11 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center flex-shrink-0">
-                <t.icon size={20} className="text-[var(--accent)]" />
+              <div className="w-11 h-11 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
+                <t.icon size={20} className="text-[var(--text-muted)]" />
               </div>
               <div>
                 <p className="font-semibold text-[var(--text)] text-sm">{t.label}</p>
@@ -60,10 +60,10 @@ export default function ToolsPage() {
           {tools.map((t) => (
             <div
               key={t.label}
-              className="panel p-5 flex flex-col gap-3 hover:border-red-300 hover:shadow-md hover:-translate-y-0.5 transition-all"
+              className="panel p-5 flex flex-col gap-3 hover:border-[var(--border-strong)] hover:shadow-md hover:-translate-y-0.5 transition-all"
             >
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center">
-                <t.icon size={18} className="text-[var(--accent)]" />
+              <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center">
+                <t.icon size={18} className="text-[var(--text-muted)]" />
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-sm text-[var(--text)]">{t.label}</p>

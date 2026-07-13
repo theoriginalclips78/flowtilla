@@ -56,8 +56,8 @@ export default function SocialTrackerPage() {
   return (
     <div className="space-y-6 max-w-[1100px]">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center">
-          <TrendingUp size={20} className="text-[var(--accent)]" />
+        <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center">
+          <TrendingUp size={20} className="text-[var(--text-muted)]" />
         </div>
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text)]">Social Tracker</h1>
@@ -93,13 +93,13 @@ export default function SocialTrackerPage() {
       {/* Top hooks */}
       {topHooks.length > 0 && (
         <div className="panel p-5">
-          <h2 className="font-bold text-[var(--text)] mb-3 flex items-center gap-2"><Trophy size={16} className="text-[var(--accent)]" /> Best-performing hooks</h2>
+          <h2 className="font-bold text-[var(--text)] mb-3 flex items-center gap-2"><Trophy size={16} className="text-[var(--text-muted)]" /> Best-performing hooks</h2>
           <div className="space-y-2">
             {topHooks.map((p, i) => (
               <div key={p.id} className="flex items-center gap-3">
                 <span className="text-xs font-bold text-[var(--text-light)] w-5">#{i + 1}</span>
                 <span className="flex-1 text-sm text-[var(--text)] truncate">&ldquo;{p.hook}&rdquo;</span>
-                <span className="text-sm font-bold text-[var(--accent)]">{fmt(p.views)} views</span>
+                <span className="text-sm font-semibold text-[var(--text)] tabular-nums">{fmt(p.views)} views</span>
               </div>
             ))}
           </div>
@@ -144,7 +144,7 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   return (
     <div className="stat-card">
       <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1.5">
-        <span className="text-[var(--accent)]">{icon}</span>
+        <span className="text-[var(--text-muted)]">{icon}</span>
         <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
       </div>
       <div className="text-2xl font-extrabold text-[var(--text)]">{value}</div>
