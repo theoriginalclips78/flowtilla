@@ -19,6 +19,30 @@ import { reframeTrack, trackedCropFilter, type TrackData } from "@/lib/clipEngin
 const CONCURRENCY = 1; // sequential: finish all clips from one video before moving to next
 const FONT = "/System/Library/Fonts/Helvetica.ttc";
 
+// How many clips from ONE video render at the same time. Unbounded parallelism (one task
+// per moment) thrashes CPU/GPU at agency scale; this caps it to a sane pool sized to the
+// machine (≈ half the cores, clamped 2–6). Override with CLIP_CONCURRENCY.
+const CLIP_CONCURRENCY = Math.max(2, Math.min(6,
+  Number(process.env.CLIP_CONCURRENCY) || Math.floor((os.cpus()?.length || 4) / 2)));
+
+// Run `fn` over `items` with at most `limit` in flight at once. Never rejects — returns
+// a settled result per item (same shape as Promise.allSettled) so callers can tally
+// successes/failures. Preserves input order in the results array.
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (true) {
+      const i = next++;
+      if (i >= items.length) return;
+      try { results[i] = { status: "fulfilled", value: await fn(items[i], i) }; }
+      catch (reason) { results[i] = { status: "rejected", reason }; }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 function sse(ctrl: ReadableStreamDefaultController, data: object) {
   try { ctrl.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`)); } catch { /* closed */ }
 }
@@ -1324,7 +1348,7 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
 
   let clipsFromSource = 0;
   const clipSummaries: Record<string, unknown>[] = [];
-  const results = await Promise.allSettled(jobs.map(async (m, i) => {
+  const results = await mapLimit(jobs, CLIP_CONCURRENCY, async (m, i) => {
     const variant = m._variant ?? i;   // variations give each version a distinct title style
     const safeEnd = Math.min(m.end_time, videoDuration);
     // Start on a real face; skip black/flash + animated/no-face intros (OpenCV, with a
@@ -1384,7 +1408,7 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
       checks: { frame1_is_face: opening.face, opens_clean: true, within_90s: dur <= 90, format: "1080x1920", single_subtitle_layer: true },
     });
     return saved;
-  }));
+  });
 
   for (const r of results) {
     if (r.status === "fulfilled" && r.value) clipsFromSource++;
