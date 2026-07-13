@@ -125,8 +125,21 @@ export function buildWordAss(
   }
   if (ws.length === 0) return null;
 
+  // Group words into caption lines by NATURAL PHRASE, not fixed N-word chunks — so lines
+  // don't read as mid-sentence fragments ("goal is. As"). Break a line when it's full,
+  // OR the previous word ended a sentence/clause (. ! ? , ; :), OR there's a real pause
+  // (gap > 0.45s) before the next word. This keeps captions reading as coherent phrases.
+  const endsClause = (w: string) => /[.!?,;:]["')\]]?$/.test(w);
   const lines: { words: typeof ws }[] = [];
-  for (let i = 0; i < ws.length; i += wordsPerLine) lines.push({ words: ws.slice(i, i + wordsPerLine) });
+  let cur: typeof ws = [];
+  for (let i = 0; i < ws.length; i++) {
+    cur.push(ws[i]);
+    const next = ws[i + 1];
+    const full = cur.length >= wordsPerLine;
+    const clauseEnd = endsClause(ws[i].word) && cur.length >= Math.min(2, wordsPerLine);
+    const pause = next && next.start - ws[i].end > 0.45 && cur.length >= Math.min(2, wordsPerLine);
+    if (full || clauseEnd || pause || !next) { lines.push({ words: cur }); cur = []; }
+  }
 
   const header = `[Script Info]
 ScriptType: v4.00+
