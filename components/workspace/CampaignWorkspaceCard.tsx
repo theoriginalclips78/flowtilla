@@ -31,12 +31,12 @@ interface Props {
 
 const PlatformIcon = ({ platform, size = 18 }: { platform: string; size?: number }) => {
   if (platform === "youtube") return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className="text-[var(--accent)]">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className="text-[var(--text-muted)]">
       <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
     </svg>
   );
-  if (platform === "tiktok") return <span className="text-xs font-bold text-black">TT</span>;
-  return <span className="text-xs font-bold text-pink-600">IG</span>;
+  if (platform === "tiktok") return <span className="text-xs font-bold text-[var(--text)]">TT</span>;
+  return <span className="text-xs font-bold text-[var(--text-muted)]">IG</span>;
 };
 
 function now() {
@@ -251,10 +251,10 @@ export default function CampaignWorkspaceCard({ campaign, sources, autoRun, onRe
             {uniquePlatforms.map((p) => (
               <span key={p} className="inline-flex"><PlatformIcon platform={p} /></span>
             ))}
-            <span className="text-xs bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full font-semibold">
+            <span className="text-xs bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-0.5 rounded-full font-medium">
               ${campaign.cpm} CPM
             </span>
-            <span className="text-xs bg-red-50 text-[var(--accent)] px-2 py-0.5 rounded-full font-semibold">
+            <span className="text-xs bg-[var(--surface-2)] text-[var(--text-muted)] px-2 py-0.5 rounded-full font-medium">
               Max ${campaign.maxPerClip}
             </span>
             {(campaign as { accountWarning?: string }).accountWarning && (

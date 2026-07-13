@@ -73,8 +73,8 @@ export default function PostQueuePage() {
   return (
     <div className="space-y-6 max-w-[1000px]">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center">
-          <Send size={18} className="text-[var(--accent)]" />
+        <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center">
+          <Send size={18} className="text-[var(--text-muted)]" />
         </div>
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text)]">Post Queue</h1>
@@ -120,7 +120,7 @@ export default function PostQueuePage() {
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-sm font-bold text-[var(--text)] truncate">{c.hook || c.title}</span>
-                  {c.campaignName && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] font-semibold shrink-0">{c.campaignName}</span>}
+                  {c.campaignName && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-muted)] font-medium shrink-0">{c.campaignName}</span>}
                 </div>
                 <textarea
                   value={captionFor(c)}
@@ -133,7 +133,7 @@ export default function PostQueuePage() {
                     {copied === c.id ? <><Check size={14} className="text-[var(--accent)]" /> Copied</> : <><Copy size={14} /> Copy caption</>}
                   </button>
                   <a href={c.downloadUrl} download className="btn-secondary !py-1.5 text-sm"><Download size={14} /> Download</a>
-                  <button onClick={() => markPosted(c)} className="btn-blue !py-1.5 text-sm ml-auto"><Check size={14} /> I posted it</button>
+                  <button onClick={() => markPosted(c)} className="btn-primary !py-1.5 text-sm ml-auto"><Check size={14} /> I posted it</button>
                 </div>
               </div>
             </div>
