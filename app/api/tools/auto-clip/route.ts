@@ -7,7 +7,7 @@ import ffmpegStatic from "ffmpeg-static";
 import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicText } from "@/lib/anthropic/text";
-import { reframeFace, renderVerticalClip, type Word } from "@/lib/clipEngine/render";
+import { reframeFace, reframeTrack, renderVerticalClip, type Word } from "@/lib/clipEngine/render";
 
 if (ffmpegStatic) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -179,12 +179,16 @@ JSON format:
             // (falls back to blur-fill), animated word captions, and a title card — the
             // exact same output path the campaign Agent uses. No more raw horizontal cuts.
             const clipDur = m.end_time - m.start_time;
-            const face = await reframeFace(srcPath, m.start_time, clipDur);
+            // Per-shot tracking (follows the speaker across cuts); static face is the fallback.
+            const [track, face] = await Promise.all([
+              reframeTrack(srcPath, m.start_time, clipDur),
+              reframeFace(srcPath, m.start_time, clipDur),
+            ]);
             await renderVerticalClip({
               srcPath, outPath: clipPath,
               startTime: m.start_time, duration: clipDur,
               title: (m.hook || m.title || "").trim(),
-              words, variant: i, layout: "crop", face,
+              words, variant: i, layout: "crop", face, track,
             });
 
             // Thumbnail — from the RENDERED vertical clip so it matches the output

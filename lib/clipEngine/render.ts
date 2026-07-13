@@ -23,6 +23,7 @@ const FFMPEG_BIN =
   path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg");
 const PYTHON_BIN = process.env.PYTHON_BIN || "python3";
 const REFRAME = path.join(process.cwd(), "scripts", "reframe.py");
+const REFRAME_TRACK = path.join(process.cwd(), "scripts", "reframe_track.py");
 
 // ── MAGIC CROP ─────────────────────────────────────────────────────────────
 // Where the subject sits in a clip, so we can crop a 9:16 frame that KEEPS them
@@ -83,6 +84,44 @@ export function chooseLayout(requested: Layout, face: FaceInfo | null): { layout
   return { layout: "blur", face: null };
 }
 
+// ── SHOT-AWARE DYNAMIC TRACKING ──────────────────────────────────────────────
+// Per-shot subject positions so the crop SNAPS to the right spot on every camera cut
+// (follows whoever is on screen) instead of one static crop for the whole clip.
+export type TrackSegment = { start: number; end: number; faceRatio: number; faceYRatio: number; coverage: number };
+export type TrackData = { srcW: number; srcH: number; coverage: number; segments: TrackSegment[] };
+
+export async function reframeTrack(srcPath: string, startSec: number, duration: number, fps = 4): Promise<TrackData | null> {
+  try {
+    const out = await pyCapture([REFRAME_TRACK, srcPath, String(startSec), String(duration), String(fps)], 90000);
+    const j = JSON.parse(out.trim().split("\n").pop() || "{}") as Partial<TrackData>;
+    if (typeof j.srcW === "number" && j.srcW > 0 && Array.isArray(j.segments)) {
+      return { srcW: j.srcW, srcH: j.srcH ?? 0, coverage: j.coverage ?? 0, segments: j.segments };
+    }
+  } catch { /* fall through */ }
+  return null;
+}
+
+// Build a scale + TIME-VARYING crop that snaps the crop window to each shot's subject.
+// The x/y crop offsets are ffmpeg expressions (piecewise over shot end-times); commas
+// inside if() are protected by the single quotes, so this is safe in a filtergraph.
+function trackedCropFilter(track: TrackData, Tw: number, Th: number): string | null {
+  const segs = track.segments.filter((s) => s.end > s.start);
+  if (segs.length < 1 || !track.srcW || !track.srcH) return null;
+  const even = (n: number) => { const r = Math.round(n); return r % 2 ? r + 1 : r; };
+  const scale = Math.max(Tw / track.srcW, Th / track.srcH);
+  const sW = even(track.srcW * scale), sH = even(track.srcH * scale);
+  const cl = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+  const xOf = (r: number) => even(cl(Math.round(r * sW - Tw / 2), 0, sW - Tw));
+  const yOf = (r: number) => even(cl(Math.round(r * sH - Th * 0.42), 0, sH - Th));
+  let xe = `${xOf(segs[segs.length - 1].faceRatio)}`;
+  let ye = `${yOf(segs[segs.length - 1].faceYRatio)}`;
+  for (let i = segs.length - 2; i >= 0; i--) {
+    xe = `if(lt(t,${segs[i].end.toFixed(2)}),${xOf(segs[i].faceRatio)},${xe})`;
+    ye = `if(lt(t,${segs[i].end.toFixed(2)}),${yOf(segs[i].faceYRatio)},${ye})`;
+  }
+  return `scale=${sW}:${sH},crop=${Tw}:${Th}:x='${xe}':y='${ye}'`;
+}
+
 // Small shared ffmpeg spawn used by engine-local render helpers.
 export function engineFfmpeg(args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -113,7 +152,8 @@ export type RenderClipOpts = {
   captionPresetId?: string;      // fixed caption style, else rotates by variant
   variant?: number;
   layout?: Layout;               // "crop" (magic crop) or "blur"; default crop→auto
-  face?: FaceInfo | null;        // pass the reframeFace result to enable magic crop
+  face?: FaceInfo | null;        // static magic-crop fallback (reframeFace result)
+  track?: TrackData | null;      // per-shot tracking (reframeTrack) — preferred when multi-shot
   captions?: boolean;            // burn word captions (default true when words present)
 };
 
@@ -125,16 +165,24 @@ export type RenderClipOpts = {
 export async function renderVerticalClip(opts: RenderClipOpts): Promise<void> {
   const { srcPath, outPath, startTime, duration, title } = opts;
   const variant = opts.variant ?? 0;
-  const chosen = chooseLayout(opts.layout ?? "crop", opts.face ?? null);
   const preset = opts.captionPresetId ? presetById(opts.captionPresetId) : CAPTION_PRESETS[variant % CAPTION_PRESETS.length];
   const withCaptions = (opts.captions ?? true) && !!opts.words?.length;
 
-  // 1) framing: magic crop when we have a confident face, else blur-fill.
+  // 1) framing, best → safest:
+  //    a) SHOT-AWARE TRACKING when we have ≥2 shots with confident faces (follows the
+  //       speaker across cuts — the premium look),
+  //    b) static magic crop for a single stable subject,
+  //    c) blur-fill for everything else (group / product / roaming).
   const parts: string[] = [];
-  if (chosen.layout === "crop" && chosen.face) {
-    parts.push(`[0:v]${magicCropFill(chosen.face, TW, TH)}[v0]`);
+  const track = opts.track;
+  const trackFilter = (opts.layout ?? "crop") === "crop" && track && track.segments.length >= 2 && track.coverage >= 0.5
+    ? trackedCropFilter(track, TW, TH) : null;
+  if (trackFilter) {
+    parts.push(`[0:v]${trackFilter}[v0]`);
   } else {
-    parts.push(blurFillFilter());
+    const chosen = chooseLayout(opts.layout ?? "crop", opts.face ?? null);
+    if (chosen.layout === "crop" && chosen.face) parts.push(`[0:v]${magicCropFill(chosen.face, TW, TH)}[v0]`);
+    else parts.push(blurFillFilter());
   }
   let last = "v0";
 
@@ -157,11 +205,20 @@ export async function renderVerticalClip(opts: RenderClipOpts): Promise<void> {
   }
 
   const filter = parts.join(";");
-  await engineFfmpeg([
+  const io = [
     "-ss", String(startTime), "-i", srcPath, "-t", String(duration),
     "-filter_complex", filter, "-map", `[${last}]`, "-map", "0:a?",
-    "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-    "-profile:v", "high", "-pix_fmt", "yuv420p",
-    "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath,
-  ]);
+  ];
+  const tail = ["-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath];
+  // Prefer the Mac GPU encoder (VideoToolbox): ~2× faster, ~7× less CPU/power than libx264.
+  // Fall back to libx264 automatically if the hardware encoder isn't available or fails.
+  if (process.env.FORCE_X264) {
+    await engineFfmpeg([...io, "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-profile:v", "high", ...tail]);
+    return;
+  }
+  try {
+    await engineFfmpeg([...io, "-c:v", "h264_videotoolbox", "-b:v", "6000k", "-profile:v", "high", ...tail]);
+  } catch {
+    await engineFfmpeg([...io, "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-profile:v", "high", ...tail]);
+  }
 }
