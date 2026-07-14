@@ -224,6 +224,7 @@ export type RenderClipOpts = {
   captions?: boolean;            // burn word captions (default true when words present)
   aspect?: AspectKey;            // output shape (default 9:16 for TikTok/Reels/Shorts)
   motion?: boolean;              // subtle opening punch + drift (default true)
+  forceX264?: boolean;           // skip the GPU encoder (used by a retry to rule out a glitch)
 };
 
 /**
@@ -293,7 +294,7 @@ export async function renderVerticalClip(opts: RenderClipOpts): Promise<void> {
   const tail = ["-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath];
   // Prefer the Mac GPU encoder (VideoToolbox): ~2× faster, ~7× less CPU/power than libx264.
   // Fall back to libx264 automatically if the hardware encoder isn't available or fails.
-  if (process.env.FORCE_X264) {
+  if (process.env.FORCE_X264 || opts.forceX264) {
     await engineFfmpeg([...io, "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-profile:v", "high", ...tail]);
     return;
   }
@@ -301,5 +302,23 @@ export async function renderVerticalClip(opts: RenderClipOpts): Promise<void> {
     await engineFfmpeg([...io, "-c:v", "h264_videotoolbox", "-b:v", "6000k", "-profile:v", "high", ...tail]);
   } catch {
     await engineFfmpeg([...io, "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-profile:v", "high", ...tail]);
+  }
+}
+
+// Render + quality-check with ONE retry: if the first render is broken (or throws), try again
+// forcing libx264 to rule out a GPU-encoder glitch. Returns the final QC result — one lost
+// render shouldn't mean a lost clip. Reliability step for agency-scale runs.
+export async function renderClipChecked(opts: RenderClipOpts): Promise<ClipCheck> {
+  const check = () => validateRenderedClip(opts.outPath, { aspect: opts.aspect, minSec: 1 });
+  try {
+    await renderVerticalClip(opts);
+    const qc = await check();
+    if (qc.ok) return qc;
+  } catch { /* fall through to the retry */ }
+  try {
+    await renderVerticalClip({ ...opts, forceX264: true });   // retry on CPU encoder
+    return await check();
+  } catch (e) {
+    return { ok: false, reason: `render failed: ${(e as Error).message?.slice(0, 80)}`, hasAudio: false };
   }
 }

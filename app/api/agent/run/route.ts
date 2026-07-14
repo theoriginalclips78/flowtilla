@@ -14,7 +14,7 @@ import { CAPTION_PRESETS, presetById, buildWordAss, buildTitleAss, CAPTION_PLACE
 import { renderOverlay, closeOverlayBrowser } from "@/lib/editor/overlayRender";
 import { WORK_DIR } from "@/lib/workdir";
 import { anthropicText } from "@/lib/anthropic/text";
-import { reframeTrack, trackedCropFilter, renderVerticalClip, validateRenderedClip, ASPECTS, type TrackData, type AspectKey } from "@/lib/clipEngine/render";
+import { reframeTrack, trackedCropFilter, renderClipChecked, validateRenderedClip, ASPECTS, type TrackData, type AspectKey } from "@/lib/clipEngine/render";
 
 const CONCURRENCY = 1; // sequential: finish all clips from one video before moving to next
 const FONT = "/System/Library/Fonts/Helvetica.ttc";
@@ -908,6 +908,7 @@ async function cutClip(
   bottomBanner: string = "",
   face: FaceInfo | null = null,
   track: TrackData | null = null,
+  forceX264 = false,
 ): Promise<void> {
   const style = CLIP_STYLES[variant % CLIP_STYLES.length];
 
@@ -974,7 +975,7 @@ async function cutClip(
     const tail = ["-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath];
     // GPU encode (VideoToolbox): ~2x faster, ~7x less CPU/power — critical for agency-scale
     // throughput. Auto-falls back to libx264 (crf 18) if the hardware path errors.
-    if (process.env.FORCE_X264) {
+    if (process.env.FORCE_X264 || forceX264) {
       return ffmpegRun([...io, "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-profile:v", "high", ...tail]);
     }
     try {
@@ -1431,10 +1432,17 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
       if (ok) { try { renameSync(tightFile, clipFile); } catch { /* keep original */ } }
     }
 
-    // QUALITY CONTROL: never hand a clipper a broken clip. Verify the rendered file is a real,
-    // correctly-sized, non-truncated 1080x1920 mp4; drop it (don't save) if it's clearly broken.
-    // Fail-open, so a probe hiccup never discards a good clip.
-    const qc = await validateRenderedClip(clipFile, { minSec: 1 });
+    // QUALITY CONTROL + RETRY: never hand a clipper a broken clip. Verify the rendered file is
+    // a real, correctly-sized, non-truncated 1080x1920 mp4. If it's broken, re-render ONCE
+    // forcing libx264 (rules out a GPU-encoder glitch) before giving up. Fail-open otherwise.
+    let qc = await validateRenderedClip(clipFile, { minSec: 1 });
+    if (!qc.ok) {
+      sse(ctrl, { step: "cut", status: "progress", message: `↻ Clip ${i+1}: re-rendering after quality check (${qc.reason})` });
+      try {
+        await cutClip(srcPath, clipFile, startForCut, dur, useTranscript, overlayText, variant, useWords, rsPresetId, rsMotion, eff.layout, rsCaptionMode, rsCaptionPos, rsWatermark, rsBanner, eff.face, track, true);
+        qc = await validateRenderedClip(clipFile, { minSec: 1 });
+      } catch { /* keep the failed qc — skip below */ }
+    }
     if (!qc.ok) {
       sse(ctrl, { step: "cut", status: "warn", message: `⚠️ Clip ${i+1} failed quality check (${qc.reason}) — skipped` });
       return null;
@@ -1452,11 +1460,10 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
       const variants: { aspect: string; url: string }[] = [];
       for (const aspect of extraAspects) {
         const vfile = path.join(clipsDir, `clip-${i}-${aspect.replace(":", "x")}.mp4`);
-        try {
-          await renderVerticalClip({ srcPath, outPath: vfile, startTime: startForCut, duration: dur,
-            title: overlayText, words: useWords, face: rf, track, aspect, captionPresetId: rsPresetId || undefined });
-          variants.push({ aspect, url: `/api/clip/${subId}/${idx}?aspect=${aspect.replace(":", "x")}` });
-        } catch { /* skip a failed variant */ }
+        // render + QC + one retry; only offer the variant if it passes
+        const vqc = await renderClipChecked({ srcPath, outPath: vfile, startTime: startForCut, duration: dur,
+          title: overlayText, words: useWords, face: rf, track, aspect, captionPresetId: rsPresetId || undefined });
+        if (vqc.ok) variants.push({ aspect, url: `/api/clip/${subId}/${idx}?aspect=${aspect.replace(":", "x")}` });
       }
       if (variants.length) {
         await prisma.clip.update({ where: { id: saved.id }, data: { variants: JSON.stringify(variants) } }).catch(() => {});

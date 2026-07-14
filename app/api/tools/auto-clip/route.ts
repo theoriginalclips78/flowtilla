@@ -7,7 +7,7 @@ import ffmpegStatic from "ffmpeg-static";
 import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicText } from "@/lib/anthropic/text";
-import { reframeFace, reframeTrack, renderVerticalClip, bestThumbnail, validateRenderedClip, ASPECTS, type Word, type AspectKey } from "@/lib/clipEngine/render";
+import { reframeFace, reframeTrack, renderClipChecked, bestThumbnail, ASPECTS, type Word, type AspectKey } from "@/lib/clipEngine/render";
 
 if (ffmpegStatic) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -208,7 +208,9 @@ JSON format:
               const suffix = aspect.replace(":", "x");
               const isPrimary = aspect === aspects[0];
               const outPath = isPrimary ? clipPath : `${dir}/clip_${clipId}_${suffix}.mp4`;
-              await renderVerticalClip({
+              // Render + QC with one automatic retry. Drop a broken variant; if the PRIMARY
+              // is broken (even after retry), skip the whole clip. Fail-open on probe hiccups.
+              const qc = await renderClipChecked({
                 srcPath, outPath,
                 startTime: m.start_time, duration: clipDur,
                 title: edit.useTitle ? (m.hook || m.title || "").trim() : "",
@@ -216,9 +218,6 @@ JSON format:
                 captions: edit.captions, motion: edit.motion,
                 captionPresetId: captionStyle,   // undefined → rotate styles for variety
               });
-              // QUALITY CONTROL: verify the render before offering it. Drop a broken variant;
-              // if the PRIMARY is broken, skip the whole clip. Fail-open on probe hiccups.
-              const qc = await validateRenderedClip(outPath, { aspect, minSec: 1 });
               if (!qc.ok) { if (isPrimary) { primaryOk = false; break; } continue; }
               variants.push({ aspect, downloadUrl: `/api/tools/serve/${jobId}/${outPath.split("/").pop()}` });
             }
