@@ -7,7 +7,7 @@ import ffmpegStatic from "ffmpeg-static";
 import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicText } from "@/lib/anthropic/text";
-import { reframeFace, reframeTrack, renderClipChecked, bestThumbnail, ASPECTS, type Word, type AspectKey } from "@/lib/clipEngine/render";
+import { reframeFace, reframeTrack, renderClipChecked, bestThumbnail, cleanOpeningOffset, ASPECTS, type Word, type AspectKey } from "@/lib/clipEngine/render";
 
 if (ffmpegStatic) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -195,11 +195,15 @@ JSON format:
           try {
             // Render PREMIUM clips via the shared engine: magic-crop / per-shot tracking,
             // animated word captions, title card — one export per requested platform aspect.
-            const clipDur = m.end_time - m.start_time;
+            // Open on a clean frame: nudge past a black fade / flash at the cut point so the
+            // clip doesn't start on a transition (the first 1.5s decide retention).
+            const openOffset = await cleanOpeningOffset(srcPath, m.start_time);
+            const startAt = m.start_time + openOffset;
+            const clipDur = m.end_time - startAt;
             // Analyse the subject ONCE (tracking + static face), reuse across every aspect.
             const [track, face] = await Promise.all([
-              reframeTrack(srcPath, m.start_time, clipDur),
-              reframeFace(srcPath, m.start_time, clipDur),
+              reframeTrack(srcPath, startAt, clipDur),
+              reframeFace(srcPath, startAt, clipDur),
             ]);
             const variants: { aspect: AspectKey; downloadUrl: string }[] = [];
             let primaryOk = true;
@@ -211,7 +215,7 @@ JSON format:
               // is broken (even after retry), skip the whole clip. Fail-open on probe hiccups.
               const qc = await renderClipChecked({
                 srcPath, outPath,
-                startTime: m.start_time, duration: clipDur,
+                startTime: startAt, duration: clipDur,
                 title: edit.useTitle ? (m.hook || m.title || "").trim() : "",
                 words, variant: i, layout: edit.layout, face, track, aspect,
                 captions: edit.captions, motion: edit.motion,

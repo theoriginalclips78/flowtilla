@@ -146,6 +146,38 @@ export function engineFfmpeg(args: string[]): Promise<void> {
   });
 }
 
+// Run ffmpeg and return stdout (for signalstats metadata parsing).
+function engineFfmpegStdout(args: string[]): Promise<string> {
+  return new Promise((resolve) => {
+    let out = "";
+    let proc: ReturnType<typeof spawn>;
+    try { proc = spawn(FFMPEG_BIN, ["-hide_banner", ...args]); } catch { return resolve(""); }
+    proc.stdout?.on("data", (d) => { out += d.toString(); });
+    proc.on("close", () => resolve(out));
+    proc.on("error", () => resolve(""));
+  });
+}
+
+// Average brightness (YAVG 0-255) of one frame, or null on failure.
+async function frameBrightness(srcPath: string, atSec: number): Promise<number | null> {
+  const out = await engineFfmpegStdout(["-ss", String(atSec), "-i", srcPath, "-frames:v", "1",
+    "-vf", "signalstats,metadata=print:file=-", "-f", "null", "-"]);
+  const m = out.match(/signalstats\.YAVG=([0-9.]+)/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+// Nudge a clip's start past a bad opening frame (near-black fade or blown-out flash) so every
+// clip opens on clean, watchable footage — the first 1.5s decide retention. Returns the seconds
+// to push forward (0 = already clean). Fail-open: unknown brightness counts as clean.
+export async function cleanOpeningOffset(srcPath: string, startSec: number, maxPush = 1.0): Promise<number> {
+  const clean = (y: number | null) => y === null || (y >= 20 && y <= 226);
+  if (clean(await frameBrightness(srcPath, startSec))) return 0;
+  for (let off = 0.2; off <= maxPush + 1e-6; off += 0.2) {
+    if (clean(await frameBrightness(srcPath, startSec + off))) return Math.round(off * 100) / 100;
+  }
+  return 0;
+}
+
 // Probe a media file — `ffmpeg -i` prints stream/format info to stderr (and exits non-zero
 // because no output is given), so we capture stderr regardless of exit code.
 function engineProbe(input: string): Promise<string> {
