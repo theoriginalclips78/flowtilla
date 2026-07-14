@@ -705,6 +705,38 @@ Return ONLY a compact JSON object: {"keep":[<indices to keep>]}. No prose.`,
   }
 }
 
+// HOOK A/B: the on-screen hook decides 70%+ of retention, so don't ship the first idea.
+// For every kept clip, generate 2 sharper alternatives (different proven formulas) grounded
+// in what's ACTUALLY said, then keep the single strongest of {current, alt1, alt2}. One batch
+// call for the whole video (cheap at scale). Fail-open: on any error, keep the current hooks.
+type RefineClip = { start_time: number; end_time: number; hook: string; reason?: string };
+async function refineHooks<T extends RefineClip>(
+  anthropic: Anthropic, clips: T[], transcript: { start: number; end: number; text: string }[],
+): Promise<T[]> {
+  if (clips.length === 0) return clips;
+  try {
+    const list = clips.map((m, i) => {
+      const said = transcript.filter(s => s.end > m.start_time && s.start < m.end_time)
+        .map(s => s.text).join(" ").replace(/\s+/g, " ").trim().slice(0, 220);
+      return `${i}. current="${(m.hook || "").slice(0, 70)}" | said="${said || "(no transcript)"}"`;
+    }).join("\n");
+    const msg = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1400,
+      system: `You optimize the ON-SCREEN HOOK for viral short clips. For each clip you're given the current hook and what's actually said in it. Silently write 2 SHARPER alternatives using DIFFERENT proven formulas (outcome-first, curiosity gap, specific number/stat, contrarian callout, open loop), then judge {current, alt1, alt2} and return the single strongest — the line a stranger scrolling at 2am physically cannot skip.
+RULES: 3-7 words. Exactly ONE word in ALL CAPS (the most surprising word). No emoji. Concrete beats clever — pull a real, specific detail from what's said. If the current hook is already the strongest, keep it.
+Return ONLY a JSON array: [{"i":0,"best":"..."}]. No prose.`,
+      messages: [{ role: "user", content: list }],
+    });
+    const raw = anthropicText(msg);
+    const arr = JSON.parse(raw.match(/\[[\s\S]*\]/)?.[0] || "[]") as { i?: number; best?: string }[];
+    const byI = new Map(arr.filter(o => typeof o.i === "number" && typeof o.best === "string").map(o => [o.i as number, (o.best as string).trim()]));
+    return clips.map((m, i) => { const b = byI.get(i); return b ? { ...m, hook: b } : m; });
+  } catch {
+    return clips; // fail-open — keep the original hooks
+  }
+}
+
 function escapeDrawtext(str: string): string {
   return str.replace(/[\\:'"[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 55);
 }
@@ -1328,6 +1360,13 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
   if (clipJobs.length === 0 && minRank <= 1) {
     clipJobs = makeTimeMoments(videoDuration, videoTitle, 30, 12)
       .map(m => ({ ...m, start_time: m.start_time, end_time: m.end_time }));
+  }
+
+  // HOOK A/B: sharpen the on-screen hook for every kept clip (2 alternatives → keep the best).
+  if (clipJobs.length > 0 && transcript.length > 0) {
+    sse(ctrl, { step: "hooks", status: "started", message: `✍️ A/B-testing hooks for ${clipJobs.length} clips...` });
+    clipJobs = await refineHooks(anthropic, clipJobs, transcript);
+    sse(ctrl, { step: "hooks", status: "complete", message: `✅ Hooks optimized` });
   }
 
   // VARIATIONS: turn each top moment into N posts — same footage, different hook + title
