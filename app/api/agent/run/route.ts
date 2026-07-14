@@ -889,7 +889,7 @@ function assembleGraph(base: string, post: string[], withAudio: boolean, overlay
     videoGraph += `;movie=${overlayPng}[ovl];[vpre][ovl]overlay=0:0[v]`;
   }
   if (withAudio) {
-    return { graph: `${videoGraph};[0:a]dynaudnorm=f=150:g=15[a]`, maps: ["-map", "[v]", "-map", "[a]"] };
+    return { graph: `${videoGraph};[0:a]loudnorm=I=-14:TP=-1.0:LRA=11[a]`, maps: ["-map", "[v]", "-map", "[a]"] };
   }
   return { graph: videoGraph, maps: ["-map", "[v]"] };
 }

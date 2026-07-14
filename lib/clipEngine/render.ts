@@ -291,7 +291,9 @@ export async function renderVerticalClip(opts: RenderClipOpts): Promise<void> {
     "-ss", String(startTime), "-i", srcPath, "-t", String(duration),
     "-filter_complex", filter, "-map", `[${last}]`, "-map", "0:a?",
   ];
-  const tail = ["-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath];
+  // Normalize loudness to the social standard (~-14 LUFS) so every clip sounds consistent and
+  // punchy regardless of how quiet/loud the source was. -af is a no-op when there's no audio.
+  const tail = ["-af", "loudnorm=I=-14:TP=-1.0:LRA=11", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outPath];
   // Prefer the Mac GPU encoder (VideoToolbox): ~2× faster, ~7× less CPU/power than libx264.
   // Fall back to libx264 automatically if the hardware encoder isn't available or fails.
   if (process.env.FORCE_X264 || opts.forceX264) {
