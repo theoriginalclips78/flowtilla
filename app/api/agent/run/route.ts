@@ -465,7 +465,9 @@ async function downloadVideo(url: string, outDir: string, platform: string): Pro
 }
 
 async function extractAudio(videoPath: string, audioPath: string): Promise<void> {
-  await ffmpegRun(["-i", videoPath, "-vn", "-ar", "16000", "-ac", "1", "-b:a", "32k", "-t", "600", audioPath]);
+  // Transcribe up to 60 min (32k mono ≈ 14MB, safely under Groq's 25MB cap) so campaigns on
+  // long podcasts/interviews find moments across the WHOLE video — not just the first 10 min.
+  await ffmpegRun(["-i", videoPath, "-vn", "-ar", "16000", "-ac", "1", "-b:a", "32k", "-t", "3600", audioPath]);
 }
 
 function toSrtTime(sec: number): string {

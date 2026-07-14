@@ -120,16 +120,15 @@ export async function POST(req: NextRequest) {
         let segments: { start: number; end: number; text: string }[] = [];
         let words: Word[] = [];
         try {
-          // Transcribe up to ~40 min (32k mono ≈ 9MB, under Groq's 25MB cap) so we scan
-          // most of a long podcast, not just the first 10 min. Word timestamps power the
-          // animated captions the shared render engine burns in.
-          await ffmpegRun(["-i", srcPath, "-vn", "-ar", "16000", "-ac", "1", "-b:a", "32k", "-t", "2400", audioPath]);
+          // Transcribe up to 60 min (32k mono ≈ 14MB, under Groq's 25MB cap) so we scan a full
+          // podcast, not just the first chunk. Word timestamps power the animated captions.
+          await ffmpegRun(["-i", srcPath, "-vn", "-ar", "16000", "-ac", "1", "-b:a", "32k", "-t", "3600", audioPath]);
           const whisperRes = await groq.audio.transcriptions.create({
             file: createReadStream(audioPath) as Parameters<typeof groq.audio.transcriptions.create>[0]["file"],
             model: "whisper-large-v3",
             response_format: "verbose_json",
             timestamp_granularities: ["word", "segment"],
-          } as Parameters<typeof groq.audio.transcriptions.create>[0], { timeout: 240000 });
+          } as Parameters<typeof groq.audio.transcriptions.create>[0], { timeout: 480000 });
           const r = whisperRes as { segments?: { start: number; end: number; text: string }[]; words?: { word: string; start: number; end: number }[] };
           segments = r.segments || [];
           words = (r.words || []).map((w) => ({ word: w.word.trim(), start: w.start, end: w.end })).filter((w) => w.word);
