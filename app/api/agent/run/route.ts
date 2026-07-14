@@ -14,7 +14,7 @@ import { CAPTION_PRESETS, presetById, buildWordAss, buildTitleAss, CAPTION_PLACE
 import { renderOverlay, closeOverlayBrowser } from "@/lib/editor/overlayRender";
 import { WORK_DIR } from "@/lib/workdir";
 import { anthropicText } from "@/lib/anthropic/text";
-import { reframeTrack, trackedCropFilter, renderVerticalClip, ASPECTS, type TrackData, type AspectKey } from "@/lib/clipEngine/render";
+import { reframeTrack, trackedCropFilter, renderVerticalClip, validateRenderedClip, ASPECTS, type TrackData, type AspectKey } from "@/lib/clipEngine/render";
 
 const CONCURRENCY = 1; // sequential: finish all clips from one video before moving to next
 const FONT = "/System/Library/Fonts/Helvetica.ttc";
@@ -1429,6 +1429,15 @@ Return ONLY a compact valid JSON array (no markdown, no commentary). Max 8 clips
       const tightFile = path.join(clipsDir, `clip-${i}-tight.mp4`);
       const ok = await tightenClip(clipFile, tightFile, dur);
       if (ok) { try { renameSync(tightFile, clipFile); } catch { /* keep original */ } }
+    }
+
+    // QUALITY CONTROL: never hand a clipper a broken clip. Verify the rendered file is a real,
+    // correctly-sized, non-truncated 1080x1920 mp4; drop it (don't save) if it's clearly broken.
+    // Fail-open, so a probe hiccup never discards a good clip.
+    const qc = await validateRenderedClip(clipFile, { minSec: 1 });
+    if (!qc.ok) {
+      sse(ctrl, { step: "cut", status: "warn", message: `⚠️ Clip ${i+1} failed quality check (${qc.reason}) — skipped` });
+      return null;
     }
 
     const saved = await saveAndStream(clipFile, thumbFile, { ...m, start_time: startForCut, end_time: safeEnd });

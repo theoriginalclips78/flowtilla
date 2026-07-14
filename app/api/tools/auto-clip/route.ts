@@ -7,7 +7,7 @@ import ffmpegStatic from "ffmpeg-static";
 import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicText } from "@/lib/anthropic/text";
-import { reframeFace, reframeTrack, renderVerticalClip, bestThumbnail, ASPECTS, type Word, type AspectKey } from "@/lib/clipEngine/render";
+import { reframeFace, reframeTrack, renderVerticalClip, bestThumbnail, validateRenderedClip, ASPECTS, type Word, type AspectKey } from "@/lib/clipEngine/render";
 
 if (ffmpegStatic) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -203,9 +203,11 @@ JSON format:
               reframeFace(srcPath, m.start_time, clipDur),
             ]);
             const variants: { aspect: AspectKey; downloadUrl: string }[] = [];
+            let primaryOk = true;
             for (const aspect of aspects) {
               const suffix = aspect.replace(":", "x");
-              const outPath = aspect === aspects[0] ? clipPath : `${dir}/clip_${clipId}_${suffix}.mp4`;
+              const isPrimary = aspect === aspects[0];
+              const outPath = isPrimary ? clipPath : `${dir}/clip_${clipId}_${suffix}.mp4`;
               await renderVerticalClip({
                 srcPath, outPath,
                 startTime: m.start_time, duration: clipDur,
@@ -214,7 +216,15 @@ JSON format:
                 captions: edit.captions, motion: edit.motion,
                 captionPresetId: captionStyle,   // undefined → rotate styles for variety
               });
+              // QUALITY CONTROL: verify the render before offering it. Drop a broken variant;
+              // if the PRIMARY is broken, skip the whole clip. Fail-open on probe hiccups.
+              const qc = await validateRenderedClip(outPath, { aspect, minSec: 1 });
+              if (!qc.ok) { if (isPrimary) { primaryOk = false; break; } continue; }
               variants.push({ aspect, downloadUrl: `/api/tools/serve/${jobId}/${outPath.split("/").pop()}` });
+            }
+            if (!primaryOk) {
+              sse(controller, { step: "clip_error", message: `Clip ${i + 1} failed quality check — skipped` });
+              continue;
             }
 
             // Thumbnail — a smart cover frame (clear central face, sharp, well-lit) from the

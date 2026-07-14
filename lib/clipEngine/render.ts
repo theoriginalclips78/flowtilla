@@ -12,7 +12,7 @@
  * in campaign/prisma code.
  */
 import { spawn } from "child_process";
-import { writeFileSync } from "fs";
+import { writeFileSync, statSync } from "fs";
 import path from "path";
 import { CAPTION_PRESETS, presetById, buildWordAss, buildTitleAss, CAPTION_PLACEMENTS } from "@/lib/editor/captionStyles";
 
@@ -144,6 +144,51 @@ export function engineFfmpeg(args: string[]): Promise<void> {
     proc.stderr.on("data", (d) => { err += d.toString(); });
     proc.on("close", (c) => (c === 0 ? resolve() : reject(new Error(err.slice(-500)))));
   });
+}
+
+// Probe a media file — `ffmpeg -i` prints stream/format info to stderr (and exits non-zero
+// because no output is given), so we capture stderr regardless of exit code.
+function engineProbe(input: string): Promise<string> {
+  return new Promise((resolve) => {
+    let err = "";
+    let proc: ReturnType<typeof spawn>;
+    try { proc = spawn(FFMPEG_BIN, ["-hide_banner", "-i", input]); } catch { return resolve(""); }
+    proc.stderr?.on("data", (d) => { err += d.toString(); });
+    proc.on("close", () => resolve(err));
+    proc.on("error", () => resolve(""));
+  });
+}
+
+// ── QUALITY CONTROL ──────────────────────────────────────────────────────────
+// Verify a RENDERED clip is actually good before it reaches a user: real file, a valid
+// video stream, the expected frame size, and not truncated. Only rejects UNAMBIGUOUSLY
+// broken output (empty/corrupt/wrong-size/too-short). FAIL-OPEN by design — a probe hiccup
+// must never drop a good clip. Missing audio is reported (soft) but not a hard reject.
+export type ClipCheck = { ok: boolean; reason?: string; hasAudio: boolean };
+export async function validateRenderedClip(clipPath: string, opts?: { aspect?: AspectKey; minSec?: number }): Promise<ClipCheck> {
+  try {
+    const { w, h } = ASPECTS[opts?.aspect ?? "9:16"];
+    // Floor is deliberately low (1s): the silence-trim can legitimately shorten a near-3s
+    // clip to ~1.6s, and we must never reject those. Corruption is caught by the size /
+    // stream / dimension checks; this only flags truly-broken sub-second renders.
+    const minSec = opts?.minSec ?? 1;
+    let st;
+    try { st = statSync(clipPath); } catch { return { ok: false, reason: "missing file", hasAudio: false }; }
+    if (!st.isFile() || st.size < 40_000) return { ok: false, reason: `file empty/too small (${st.size ?? 0}b)`, hasAudio: false };
+    const info = await engineProbe(clipPath);
+    const hasAudio = /Stream #\d+:\d+.*Audio:/.test(info);
+    if (!/Stream #\d+:\d+.*Video:/.test(info)) return { ok: false, reason: "no video stream", hasAudio };
+    const dim = info.match(/Video:.*?\b(\d{2,4})x(\d{2,4})\b/);
+    if (dim && (Number(dim[1]) !== w || Number(dim[2]) !== h)) return { ok: false, reason: `wrong size ${dim[1]}x${dim[2]} (want ${w}x${h})`, hasAudio };
+    const dm = info.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
+    if (dm) {
+      const sec = (+dm[1]) * 3600 + (+dm[2]) * 60 + parseFloat(dm[3]);
+      if (sec < minSec) return { ok: false, reason: `too short (${sec.toFixed(1)}s)`, hasAudio };
+    }
+    return { ok: true, hasAudio };
+  } catch {
+    return { ok: true, hasAudio: true }; // fail-open — QC must never block a good clip
+  }
 }
 
 // Aspect targets for every major platform. 9:16 covers TikTok/Reels/Shorts (default);
