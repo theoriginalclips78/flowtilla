@@ -7,7 +7,7 @@ import ffmpegStatic from "ffmpeg-static";
 import Groq from "groq-sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicText } from "@/lib/anthropic/text";
-import { reframeFace, reframeTrack, renderVerticalClip, ASPECTS, type Word, type AspectKey } from "@/lib/clipEngine/render";
+import { reframeFace, reframeTrack, renderVerticalClip, bestThumbnail, ASPECTS, type Word, type AspectKey } from "@/lib/clipEngine/render";
 
 if (ffmpegStatic) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -217,17 +217,9 @@ JSON format:
               variants.push({ aspect, downloadUrl: `/api/tools/serve/${jobId}/${outPath.split("/").pop()}` });
             }
 
-            // Thumbnail — from the RENDERED vertical clip so it matches the output
-            // (framing + captions), not the horizontal source.
-            try {
-              await ffmpegRun([
-                "-ss", "1",
-                "-i", clipPath,
-                "-vframes", "1",
-                "-q:v", "3",
-                thumbPath,
-              ]);
-            } catch { /* thumbnail optional */ }
+            // Thumbnail — a smart cover frame (clear central face, sharp, well-lit) from the
+            // RENDERED vertical clip, so it matches the output and isn't a blurry t=1s grab.
+            try { await bestThumbnail(clipPath, thumbPath); } catch { /* thumbnail optional */ }
 
             clipsGenerated++;
             sse(controller, {

@@ -24,6 +24,7 @@ const FFMPEG_BIN =
 const PYTHON_BIN = process.env.PYTHON_BIN || "python3";
 const REFRAME = path.join(process.cwd(), "scripts", "reframe.py");
 const REFRAME_TRACK = path.join(process.cwd(), "scripts", "reframe_track.py");
+const BEST_THUMB = path.join(process.cwd(), "scripts", "best_thumb.py");
 
 // ── MAGIC CROP ─────────────────────────────────────────────────────────────
 // Where the subject sits in a clip, so we can crop a 9:16 frame that KEEPS them
@@ -120,6 +121,19 @@ export function trackedCropFilter(track: TrackData, Tw: number, Th: number): str
     ye = `if(lt(t,${segs[i].end.toFixed(2)}),${yOf(segs[i].faceYRatio)},${ye})`;
   }
   return `scale=${sW}:${sH},crop=${Tw}:${Th}:x='${xe}':y='${ye}'`;
+}
+
+// Pick a strong COVER frame (clear, central face + sharp + well-lit via best_thumb.py) and
+// write it as the thumbnail — far better than a fixed t=1s grab that often lands on a blur
+// or a transition. Falls back to t=1s if the picker is unavailable.
+export async function bestThumbnail(clipPath: string, thumbPath: string): Promise<void> {
+  let t = 1;
+  try {
+    const out = await pyCapture([BEST_THUMB, clipPath], 20000);
+    const j = JSON.parse(out.trim().split("\n").pop() || "{}") as { time?: number };
+    if (typeof j.time === "number" && isFinite(j.time) && j.time >= 0) t = j.time;
+  } catch { /* fall back to t=1 */ }
+  await engineFfmpeg(["-ss", String(t), "-i", clipPath, "-frames:v", "1", "-q:v", "3", "-vf", "scale=480:-1", thumbPath]);
 }
 
 // Small shared ffmpeg spawn used by engine-local render helpers.
