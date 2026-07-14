@@ -67,6 +67,16 @@ interface Moment {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { url, maxClips = 5, minDuration = 20, maxDuration = 90 } = body;
+  // EDIT TIER (like Crayo's "how edited?"): maps to the engine's framing/caption/title/motion
+  // toggles. "full" = the works; "magic" = reframe + motion only; "subtitles" = captions +
+  // title, no magic crop or motion; "raw" = just a clean vertical cut.
+  const editLevel: string = ["full", "magic", "subtitles", "raw"].includes(body.editLevel) ? body.editLevel : "full";
+  const edit = {
+    full:      { captions: true,  useTitle: true,  motion: true,  layout: "crop" as const },
+    magic:     { captions: false, useTitle: false, motion: true,  layout: "crop" as const },
+    subtitles: { captions: true,  useTitle: true,  motion: false, layout: "blur" as const },
+    raw:       { captions: false, useTitle: false, motion: false, layout: "blur" as const },
+  }[editLevel]!;
   // Caption style: a specific preset id, or "auto"/undefined to ROTATE styles across clips
   // (variety, the way Crayo does it) — passed through per clip below.
   const captionStyle: string | undefined = body.captionStyle && body.captionStyle !== "auto" ? body.captionStyle : undefined;
@@ -199,8 +209,9 @@ JSON format:
               await renderVerticalClip({
                 srcPath, outPath,
                 startTime: m.start_time, duration: clipDur,
-                title: (m.hook || m.title || "").trim(),
-                words, variant: i, layout: "crop", face, track, aspect,
+                title: edit.useTitle ? (m.hook || m.title || "").trim() : "",
+                words, variant: i, layout: edit.layout, face, track, aspect,
+                captions: edit.captions, motion: edit.motion,
                 captionPresetId: captionStyle,   // undefined → rotate styles for variety
               });
               variants.push({ aspect, downloadUrl: `/api/tools/serve/${jobId}/${outPath.split("/").pop()}` });
